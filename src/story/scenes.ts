@@ -140,7 +140,7 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
     .to(kept, { x: 0, y: 0, duration: 0.45, ease: 'power3.out' }, 5.23)
     .to(kept, { opacity: 0, duration: 0.15 }, 5.6)
     .fromTo($(`${K} [data-ov="act"]`), { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.45, ease: 'power3.out' }, 5.23)
-    .fromTo($('[data-wave]'), { attr: { r: 8 }, opacity: 0.85 }, { attr: { r: 330 }, opacity: 0, duration: 0.75, ease: 'power2.out' }, 5.25)
+    .fromTo($('[data-wave]'), { attr: { r: 8 }, opacity: 0.85 }, { attr: { r: 330 }, opacity: 0, duration: 0.75, ease: 'power2.out', immediateRender: false }, 5.25)
     .to($(`${K} [data-ov="beat"]`), { opacity: 0, duration: 0.3 }, 5.3)
     .to($(`[data-offer="${winner.id}"], [data-offer="${keeper.id}"]`), { opacity: 0, duration: 0.3 }, 5.35)
     .to($(`[data-mark="${keeper.id}"] [data-lit]`), { opacity: 0, duration: 0.25 }, 5.4)
