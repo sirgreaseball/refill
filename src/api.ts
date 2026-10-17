@@ -11,7 +11,7 @@ export interface Workspace {
   id: string; salon: string; now_min: number; late_cutoff_min: number; min_lead_min: number
   hold_min: number; max_offers: number; join_code: string | null
   /** 'demo': the sample day on a demo clock. 'live': a real business on the real clock. Absent before migration 007. */
-  kind?: Mode; business_type?: string | null; day?: string | null
+  kind?: Mode; business_type?: string | null; day?: string | null; listed?: boolean
 }
 export interface DbStaff { id: string; name: string; skills: string[]; present: boolean; shift_start: number; shift_end: number }
 export interface DbService { id: string; name: string; minutes: number; skill: string; price_inr: number | null }
@@ -146,7 +146,7 @@ export interface Profile { id: string; email: string; name: string | null; role:
 // Desk functions take p_ws and p_key; offer-level ones take only the offer id.
 const DESK_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock',
   'staff_link', 'set_staff_presence', 'reassign_slot', 'get_move_options', 'move_booking', 'move_link', 'desk_link', 'set_policy',
-  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment'])
+  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment', 'set_listed'])
 
 /** Today's book. Live: this browser's business, or the setup form if it has none. Demo: the sample day, made on first visit. */
 export function useBook() {

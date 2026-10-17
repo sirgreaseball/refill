@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "race": "node scripts/race-test.ts",
-    "dbtest": "node scripts/db-test.ts"
+    "dbtest": "node scripts/db-test.ts",
+    "flowtest": "node scripts/flow-test.ts"
   },
   "dependencies": {
     "qrcode": "^1.5.4",
