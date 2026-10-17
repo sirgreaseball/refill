@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **START HERE.** State at 18 Oct 2026, ~01:20 IST. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
+> **START HERE.** State at 18 Oct 2026, ~00:10 IST (v4 redesign finished on every page). Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
 
@@ -16,9 +16,14 @@
 - **v1 to v2:** the rules engine, the database guarantees (one booking per slot, consent checked at booking, rate limits), four roles proven by private keys (owner, front desk, staff, client), staff absence, working hours, rescheduling (desk picks a time, or the client gets a link and picks), owner rules, and the evidence log. `npm run dbtest` gives 20/20; `npm run race` passes.
 - **v3 (17 Oct night):** information architecture rebuilt with one dashboard per role. Home is the product's own home screen, not a splash. Front desk: Today, Waitlist, Activity. Owner: Overview, Team, Rules. Every appointment action lives in one sheet. The dock is per role.
 - **v3.1:** motion layer. View transitions, ambient glow, spotlight, staggered reveals, spring press, sliding dock pill, drag-to-dismiss sheet, count-up numbers, refill sweep.
-- **v4 (in progress):** the **chronograph** design language (section 0.3). Theme tokens, fonts and grain are done. The **Day Dial** is on Home and Front desk Today. Magnetic primary buttons are done.
-  - **17 Oct ~23:40 (new account):** Owner Overview (cancelled-value ledger strip + one `SubDial` per staff for share of shift booked), Owner Team (link rows instead of three cards), Owner Rules (instrument rows with unit inputs), Waitlist (consent strip + figures, each person's free window on a 10–20 track), Activity (event rail, coloured ticks, per-filter counts), client pages Offer / Me / Move (`SlotDial` hero: one appointment on the day ring; amber open, lime when booked, coral if staff out, hand at demo clock), Join (consent choice indicator, mono labels). All pushed. Shared: page-head h1 now clamp(32px, 4.6vw, 56px); off-palette blue glow removed.
-  - Remaining for v4: `StaffView.tsx`, `Lab.tsx`.
+- **v4 (done on every page, 18 Oct ~00:10):** the **chronograph** design language (section 0.3). Theme tokens, fonts and grain; the **Day Dial** on Home and Front desk Today; magnetic primary buttons. Then, per page:
+  - Owner Overview: cancelled-value ledger strip (recovered lime, still open amber, passed unfilled ink-3) + one `SubDial` per staff member (share of shift booked, coral when out) + a six-figure offers row (`.figs`).
+  - Owner Team: staff rows (out = coral avatar) and one Links group of rows (no three-card grid). Owner Rules: instrument rows with unit inputs; who-can-do-what cells carry a dot (filled yes, ring own, faint no).
+  - Waitlist: consent strip + three figures; each person's free window on a 10:00–20:00 track. Activity: event rail with coloured ticks, per-filter counts; chips scroll on phones.
+  - Client pages Offer / Me / Move and StaffView: `SlotDial` (in `src/Dial.tsx`) is the hero: appointments on one ring of the day dial, hand at the demo clock. Amber open, lime when booked (draws in), coral if staff is out, dashed when gone. Join: consent choice indicator, mono labels.
+  - Lab: pass-count score as the loud moment, expected/actual two-column readouts, phone layout for the race row.
+  - Shared: page-head h1 clamp(32px, 4.6vw, 56px); off-palette blue glow, rainbow team faces and app-icon gradients replaced with token materials. All new CSS is at the end of `src/motion.css`.
+  - Verified in the browser preview at 1280 and 375 px, dark and light, no horizontal scroll; tests 51/51, build green after every page.
 - **Fixes:** issue #7 (consent copy: clients who decline messages are told they will not get offers). The Modal no longer steals focus on every poll. Polls skip unchanged state.
 - **Teammate PRs merged:**
   - #5 Vedanth: `docs/DEMO_SCRIPT.md`, `docs/KNOWN_LIMITS.md`, `docs/SETUP_CHECK.md`.
@@ -75,15 +80,10 @@ npm test        # expect 51 passing
 npx tsc -b && npx vite build
 npm run dbtest  # expect 20/20 against the live database
 ```
-Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the browser preview to check at 1280 px and 375 px, in dark and light. Note: the preview pane pauses CSS animations and `requestAnimationFrame` while hidden. Take a second screenshot before deciding an animation is stuck.
+Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the browser preview to check at 1280 px and 375 px, in dark and light. Note: the preview pane pauses CSS animations and `requestAnimationFrame` while hidden, and view transitions freeze mid-fade in screenshots. Take a second screenshot before deciding anything is stuck, or inject a debug style that sets animation and transition durations to 0 (also on `::view-transition-*`). A stale `vite` process holding `node_modules` makes `npm ci` fail with EPERM: find it with `Get-CimInstance Win32_Process -Filter "name='node.exe'"` and stop it.
 
 ### 0.5 What to do next, in order
-1. **Finish v4 on every page,** in the locked language:
-   - Owner (Overview, Team, Rules), Waitlist, Activity.
-   - Client pages: `Join.tsx`, `Me.tsx`, `Offer.tsx`, `Move.tsx`.
-   - `StaffView.tsx` and `Lab.tsx`.
-
-   Most already inherit the tokens. Check each at 1280 and 375 px, dark and light. Fix crowding, raise the craft (type scale, spacing, motion), and keep every feature and database call unchanged. Commit and push per page.
+1. ~~Finish v4 on every page~~ **done 18 Oct ~00:10** (see 0.2). Polish only from here; keep features and database calls unchanged.
 2. **Market-shock readiness (9 AM):** `docs/SHOCKS.md` has Chirag's click paths for late cancel, staff absence, duration change and consent withdrawal. Run each on the live site after the UI changes; fix anything that broke.
 3. **Demo script:** align `docs/DEMO_SCRIPT.md` (Vedanth) with the v4 UI. Start on Home with the Day Dial, mark a staff member out, reschedule, fill an amber gap, then show Owner and Proof (`#/lab`).
 4. **Docs:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1 screens. Refresh them, and the README screenshots in `docs/screens`, once the UI settles.
