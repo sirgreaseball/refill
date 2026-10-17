@@ -13,13 +13,13 @@ Email confirmation is off, so these sign up instantly. They are fake addresses o
 
 Front desk and staff do not have accounts in the app yet; they use private links that the owner makes. A front-desk link is a full login for the desk, and the database refuses owner-only actions for it.
 
-## Checklist (about 15 minutes, two browsers: a normal window and a private one)
+## Checklist (about 20 minutes, two browsers: a normal window and a private one, plus a phone)
 
 **Owner**
-1. Normal window: open the live app and choose **Create account**, entering Owner 1's details. Choose **I run a business**, then set up "Kesar Studio" with two services and two staff, and select **Open my desk**.
-2. ⋯ → **Sign out**, then **Sign in** again: the same business opens. *(Account holds the business.)*
+1. Normal window: open the live app and choose **Create account**, entering Owner 1's details. Choose **I run a business**, then set up "Kesar Studio" with two services; under **Who does it** choose **Me and a team** and add two staff. Select **Open my desk**.
+2. Profile button (round initial, top right) → **Sign out**, then **Sign in** again: the same business opens. *(Account holds the business.)*
 3. Owner > Team: add a staff member, edit their hours, then try to remove someone with a client ahead. The removal should be refused.
-4. Owner > Team > Links: the directory switch reads **Listed**. Leave it on.
+4. Profile button → **Settings**: the Directory switch reads **Listed**. Leave it on. Change the business type and **Save**: the top bar shows it.
 
 **Client, finding the place**
 5. Private window: open the live app and choose **Browse places you can book**. Kesar Studio is in the list, and searching a service name finds it.
@@ -34,7 +34,7 @@ Front desk and staff do not have accounts in the app yet; they use private links
 12. Client: on the place, select **Stop messages**. Owner's waitlist shows messages off. Select **Yes, message me** again.
 
 **Two places, one client (marketplace)**
-13. Owner 2 (any third window, or sign out of the owner first): create "Banjara Physio" (clinic) and keep it listed.
+13. Owner 2 (any third window, or sign out of the owner first): create "Banjara Physio" (clinic) with **Just me** under **Who does it**: no staff to add, the owner takes every booking. Keep it listed.
 14. Client 1: **Find a place**, search "physio", and join. The client home now lists both places with their own status.
 
 **Two clients, one slot**
@@ -42,5 +42,14 @@ Front desk and staff do not have accounts in the app yet; they use private links
 
 **Device places**
 16. Signed out, join a place from a counter code (no account). Then sign in as Client 2: that place appears on their home. *(Device places attach on sign-in.)*
+
+**Booking first (the counter code)**
+17. Signed out, on a phone: scan Kesar Studio's code (Owner > Team > Links > Booking page > Show code). The page says **Book a time today**. Pick a service: today's open times appear (amber = a cancelled time back on sale). Pick one and **Book**: the page says **You are booked**, and the owner's calendar shows the name.
+18. Pick a service nobody can do today (mark its only staff member **Out** first): the page says **Nothing open today**, with **Join the waitlist** and **Not now**.
+19. Front desk > **New appointment** > **Who**: pick someone already waiting. Their page (or account) shows the booking, and any offer still out to them disappears.
+
+**Deleting (use a throwaway business and account, not the ones above)**
+20. Profile → **Settings** → **Delete this business**: type its name, then delete. The account goes back to Setup; the business is gone from the directory.
+21. A client: Profile → **Settings** → **Delete my account** → **Yes**. They are signed out and cannot sign in again. An owner is asked to delete their business first.
 
 If any step shows an error or does not update within about 5 seconds, note the step number and what it said.
