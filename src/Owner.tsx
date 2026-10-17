@@ -207,6 +207,16 @@ export function Team({ book }: { book: Book }) {
               <button className="btn" onClick={() => setShare({ title: 'Waitlist sign-up', url: joinLink(code), note: 'Scan to join the waitlist. Consent is an explicit choice.' })}><Icon name="phone" /> Show code</button>
             </span>
           </li>}
+          {st.workspace.kind === 'live' && <li className="link-row">
+            <span className="link-ico"><Icon name="list" /></span>
+            <span className="row-main"><span className="overline">Directory</span><strong>{st.workspace.listed === false ? 'Not listed' : 'Listed on Refill'}</strong><small>Listed places show up when clients search, with your services and prices. Never anyone’s name.</small></span>
+            <span className="person-acts">
+              <button className={`toggle-pill ${st.workspace.listed === false ? 'is-out' : ''}`} aria-pressed={st.workspace.listed !== false}
+                onClick={() => run<{ ok: boolean; listed: boolean }>('set_listed', { p_listed: st.workspace.listed === false }, (r) => (r.ok ? (r.listed ? 'Listed: clients can find you.' : 'Hidden from the directory. Your code still works.') : null))}>
+                {st.workspace.listed === false ? 'Hidden' : 'Listed'}
+              </button>
+            </span>
+          </li>}
           <li className="link-row">
             <span className="link-ico"><Icon name="chart" /></span>
             <span className="row-main"><span className="overline">You</span><strong>This dashboard on your phone</strong><small>Carries your owner key. Keep it to yourself.</small></span>

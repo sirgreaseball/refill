@@ -23,6 +23,7 @@ const Rules = lazy(fresh(() => import('./Owner').then((m) => ({ default: m.Rules
 const Lab = lazy(fresh(() => import('./Lab')))
 const StaffView = lazy(fresh(() => import('./StaffView')))
 const Join = lazy(fresh(() => import('./Join')))
+const Directory = lazy(fresh(() => import('./Directory')))
 const Me = lazy(fresh(() => import('./Me')))
 const Places = lazy(fresh(() => import('./Me').then((m) => ({ default: m.Places }))))
 const Move = lazy(fresh(() => import('./Move')))
@@ -110,6 +111,7 @@ function Routes({ route }: { route: string }) {
   if (preview && desk) return <Suspense fallback={phoneWait}><StaffView ws={desk.id} staff={preview[1]} keyStr={desk.key} preview /></Suspense>
   const join = /^\/join\/([0-9a-f]{8})$/i.exec(route)
   if (join) return <Suspense fallback={phoneWait}><Join code={join[1]} /></Suspense>
+  if (route === '/places') return <Suspense fallback={phoneWait}><Directory /></Suspense>
   const me = /^\/me\/([0-9a-f]{32})$/i.exec(route)
   if (me) return <Suspense fallback={phoneWait}><Me token={me[1]} /></Suspense>
   if (route === '/me') return <Suspense fallback={phoneWait}><Places /></Suspense>

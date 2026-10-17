@@ -626,3 +626,8 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
   .bento { gap: 24px; }
 }
 @media (max-width: 420px) { .apps { gap: 4px; } .app-ico { width: 60px; } }
+
+/* Client home: actions under a place, and the directory. */
+.place-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 2px 0 4px 54px; }
+.directory { display: grid; gap: 10px; }
+.directory .link-row { text-decoration: none; color: inherit; }

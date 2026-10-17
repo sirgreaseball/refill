@@ -45,6 +45,7 @@ export default function Auth({ book }: { book: Book }) {
           <li><Icon name="list" /><span><strong>Every decision explained</strong><small>Who was offered, who was not, and why.</small></span></li>
         </ul>
         <button className="link" onClick={() => book.setMode('demo')}>Or look around the demo first, no account needed</button>
+        <a className="link" href="#/places">Browse places you can book</a>
       </section>
 
       <section className="group auth-form" aria-label={tab === 'up' ? 'Create an account' : 'Sign in'}>

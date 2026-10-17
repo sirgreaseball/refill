@@ -224,12 +224,15 @@ if (token) {
     services: [{ name: 'Maths class', minutes: 60, skill: 'maths', price_inr: 500 }],
   } })
   const noStaff = await rpc<Res>('create_business', { p_biz: { name: 'Empty', staff: [] } })
+  // Test businesses stay out of the public directory.
+  const unlisted = await rpc<Res>('set_listed', { p_ws: biz.id, p_key: biz.owner_key, p_listed: false })
+  const listedNow = await rpc<{ code: string }[]>('directory', { p_q: 'Test Tutors' })
   const ls = await rpc<LiveState>('get_state', { p_ws: biz.id, p_key: biz.owner_key })
   const liveClock = await fails(rpc('set_clock', { p_ws: biz.id, p_key: biz.owner_key, p_now: 600 }))
   const liveReset = await fails(rpc('reset_workspace', { p_ws: biz.id, p_key: biz.owner_key, p_day: {} }))
   const synced = await rpc<Res & { now_min: number }>('sync_clock', { p_ws: biz.id, p_key: biz.owner_key })
-  check('a live business starts empty with its staff and services; no demo clock, no reset',
-    biz.ok && noStaff.code === 'INVALID_VALUE' && ls.workspace.kind === 'live' && ls.staff.length === 2 && ls.services.length === 1 && ls.slots.length === 0
+  check('a live business starts empty with its staff and services; no demo clock, no reset; the owner can unlist it',
+    biz.ok && unlisted.ok && !listedNow.some((b) => b.code === biz.join_code) && noStaff.code === 'INVALID_VALUE' && ls.workspace.kind === 'live' && ls.staff.length === 2 && ls.services.length === 1 && ls.slots.length === 0
       && liveClock === 'LIVE_CLOCK' && liveReset === 'NOT_DEMO' && synced.ok,
     `${ls.workspace.kind}, ${ls.staff.length} staff, ${liveClock}, ${liveReset}`)
   const later = Math.min(synced.now_min + 30, 1300)
