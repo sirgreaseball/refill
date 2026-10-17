@@ -232,3 +232,7 @@
   .tile.is-hero .hero-body .hero-nums { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .dial-seg { animation: none !important; } }
+
+@media (max-width: 760px) { .home-clock { display: none; } }
+/* Magnetic: primary buttons lean a few pixels toward the pointer (set in useSpotlight). */
+.btn.is-primary, .role-pill { transition: translate 0.35s var(--spring), transform 0.45s var(--spring), background 0.2s var(--ease), box-shadow 0.3s var(--ease); }
