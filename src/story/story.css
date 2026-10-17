@@ -237,6 +237,8 @@ html.lenis, html.lenis body { height: auto; }
 .story.is-still .st-dial { position: relative; left: auto; top: auto; margin: 0; width: 100%; height: auto; aspect-ratio: 1; max-width: 760px; order: 2; justify-self: center; }
 .story.is-still .st-copy { position: static; width: auto; display: block; }
 .story.is-still .sd-sweep, .story.is-still .sd-pulse { animation: none; }
+/* Without the timeline the bar rides the top of the page instead of floating over it. */
+.story.is-still .st-hud { position: absolute; }
 @media (max-width: 899px), (max-aspect-ratio: 1/1) {
   .story.is-still .st-frame { grid-template-columns: 1fr; min-height: 0; padding-top: 80px; }
   .story.is-still .st-dial { order: 0; }
