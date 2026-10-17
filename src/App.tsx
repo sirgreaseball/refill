@@ -9,6 +9,8 @@ const Team = lazy(() => import('./Team'))
 const StaffView = lazy(() => import('./StaffView'))
 const Join = lazy(() => import('./Join'))
 const Me = lazy(() => import('./Me'))
+const Move = lazy(() => import('./Move'))
+const Owner = lazy(() => import('./Owner'))
 const phoneWait = <main className="phone"><p className="quiet">Opening…</p></main>
 
 function useRoute() {
@@ -29,11 +31,15 @@ function useRoute() {
  *   #/s/<ws>/<staff>/<key>           a stylist's own link
  *   #/join/<code>, #/me/<token>      a customer signing up, then their own page
  *   #/o/<offer>                      a customer's offer
+ *   #/m/<move>                       a customer's link to move or cancel one appointment
+ *   #/owner                          the owner's numbers, rules and links (front desk sees who-can-do-what)
  */
 export default function App() {
   const route = useRoute()
   const offer = /^\/o\/([0-9a-f-]{36})$/i.exec(route)
   if (offer) return <Offer id={offer[1]} />
+  const move = /^\/m\/([0-9a-f-]{36})$/i.exec(route)
+  if (move) return <Suspense fallback={phoneWait}><Move id={move[1]} /></Suspense>
   const stylist = /^\/s\/([0-9a-f-]{36})\/([A-Za-z0-9_-]+)\/([0-9a-f]{32})$/i.exec(route)
   if (stylist) return <Suspense fallback={phoneWait}><StaffView ws={stylist[1]} staff={stylist[2]} keyStr={stylist[3]} /></Suspense>
   const preview = /^\/staff\/([A-Za-z0-9_-]+)$/.exec(route)
@@ -73,8 +79,10 @@ function Shell({ route }: { route: string }) {
         {route === '/lab' ? <Suspense fallback={<Loading phase="lab" />}><Lab /></Suspense>
           : !book.state ? <Loading phase={book.phase} />
             : route === '/team' ? <Suspense fallback={<Loading phase="team" />}><Team book={book} /></Suspense>
-              : <Desk book={book} />}
+              : route === '/owner' ? <Suspense fallback={<Loading phase="owner" />}><Owner book={book} /></Suspense>
+                : <Desk book={book} />}
       </main>
+      {book.state && route !== '/' && route !== '' && <PageBar route={route} owner={book.state.role === 'owner'} />}
     </div>
   )
 }
@@ -120,7 +128,18 @@ function Entry({ fonts, phase, onEnter }: { fonts: boolean; phase: string; onEnt
 }
 
 type InstallEvent = Event & { prompt: () => Promise<void> }
-const PAGES = [['#/', 'Desk'], ['#/team', 'Team'], ['#/lab', 'Lab']] as const
+const PAGES = [['#/', 'Desk'], ['#/team', 'Team'], ['#/owner', 'Owner'], ['#/lab', 'Lab']] as const
+const pagesFor = (owner: boolean) => PAGES.filter(([h]) => owner || h !== '#/owner')
+const isOn = (href: string, route: string) => (href === '#/' ? !['/lab', '/team', '/owner'].includes(route) : route === href.slice(1))
+
+/** Phones: the desk has its own tab bar; every other page gets this one. */
+function PageBar({ route, owner }: { route: string; owner: boolean }) {
+  return (
+    <nav className="tabbar pagebar" aria-label="Pages">
+      {pagesFor(owner).map(([href, label]) => <a key={href} href={href} className={isOn(href, route) ? 'is-on' : ''}>{label}</a>)}
+    </nav>
+  )
+}
 
 function Header({ route, book }: { route: string; book: ReturnType<typeof useBook> }) {
   const [menu, setMenu] = useState(false)
@@ -156,15 +175,17 @@ function Header({ route, book }: { route: string; book: ReturnType<typeof useBoo
 
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !matchMedia('(display-mode: standalone)').matches
   const ws = book.state?.workspace
+  const role = book.state?.role
+  const canOwn = role === 'owner' || !!book.desk?.deskKey
 
   return (
     <header className="top">
       <a className="brand" href="#/" aria-label="Refill desk"><Mark size={18} /><span>Refill</span></a>
-      {ws && <span className="salon">{ws.salon}<small>synthetic demo day</small></span>}
+      {ws && <span className="salon">{ws.salon}<small>{role === 'desk' ? 'front desk' : 'owner'} · synthetic demo day</small></span>}
       {route !== '/lab' && ws && <ClockControl now={ws.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />}
       <nav className="top-nav" aria-label="Pages">
-        {PAGES.map(([href, label]) => {
-          const on = href === '#/' ? !['/lab', '/team'].includes(route) : route === href.slice(1)
+        {pagesFor(book.state?.role === 'owner').map(([href, label]) => {
+          const on = isOn(href, route)
           return <a key={href} href={href} className={on ? 'is-on' : ''} aria-current={on ? 'page' : undefined}>{label}</a>
         })}
       </nav>
@@ -173,16 +194,18 @@ function Header({ route, book }: { route: string; book: ReturnType<typeof useBoo
         {menu && (
           <div className="menu" role="menu">
             <button role="menuitem" onClick={async () => { await copy(location.href); setMenu(false) }}><Icon name="share" /> Copy link to this day</button>
-            <button role="menuitem" onClick={() => { setQr(true); setMenu(false) }}><Icon name="phone" /> Open this desk on a phone</button>
+            {role === 'owner' && <button role="menuitem" onClick={() => { setQr(true); setMenu(false) }}><Icon name="phone" /> Open this desk on a phone</button>}
+            {role === 'owner' && <button role="menuitem" onClick={async () => { setMenu(false); await book.viewAs('desk') }}><Icon name="share" /> View as front desk</button>}
+            {role === 'desk' && canOwn && <button role="menuitem" onClick={async () => { setMenu(false); await book.viewAs('owner') }}><Icon name="arrow" /> Back to owner view</button>}
             {install && <button role="menuitem" onClick={async () => { await install.prompt(); setInstall(null); setMenu(false) }}><Icon name="install" /> Install Refill</button>}
             {ios && <p className="menu-note">On iPhone: Share, then Add to Home Screen.</p>}
             <button role="menuitem" onClick={() => setTheme(theme === 'auto' ? 'dark' : theme === 'dark' ? 'light' : 'auto')}>
               <Icon name={theme === 'dark' ? 'moon' : 'sun'} /> Theme: {theme}
             </button>
-            <button role="menuitem" className={armed ? 'is-armed' : ''} onClick={async () => {
+            {role === 'owner' && <button role="menuitem" className={armed ? 'is-armed' : ''} onClick={async () => {
               if (!armed) return setArmed(true)
               await book.reset(); setMenu(false)
-            }}><Icon name="reset" /> {armed ? 'Tap again: reset today to its start' : 'Reset demo day'}</button>
+            }}><Icon name="reset" /> {armed ? 'Tap again: reset today to its start' : 'Reset demo day'}</button>}
           </div>
         )}
       </div>

@@ -676,3 +676,41 @@ strong .tag { margin-left: 6px; vertical-align: 2px; }
   .my-slot { grid-template-columns: 88px minmax(0, 1fr); }
   .my-slot .tag { grid-column: 2; justify-self: start; }
 }
+
+/* ------------------------------------------------------------ v2.1: moves, owner page */
+
+.move-picker { display: grid; gap: 16px; }
+.move-group { display: grid; gap: 8px; }
+.time-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.time-chip {
+  min-height: 40px; min-width: 64px; padding: 0 12px; border: 1px solid var(--hair); border-radius: var(--r);
+  background: var(--raised); font: 500 14px/1 var(--data); color: var(--ink); cursor: pointer; transition: background 0.2s var(--ease);
+}
+.time-chip.is-wide { font-family: inherit; font-size: 15px; }
+.time-chip.is-gap { border-color: var(--beat); color: var(--beat-text); }
+.time-chip.is-on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.time-chip:active { transform: scale(0.97); }
+.move-go { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+.owner-readout { margin-bottom: 0; }
+.facts { list-style: none; margin: 0; padding: 0; width: 100%; }
+.facts li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); font-size: 15px; }
+.facts li:has(.bar) { grid-template-columns: 96px minmax(0, 1fr) 44px; }
+.facts .mono { text-align: right; }
+.bar { height: 6px; border-radius: var(--r); background: var(--tint); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--act); border-radius: inherit; }
+.policy { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: end; }
+.policy label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.policy .card-acts { grid-column: 1 / -1; align-items: center; }
+.roles td.can { font: 13px var(--data); white-space: nowrap; }
+.roles td.is-yes { color: var(--act-text); }
+.roles td.is-own { color: var(--beat-text); }
+.roles td.is-no { color: var(--ink-2); }
+.roles tr.proof td { font-size: 13px; color: var(--ink-2); }
+.tabbar a { justify-content: center; }
+
+@media (max-width: 899px) {
+  .tabbar { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .pagebar a { padding: 14px 0; font-size: 11px; }
+  .policy { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}

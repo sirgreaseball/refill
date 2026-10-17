@@ -10,6 +10,7 @@ interface Mine {
   consent: boolean | null; consent_at: string | null; consent_source: string | null
   free_from: number | null; free_until: number | null; salon: string; now_min: number; place: number
   offers: { id: string; start_min: number; minutes: number; expires_min: number | null; status: string; slot_status: string }[]
+  booking: { status: 'confirmed' | 'cancelled'; start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present: boolean | null } | null
 }
 
 export default function Me({ token }: { token: string }) {
@@ -34,6 +35,15 @@ export default function Me({ token }: { token: string }) {
     setBusy(false)
   }
 
+  const change = async () => {
+    setBusy(true)
+    try {
+      const r = await rpc<{ ok: boolean; move?: string }>('my_move', { p_token: token })
+      if (r.ok && r.move) location.hash = `#/m/${r.move}`
+    } catch { setOffline(true) }
+    setBusy(false)
+  }
+
   if (!me) return <main className="phone"><p className="quiet">{offline ? 'No connection. Retrying…' : 'Opening your place in the queue…'}</p></main>
   if (me.state === 'NOT_FOUND') return <main className="phone"><Mark /><h1 className="phone-h">We could not find this sign-up</h1><p className="quiet">It may be from an old demo day.</p></main>
 
@@ -53,8 +63,16 @@ export default function Me({ token }: { token: string }) {
           <p className="quiet">For {me.service} ({me.minutes} min{me.price_inr ? `, ${money(me.price_inr)}` : ''}){me.free_from != null || me.free_until != null ? `, free ${clock(me.free_from ?? 600)}–${clock(Math.min(me.free_until ?? 1200, 1439))}` : ''}.</p>
         </div>
       )}
-      {me.state === 'booked' && <div className="verdict is-act"><h1 className="phone-h">You are booked</h1><p>Your booking is confirmed. See you at the salon.</p></div>}
-      {me.state === 'removed' && <div className="verdict"><h1 className="phone-h">You left the waitlist</h1><p>Nothing more will be sent to you.</p></div>}
+      {me.state === 'booked' && me.booking?.status === 'confirmed' && (
+        <div className="verdict is-act">
+          <h1 className="phone-h">You are booked</h1>
+          <p>{me.booking.service} at {span(me.booking.start_min, me.booking.minutes)} with {me.booking.stylist}.</p>
+          {me.booking.stylist_present === false && <p className="risk-text">{me.booking.stylist} can’t come in today. Please pick a new time.</p>}
+          <button className="btn" disabled={busy} onClick={change}>Change or cancel</button>
+        </div>
+      )}
+      {me.state === 'removed' && me.booking?.status === 'cancelled' && <div className="verdict"><h1 className="phone-h">Booking cancelled</h1><p>Your {me.booking.service} at {clock(me.booking.start_min)} is cancelled. Nothing more will be sent to you.</p></div>}
+      {me.state === 'removed' && me.booking?.status !== 'cancelled' && <div className="verdict"><h1 className="phone-h">You left the waitlist</h1><p>Nothing more will be sent to you.</p></div>}
 
       {open.length > 0 && (
         <section className="bubble">

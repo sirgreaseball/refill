@@ -2,7 +2,8 @@
 // waitlist with consent, and the evidence log. Everything shown is derived from
 // the database state; nothing is decided here that the database doesn't re-check.
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
-import { asEntry, asSlot, asStaff, rpc, type DbEntry, type DbEvent, type DbOffer, type DbSlot, type DbStaff, type State, type useBook } from './api'
+import { asEntry, asSlot, asStaff, moveUrl, rpc, type DbEntry, type DbEvent, type DbOffer, type DbSlot, type DbStaff, type MoveOption, type State, type useBook } from './api'
+import { MovePicker } from './MovePicker'
 import { demoDay } from './day'
 import { LABEL, candidates, explain, reasonFor, type Reason } from './engine'
 import { Icon, Modal, Qr, clock, copy, download, lead, money, span, stamp } from './ui'
@@ -30,6 +31,11 @@ const MOVE_TEXT: Record<string, string> = {
   TARGET_BUSY: 'that stylist has something else then',
   TARGET_LACKS_SKILL: 'that stylist does not do this service',
   SAME_STYLIST: 'it is already theirs',
+  TARGET_OFF_SHIFT: 'that stylist is not working then',
+  TOO_SOON: 'that time starts too soon',
+  ALREADY_STARTED: 'the appointment has already started',
+  SAME_TIME: 'that is the time it already has',
+  NOT_BOOKED: 'nobody is booked there any more',
 }
 
 type Book = ReturnType<typeof useBook>
@@ -38,10 +44,11 @@ type Live = 'waiting' | 'taken' | 'no-consent' | 'booked' | 'lost' | 'declined' 
 
 const staffFor = (st: State, s: DbSlot) => st.staff.find((p) => p.id === s.staff_id) ?? null
 /** A booked customer whose stylist is out: someone has to move or rebook them. */
-const atRisk = (st: State, s: DbSlot) => s.status === 'booked' && s.start_min + s.minutes > st.workspace.now_min && staffFor(st, s)?.present === false
-/** Stylists who could take this slot: in today, nothing else at that time, and (for a booked customer) able to do the service. */
+const atRisk = (st: State, s: DbSlot) => s.status === 'booked' && s.start_min >= st.workspace.now_min && staffFor(st, s)?.present === false
+/** Stylists who could take this slot at its time: in today, working then, nothing else then, and (for a booked customer) able to do the service. */
 function movable(st: State, s: DbSlot): DbStaff[] {
   return st.staff.filter((p) => p.present && p.id !== s.staff_id
+    && s.start_min >= p.shift_start && s.start_min + s.minutes <= p.shift_end
     && (s.status !== 'booked' || p.skills.includes(s.skill))
     && !st.slots.some((x) => x.staff_id === p.id && x.id !== s.id && x.start_min < s.start_min + s.minutes && x.start_min + x.minutes > s.start_min))
 }
@@ -75,7 +82,7 @@ function sentence(ev: DbEvent, st: State): string {
   const revoked = Number(d.revoked_offers) ? `, ${plural(Number(d.revoked_offers), 'open offer')} revoked` : ''
   switch (ev.kind) {
     case 'DAY_LOADED': return ev.code === 'RESET' ? 'Demo day reset to its start' : `Day loaded: ${d.slots} appointments, ${d.waitlist} on the waitlist`
-    case 'CANCELLED': return `${d.customer ?? 'A customer'} cancelled ${at}: ${ev.code === 'LATE' ? `late, ${lead(Number(d.notice_min))} notice` : ev.code === 'PAST' ? 'after it started' : `${lead(Number(d.notice_min))} notice`}${d.staff_absent ? '; stylist is out, so the gap is held' : ''}`
+    case 'CANCELLED': return `${d.customer ?? 'A customer'} cancelled ${at}${d.by === 'customer' ? ' from their own link' : ''}: ${ev.code === 'LATE' ? `late, ${lead(Number(d.notice_min))} notice` : ev.code === 'PAST' ? 'after it started' : `${lead(Number(d.notice_min))} notice`}${d.staff_absent ? '; stylist is out, so the gap is held' : ''}`
     case 'CANCEL_UNDONE': return `Cancellation undone: ${d.customer} is back at ${at}${revoked}`
     case 'OFFER_SENT': return `Offer sent to ${who} for ${at}${d.expires_min != null ? `, holds until ${clock(Number(d.expires_min))}` : ''}`
     case 'OFFER_EXPIRED': return `${who} did not reply by ${clock(Number(d.expires_min))}: offer for ${at} expired`
@@ -93,6 +100,10 @@ function sentence(ev: DbEvent, st: State): string {
     case 'STAFF_ABSENT': return `${d.name} is out today: ${plural(Number(d.at_risk), 'booked customer')} to move, ${plural(Number(d.blocked), 'open gap')} held${revoked}`
     case 'STAFF_BACK': return `${d.name} is back in: ${plural(Number(d.freed), 'gap')} open again`
     case 'REASSIGNED': return `${d.was === 'booked' ? `${d.customer}'s ${at} appointment` : `The ${at} gap`} moved from ${d.from} to ${d.to}`
+    case 'MOVED': return `${d.customer} moved from ${clock(Number(d.from_min))} with ${d.from} to ${clock(Number(d.to_min))} with ${d.to} (by ${d.by})${d.into_gap ? ', filling an open gap' : ''}${d.opened ? '; their old time is open to fill' : '; their old time is held'}${revoked}`
+    case 'MOVE_LINK_SENT': return `${d.customer} sent a link to ${ev.code === 'STAFF_ABSENT' ? 'pick a new time (stylist out)' : 'move or cancel'} ${at}`
+    case 'POLICY_CHANGED': return `Owner changed the rules: offers hold ${d.hold_min} min, at most ${d.max_offers} messages a day, late = under ${lead(Number(d.late_cutoff_min))}`
+    case 'DESK_LINK_MADE': return 'Owner made a new front-desk link; the old one stopped working'
     default: return ev.kind
   }
 }
@@ -185,7 +196,7 @@ export default function Desk({ book }: { book: Book }) {
           </button>
         ))}
         <a href="#/team"><Icon name="share" />Team</a>
-        <a href="#/lab"><Icon name="lab" />Lab</a>
+        {st.role === 'owner' ? <a href="#/owner"><Icon name="book" />Owner</a> : <a href="#/lab"><Icon name="lab" />Lab</a>}
       </nav>
 
       <div className={`toast ${toast?.bad ? 'is-bad' : ''}`} role="status" aria-live="polite">{toast?.text}</div>
@@ -436,7 +447,7 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
         {open ? <> · <span className="beat-text">{money(slot.price_inr)} at risk</span></> : held ? <> · {who} is out</> : <> · {slot.service} · {slot.customer}</>}
       </p>
 
-      {(risk || held) && future && (
+      {held && future && (
         <div className="rec-block">
           <p>{risk ? `${who} is out today. ${slot.customer}'s ${slot.service} needs another stylist who does ${slot.skill}.` : `${who} is out, so this gap cannot be offered with them. Give the time to someone who is in, then fill it.`}</p>
           {targets.length ? (
@@ -446,7 +457,7 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
               ))}
             </div>
           ) : (
-            <p className="quiet">{risk ? `Nobody who does ${slot.skill} is free at ${clock(slot.start_min)}. Call ${slot.customer} to rebook, then mark it cancelled.` : 'Nobody else is free at this time.'}</p>
+            <p className="quiet">{risk ? `Nobody who does ${slot.skill} is working and free at ${clock(slot.start_min)}. Move ${slot.customer} to another time below, or send them a link to choose.` : 'Nobody else is working and free at this time.'}</p>
           )}
         </div>
       )}
@@ -459,6 +470,7 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
           {future ? <button className="btn" onClick={cancelIt} disabled={busy}>Customer cancelled</button> : <p className="quiet">This appointment is in the past.</p>}
         </div>
       )}
+      {slot.status === 'booked' && slot.start_min >= now && <MovePanel key={slot.id} st={st} slot={slot} run={run} risk={risk} />}
 
       {(open || held) && slot.cancelled_customer && !booking && (
         <div className="rec-block">
@@ -703,8 +715,8 @@ function AddEntry({ run, onDone }: { run: Run; onDone: () => void }) {
 const FILTERS: [string, (e: DbEvent) => boolean][] = [
   ['All', () => true],
   ['Offers', (e) => e.kind.startsWith('OFFER')],
-  ['Bookings', (e) => ['BOOKED', 'WAITLIST_RETAINED', 'ACCEPT_REPEATED', 'ACCEPT_REJECTED', 'CANCELLED', 'CANCEL_UNDONE'].includes(e.kind)],
-  ['Team', (e) => e.kind.startsWith('STAFF') || e.kind === 'REASSIGNED'],
+  ['Bookings', (e) => ['BOOKED', 'WAITLIST_RETAINED', 'ACCEPT_REPEATED', 'ACCEPT_REJECTED', 'CANCELLED', 'CANCEL_UNDONE', 'MOVED', 'MOVE_LINK_SENT'].includes(e.kind)],
+  ['Team', (e) => e.kind.startsWith('STAFF') || ['REASSIGNED', 'POLICY_CHANGED', 'DESK_LINK_MADE'].includes(e.kind)],
   ['Consent', (e) => e.kind.startsWith('CONSENT') || e.code === 'NO_CONSENT' || e.kind.startsWith('WAITLIST_')],
 ]
 
@@ -749,5 +761,63 @@ function Log({ st }: { st: State }) {
       </ol>
       {rows.length > 40 && !all && <button className="btn is-quiet" onClick={() => setAll(true)}>Show all {rows.length}</button>}
     </section>
+  )
+}
+
+/** Move a booked appointment: the desk picks with the customer on the phone, or sends them a link to choose. */
+function MovePanel({ st, slot, run, risk }: { st: State; slot: DbSlot; run: Run; risk: boolean }) {
+  const [opts, setOpts] = useState<MoveOption[] | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [link, setLink] = useState<string | null>(null)
+  const open = st.moves.find((m) => m.slot_id === slot.id && m.status === 'open')
+  const first = (slot.customer ?? 'the customer').split(' ')[0]
+  const stylist = staffFor(st, slot)
+
+  const load = async () => setOpts((await run<MoveOption[]>('get_move_options', { p_slot: slot.id })) ?? [])
+  const pick = async (o: MoveOption) => {
+    setBusy(true)
+    await run<{ ok: boolean; code?: string; opened?: boolean }>('move_booking', { p_slot: slot.id, p_staff: o.staff, p_start: o.start_min }, (r) =>
+      r.ok ? `${slot.customer} moved to ${clock(o.start_min)} with ${o.name}. ${r.opened ? `Their ${clock(slot.start_min)} is open to fill.` : `Their ${clock(slot.start_min)} is held: ${stylist?.name} is out.`}`
+        : `Not moved: ${MOVE_TEXT[r.code ?? ''] ?? r.code}`)
+    setBusy(false)
+    setOpts(null)
+  }
+  const sendLink = async () => {
+    setBusy(true)
+    const r = await run<{ ok: boolean; move?: string; code?: string }>('move_link', { p_slot: slot.id })
+    if (r?.ok && r.move) setLink(moveUrl(r.move))
+    setBusy(false)
+  }
+  const message = risk
+    ? `Hi ${first}, ${stylist?.name} can't come in today, so your ${clock(slot.start_min)} ${slot.service} needs a new time. Pick one that suits you here:`
+    : `Hi ${first}, need to change your ${clock(slot.start_min)} ${slot.service}? Pick a new time or cancel here:`
+
+  return (
+    <div className="rec-block">
+      <h3 className="list-head">{risk ? `Rebook ${first}` : 'Reschedule'}</h3>
+      {risk && <p>{stylist?.name} is out today. {first}'s {slot.service} needs someone who does {slot.skill}, or a new time. Nothing moves until you or {first} choose.</p>}
+      {open && <p className="beat-text small">Link sent to {first}. Waiting for their choice. <button className="link" onClick={() => setLink(moveUrl(open.id))}>Show link</button></p>}
+      {opts === null ? (
+        <div className="card-acts">
+          <button className="btn" onClick={load} disabled={busy}><Icon name="book" /> Pick a new time</button>
+          {!open && <button className="btn is-quiet" onClick={sendLink} disabled={busy}><Icon name="share" /> Let {first} choose</button>}
+        </div>
+      ) : (
+        <MovePicker options={opts} busy={busy} confirm={(o) => `Move ${first} to ${clock(o.start_min)} with ${o.name}`} onPick={pick} onCancel={() => setOpts(null)} />
+      )}
+      {link && (
+        <Modal title={`${first}'s link`} onClose={() => setLink(null)}>
+          <div className="qr-one">
+            <Qr text={link} size={196} />
+            <p className="bubble small">{message} {link}</p>
+            <div className="card-acts">
+              <button className="btn" onClick={() => copy(`${message} ${link}`)}><Icon name="copy" /> Copy message</button>
+              <a className="btn is-quiet" href={link.slice(link.indexOf('#'))}>Open as {first}</a>
+            </div>
+            <p className="quiet small">Synthetic demo: nothing is sent. {first} sees only times that truly work.</p>
+          </div>
+        </Modal>
+      )}
+    </div>
   )
 }
