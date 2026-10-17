@@ -543,3 +543,86 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
   .page.auth { grid-template-columns: minmax(0, 1fr); min-height: 0; gap: 28px; }
   .auth-story h1 { font-size: clamp(36px, 10vw, 56px); }
 }
+
+/* ---------- v6: no boxes. Content sits on the canvas, grouped by space and hairlines, the way
+   Threshold reads. One tonal stage per page holds the centrepiece (the dial, the ledger); glass
+   stays only on what floats (bar, dock, sheets, menus, toasts). Controls keep their own surfaces. */
+.group, .tile, .stat, .lab-in, .lab-out, .checks, .slot-card, .verdict, .verdict-card, .presence-card,
+.phone .rows, .phone section > .rows, .auth-form {
+  background: none; box-shadow: none; border-radius: 0;
+}
+.group { padding: 22px 0 4px; border-top: 1px solid var(--line); }
+.page-head + .group, .stack > .group:first-child { border-top: 0; }
+.stack > * + *, .group + .group { margin-top: 22px; }
+.group-head { margin-bottom: 6px; }
+.group-head h2, .tile-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.group.spot::after, .tile.spot::after, .stat.spot::after { display: none; }
+@media (hover: hover) and (pointer: fine) { .group.spot:hover, .tile:hover, .stat.spot:hover { box-shadow: none; } }
+
+/* The stage: the one tonal plane on a page, for the thing the page is about. */
+.group.today-hero, .group.ov-hero, .tile.is-hero {
+  background: var(--surface); border-radius: var(--r-lg); border-top: 0; box-shadow: inset 0 1px 0 var(--glass-edge);
+  padding: clamp(18px, 2.4vw, 28px);
+}
+.page-head + .group.today-hero, .page-head + .group.ov-hero { margin-top: 8px; }
+.group.today-hero + .group, .group.ov-hero + .group { border-top: 0; }
+
+/* Figures read as instrument markings: big numbers split by hairlines, no tiles. */
+.today-hero .stats { gap: 18px 0; }
+.today-hero .stat { background: none; padding: 2px 0 2px 18px; border-left: 1px solid var(--line); }
+.today-hero:not(.is-calendar) .stat:nth-child(odd), .today-hero.is-calendar .stat:first-child { border-left: 0; padding-left: 0; }
+.stat-l { color: var(--ink-3); }
+
+/* Home: the dial on its stage, everything else typeset on the canvas around it. */
+.bento { gap: 30px 36px; }
+.tile:not(.is-hero) { padding: 18px 0 0; border-top: 1px solid var(--line); }
+.tile-head { margin-bottom: 10px; }
+
+/* Rows: a hairline between, a coloured rail only where colour means something, a soft light under the pointer. */
+.queue { gap: 0; }
+.q-item { background: transparent; border-radius: 0; padding: 14px 0 14px 0; border-top: 1px solid var(--line); overflow: visible; }
+.queue > .q-item:first-child { border-top: 0; }
+.q-item:hover { background: transparent; }
+.q-item, .agenda-row, .choice, .person, .link-row, .wl-row, .hist-row, .row-btn { position: relative; isolation: isolate; }
+.q-item::after, .agenda-row::after, .choice::after, .person::after, .link-row::after, .wl-row::after, .hist-row::after, .row-btn::after {
+  content: ''; position: absolute; inset: 2px -14px; z-index: -1; border-radius: var(--r); pointer-events: none;
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--act) 9%, transparent), transparent 70%);
+  opacity: var(--spot, 0); transition: opacity 0.4s var(--ease);
+}
+.row-btn:hover { background: transparent; }
+
+/* Phone pages: the message stays a bubble (it is one); verdicts and states are typeset with a rail. */
+.phone .rows, .phone section > .rows { padding: 0; }
+.verdict { padding: 4px 0 4px 18px; border-left: 3px solid var(--line-2); gap: 10px; }
+.verdict.is-act { background: none; border-left-color: var(--act); }
+.presence-card { padding: 16px 0 4px; border-top: 1px solid var(--line); gap: 8px; }
+.presence-card.is-in, .presence-card.is-out { background: none; }
+.presence-card.is-in .presence-state { color: var(--act-text); }
+.presence-card.is-out .presence-state { color: var(--danger); }
+.verdict-card, .slot-card { padding: 2px 0 2px 16px; border-left: 3px solid var(--line-2); }
+.verdict-card.is-bad { background: none; border-left-color: var(--danger); }
+.verdict-card.is-diff { background: none; border-left-color: var(--beat); margin-top: 14px; }
+
+/* Lab: input and result side by side on the canvas, split by one hairline. */
+.lab-in, .lab-out { padding: 0; }
+.lab-grid { gap: clamp(20px, 4vw, 44px); }
+.lab-out { padding-left: clamp(20px, 4vw, 44px); border-left: 1px solid var(--line); }
+.checks { padding: 0; border-top: 1px solid var(--line); }
+
+/* The way in: the promise and the form, split by a hairline instead of a panel. */
+.auth-form { padding: 4px 0 4px clamp(24px, 4vw, 48px); border-left: 1px solid var(--line); }
+.role-choice { gap: 0; }
+.choice { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; padding: 20px 0; }
+.choice:last-child { border-bottom: 1px solid var(--line); }
+.choice:hover:not(:disabled) { border-color: var(--line); }
+
+@media (max-width: 900px) {
+  .lab-out { padding-left: 0; border-left: 0; padding-top: 20px; border-top: 1px solid var(--line); }
+  .auth-form { padding: 22px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 760px) {
+  .group { padding: 18px 0 4px; border-radius: 0; }
+  .group.today-hero, .group.ov-hero, .tile.is-hero { padding: 16px; border-radius: 16px; }
+  .bento { gap: 24px; }
+}
+@media (max-width: 420px) { .apps { gap: 4px; } .app-ico { width: 60px; } }

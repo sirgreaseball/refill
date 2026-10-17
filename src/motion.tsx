@@ -46,7 +46,10 @@ export function Glow({ st }: { st: State | null }) {
   )
 }
 
-/** One listener for the whole app: cards marked .spot get a light that follows the pointer. Fine pointers only. */
+// What the pointer lights up: anything marked .spot, and every row a person can act on.
+const GLOW = '.spot, .q-item, .agenda-row, .choice, .person, .link-row, .wl-row, .hist-row, .row-btn'
+
+/** One listener for the whole app: rows and .spot elements get a light that follows the pointer. Fine pointers only. */
 export function useSpotlight() {
   useEffect(() => {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches || reduced()) return
@@ -61,7 +64,7 @@ export function useSpotlight() {
         const lean = (d: number, size: number) => Math.max(-3, Math.min(3, (d / size) * 6))
         m.style.translate = `${lean(e.clientX - b.left - b.width / 2, b.width)}px ${lean(e.clientY - b.top - b.height / 2, b.height)}px`
       }
-      const el = (e.target as HTMLElement).closest?.('.spot') as HTMLElement | null
+      const el = (e.target as HTMLElement).closest?.(GLOW) as HTMLElement | null
       if (last && last !== el) last.style.removeProperty('--spot')
       last = el
       if (!el) return
