@@ -7,3 +7,4 @@ dist
 *.log
 .playwright-mcp
 .DS_Store
+graphify-out/cache
