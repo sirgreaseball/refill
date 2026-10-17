@@ -62,13 +62,14 @@ td{padding:11px 12px 11px 0;border-bottom:1px solid var(--hair);vertical-align:t
 
 <h2>Try it in two minutes</h2>
 <ol class="flow">
-<li>Open the link and press "Open today’s book". You are the owner of Kesar Salon (invented).</li>
-<li>Tap any future appointment and press "Customer cancelled". The gap glows.</li>
-<li>The right side shows who on the waitlist fits, and who is skipped and why.</li>
-<li>Press "Send offers". Open an offer on your phone with the QR code.</li>
-<li>Tap Book on your phone. Watch the desk update. Try "Two phones, one slot".</li>
-<li>Try "Stop messages" on the phone. That customer is never messaged again.</li>
+<li>Open the product and choose "Try the demo" if it is not already marked Demo. Choose "Front desk" to open the invented Kesar Salon day.</li>
+<li>Open a future booked appointment, choose "Record a cancellation", then confirm with "Yes, [client name] cancelled".</li>
+<li>Open the amber gap. Review who fits and expand "Not offered, and why" for skipped clients. Tick the people to contact.</li>
+<li>Use the Send offers button, which includes the selected count (for example, "Send 3 offers"). Open a pending offer here or scan its phone QR code.</li>
+<li>Choose "Book" with the offered time. Return to "Front desk" to see the booking, then choose "Owner" → "Overview" to see the recovered value.</li>
+<li>Choose "Proof" from All views, or "Proof for judges" from the view menu, to open the <a href="/#/lab">Lab</a> and try the case checks.</li>
 </ol>
+<p class="quiet">To check consent, use "Stop messages from Kesar Salon" on a pending offer before booking it. To check simultaneous booking, keep two offers pending and choose "Two phones, one slot" → "Tap both at once", or scan one code on each phone.</p>
 <p class="quiet">On a phone, the app can be installed: browser menu → "Install app" or "Add to Home Screen".</p>
 
 <h2>How you are scored</h2>
@@ -84,20 +85,21 @@ td{padding:11px 12px 11px 0;border-bottom:1px solid var(--hair);vertical-align:t
 </table>
 <p class="note">Judges compare <strong>what you inherited</strong> with <strong>what changed because of your decisions</strong>. A polished product does not earn business points on its own. Your choices do.</p>
 
-<h2>What the product does today (version 1)</h2>
+<h2>What the team inherited (version 1)</h2>
+<p class="note">Historical reference for the business team's before-and-after comparison. The walkthrough above follows the current interface; the version 1 limitations below describe the original handover.</p>
 <div class="grid">
 <div class="card"><p class="over">For the owner</p><h3>The desk</h3><p>Today’s appointments per stylist. Mark a cancellation; the app says how much notice was given (under two hours is "late"). It lists who fits the empty slot, who does not and why, and sends offers only after the owner approves.</p></div>
 <div class="card"><p class="over">For the customer</p><h3>The offer page</h3><p>A short message on the phone: the slot, the stylist, the service and price. Book, Not today, or Stop messages. If someone else booked a moment earlier, it says so and the customer keeps their place in the queue.</p></div>
 <div class="card"><p class="over">Trust</p><h3>Consent and evidence</h3><p>Every customer’s consent is yes, no or "not asked". "Not asked" is never treated as yes. Every action is logged with a reason and can be exported for the owner, or for an auditor.</p></div>
 </div>
 
-<h3>The gap you can negotiate</h3>
-<p>The case card says your change is: <strong>"add service-duration and staff constraints before outreach."</strong> In version 1 the app knows how long each slot is and what kind of service it was booked for (hair, nails, skin). It does <strong>not</strong> yet know which stylist is actually in today, or that a stylist who does hair can also do a facial. So:</p>
+<h3>The original gap to negotiate</h3>
+<p>The case card says your change is: <strong>"add service-duration and staff constraints before outreach."</strong> In version 1 the app knew how long each slot was and what kind of service it was booked for (hair, nails, skin). It did <strong>not</strong> yet know which stylist was actually in that day, or that a stylist who did hair could also do a facial. At that handover:</p>
 <ul>
-<li>if a stylist calls in sick, version 1 cannot tell which of their slots to stop offering;</li>
-<li>a freed hair slot with a stylist who also does skin cannot go to a waiting facial customer, so a possible booking is missed.</li>
+<li>if a stylist called in sick, version 1 could not tell which of their slots to stop offering;</li>
+<li>a freed hair slot with a stylist who also did skin could not go to a waiting facial customer, so a possible booking was missed.</li>
 </ul>
-<p>Check this yourself in the app, decide whether it matters to a real owner, and then ask for it (or for something better) through a GitHub issue. Engineering will reply with scope, an offer or a counter-offer.</p>
+<p>Compare that starting point with the current "Owner" → "Team", "Staff" and "Proof" views. Record what changed and why it matters to a real owner, then request any remaining improvement through a GitHub issue. Engineering will reply with scope, an offer or a counter-offer.</p>
 
 <h2>The market, in numbers you can defend</h2>
 <p class="note">All figures below are secondary sources or assumptions. Quote a number only with its source, or mark it "unverified".</p>
