@@ -3,7 +3,8 @@
 // Rules: the policies the database enforces, and who may do what.
 import { useState, type FormEvent } from 'react'
 import { deskLinkUrl, joinLink, ownerLink, staffLinkUrl, type DbStaff, type State } from './api'
-import { figures, togglePresence, useRun, type Book } from './desk/common'
+import { figures, plural, togglePresence, useRun, type Book } from './desk/common'
+import { SubDial } from './Dial'
 import { Num } from './motion'
 import { Icon, Modal, Qr, clock, copy, lead, money } from './ui'
 
@@ -23,7 +24,7 @@ const ACCESS: [string, Can, Can, Can, Can][] = [
   ['Make staff and front-desk links', 'yes', 'no', 'no', 'no'],
   ['Reset the demo day', 'yes', 'no', 'no', 'no'],
 ]
-const CAN_TEXT: Record<Can, string> = { yes: 'Yes', own: 'Own only', no: '—' }
+const CAN_TEXT: Record<Can, string> = { yes: 'Yes', own: 'Own only', no: 'No' }
 
 function OwnerOnly() {
   return (
@@ -54,44 +55,62 @@ export function Overview({ book }: { book: Book }) {
           <p>Counted live from the database. Synthetic demo day.</p>
         </div>
       </header>
-      <div className="stats">
-        <div className={`stat spot ${f.recovered ? 'is-act' : ''}`}><div className="stat-v"><Num value={f.recovered} format={money} /></div><div className="stat-l">Recovered from cancellations</div></div>
-        <div className={`stat spot ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v"><Num value={f.openValue} format={money} /></div><div className="stat-l">Still open, can be filled</div></div>
-        <div className="stat spot"><div className="stat-v"><Num value={n.lost} format={money} /></div><div className="stat-l">Gaps that passed unfilled</div></div>
-        <div className="stat"><div className="stat-v">{f.refilled}/{n.cancelled}</div><div className="stat-l">Cancellations refilled · {n.late} late</div></div>
-      </div>
-      <div className="grid-2">
-        <section className="group spot">
-          <div className="group-head"><h2>Offers</h2><p>{n.sent ? `${n.accepted} of ${n.sent} booked` : 'None sent yet'}</p></div>
-          <ul className="facts">
-            <li><span>Declined</span><span className="mono">{n.declined}</span></li>
-            <li><span>No reply in time</span><span className="mono">{n.expired}</span></li>
-            <li><span>Tapped a moment late, kept their place</span><span className="mono">{n.lostRace}</span></li>
-            <li><span>Withdrawn (consent, staff out, moved)</span><span className="mono">{n.revoked}</span></li>
+      <section className="group ov-hero spot" aria-label="Where cancelled money went">
+        <div className="ov-money">
+          <p className="overline">Cancelled value, where it went</p>
+          <div className="ov-big"><span className={f.recovered ? 'act-text' : ''}><Num value={f.recovered} format={money} /></span><small>recovered</small></div>
+          <div className="ledger" role="img" aria-label={`${money(f.recovered)} recovered, ${money(f.openValue)} still open, ${money(n.lost)} passed unfilled`}>
+            {f.recovered + f.openValue + n.lost === 0 ? <span className="is-empty" /> : <>
+              <span className="is-act" style={{ flexGrow: f.recovered }} />
+              <span className="is-beat" style={{ flexGrow: f.openValue }} />
+              <span className="is-lost" style={{ flexGrow: n.lost }} />
+            </>}
+          </div>
+          <ul className="ledger-key">
+            <li><i className="is-act" />Recovered<b className="mono"><Num value={f.recovered} format={money} /></b></li>
+            <li><i className="is-beat" />Still open, can be filled<b className="mono"><Num value={f.openValue} format={money} /></b></li>
+            <li><i className="is-lost" />Passed unfilled<b className="mono"><Num value={n.lost} format={money} /></b></li>
           </ul>
-        </section>
-        <section className="group spot">
+          <p className="faint">{f.refilled} of {plural(n.cancelled, 'cancellation')} refilled · {n.late} late</p>
+        </div>
+        <div className="ov-dials">
+          <p className="overline">Share of each shift booked</p>
+          <div className="subdials">
+            {util.map(({ p, pct }) => <SubDial key={p.id} pct={pct} label={p.name} out={!p.present} sub={p.present ? `${clock(p.shift_start)}–${clock(p.shift_end)}` : 'out today'} />)}
+          </div>
+        </div>
+      </section>
+
+      <section className="group spot" aria-label="Offers">
+        <div className="group-head"><h2>Offers</h2><p>{n.sent ? `${n.accepted} of ${plural(n.sent, 'offer')} booked` : 'None sent yet'}</p></div>
+        <dl className="figs">
+          <div><dt>Sent</dt><dd><Num value={n.sent} /></dd></div>
+          <div className={n.accepted ? 'is-act' : ''}><dt>Booked</dt><dd><Num value={n.accepted} /></dd></div>
+          <div><dt>Declined</dt><dd><Num value={n.declined} /></dd></div>
+          <div><dt>No reply in time</dt><dd><Num value={n.expired} /></dd></div>
+          <div><dt>Tapped late, kept their place</dt><dd><Num value={n.lostRace} /></dd></div>
+          <div><dt>Withdrawn: consent, staff out, moved</dt><dd><Num value={n.revoked} /></dd></div>
+        </dl>
+      </section>
+
+      <div className="grid-2 ov-pair">
+        <section className="group spot" aria-label="Consent">
           <div className="group-head"><h2>Consent</h2><p>{n.yes} may be messaged</p></div>
+          <div className="consent-bar" role="img" aria-label={`${n.yes} may be messaged, ${n.no} said no, ${n.unknown} never asked`}>
+            <span className="is-yes" style={{ flex: n.yes || 0.0001 }} /><span className="is-no" style={{ flex: n.no || 0.0001 }} /><span className="is-unknown" style={{ flex: n.unknown || 0.0001 }} />
+          </div>
           <ul className="facts">
             <li><span>Said no</span><span className="mono">{n.no}</span></li>
             <li><span>Never asked, so never messaged</span><span className="mono">{n.unknown}</span></li>
             <li><span>Offers refused for consent</span><span className="mono">{n.blockedByConsent}</span></li>
           </ul>
         </section>
-        <section className="group spot">
+        <section className="group spot" aria-label="Reschedules">
           <div className="group-head"><h2>Reschedules</h2><p>{n.movedByDesk + n.movedByClient} moved, none double-booked</p></div>
           <ul className="facts">
             <li><span>By the front desk</span><span className="mono">{n.movedByDesk}</span></li>
             <li><span>By the client, from their link</span><span className="mono">{n.movedByClient}</span></li>
             <li><span>Links waiting for a reply</span><span className="mono">{n.linksOpen}</span></li>
-          </ul>
-        </section>
-        <section className="group spot">
-          <div className="group-head"><h2>Staff booked today</h2><p>Share of each shift</p></div>
-          <ul className="facts">
-            {util.map(({ p, pct }) => (
-              <li key={p.id}><span>{p.name}{p.present ? '' : ' · out'}</span><span className="bar-meter" aria-label={`${pct}% of shift booked`}><span style={{ width: `${Math.min(100, pct)}%` }} /></span><span className="mono">{pct}%</span></li>
-            ))}
           </ul>
         </section>
       </div>
@@ -148,7 +167,7 @@ export function Team({ book }: { book: Book }) {
           {st.staff.map((p) => {
             const ahead = st.slots.filter((s) => s.staff_id === p.id && s.status === 'booked' && s.start_min >= now).length
             return (
-              <li key={p.id} className="person">
+              <li key={p.id} className={`person ${p.present ? '' : 'is-out'}`}>
                 <span className="avatar-sm">{p.name.slice(0, 1)}</span>
                 <span className="row-main"><strong>{p.name}</strong><small>{p.skills.join(' · ')} · {clock(p.shift_start)}–{clock(p.shift_end)} · {ahead} booked ahead</small></span>
                 <span className="person-acts">
@@ -161,34 +180,34 @@ export function Team({ book }: { book: Book }) {
           })}
         </ul>
       </section>
-      <div className="grid-3">
-        <section className="group spot">
-          <p className="overline">Front desk</p>
-          <h2 style={{ margin: '6px 0' }}>Their own login link</h2>
-          <p className="quiet small">For whoever runs the counter. Runs the day; cannot change rules or make links.</p>
-          <div className="card-acts" style={{ marginTop: 12 }}>
-            <button className="btn" onClick={() => deskLink()}><Icon name="phone" /> Show link</button>
-            <button className="btn is-quiet" onClick={async () => { await book.viewAs('desk'); location.hash = '#/desk' }}>Open as front desk</button>
-          </div>
-        </section>
-        <section className="group spot">
-          <p className="overline">Clients</p>
-          <h2 style={{ margin: '6px 0' }}>Waitlist sign-up</h2>
-          <p className="quiet small">Put this at the counter. Clients join and choose yes or no to messages; nothing is ticked for them.</p>
-          {code && <div className="card-acts" style={{ marginTop: 12 }}>
-            <button className="btn" onClick={() => setShare({ title: 'Waitlist sign-up', url: joinLink(code), note: 'Scan to join the waitlist. Consent is an explicit choice.' })}><Icon name="phone" /> Show code</button>
-            <a className="btn is-quiet" href={`#/join/${code}`}>Open it</a>
-          </div>}
-        </section>
-        <section className="group spot">
-          <p className="overline">You</p>
-          <h2 style={{ margin: '6px 0' }}>This dashboard on your phone</h2>
-          <p className="quiet small">Carries your owner key. Keep it to yourself.</p>
-          <div className="card-acts" style={{ marginTop: 12 }}>
-            <button className="btn" onClick={() => setShare({ title: 'Your dashboard on a phone', url: ownerLink(desk), note: 'Owner rights. Do not share.' })}><Icon name="phone" /> Show code</button>
-          </div>
-        </section>
-      </div>
+      <section className="group spot" aria-label="Links">
+        <div className="group-head"><h2>Links</h2><p>One key per person. A new link turns the old one off.</p></div>
+        <ul className="rows">
+          <li className="link-row">
+            <span className="link-ico"><Icon name="desk" /></span>
+            <span className="row-main"><span className="overline">Front desk</span><strong>Their own login link</strong><small>For whoever runs the counter. Runs the day; cannot change rules or make links.</small></span>
+            <span className="person-acts">
+              <button className="btn is-quiet" onClick={async () => { await book.viewAs('desk'); location.hash = '#/desk' }}>Open as front desk</button>
+              <button className="btn" onClick={() => deskLink()}><Icon name="phone" /> Show link</button>
+            </span>
+          </li>
+          {code && <li className="link-row">
+            <span className="link-ico"><Icon name="users" /></span>
+            <span className="row-main"><span className="overline">Clients</span><strong>Waitlist sign-up</strong><small>Put this at the counter. Clients join and choose yes or no to messages; nothing is ticked for them.</small></span>
+            <span className="person-acts">
+              <a className="btn is-quiet" href={`#/join/${code}`}>Open it</a>
+              <button className="btn" onClick={() => setShare({ title: 'Waitlist sign-up', url: joinLink(code), note: 'Scan to join the waitlist. Consent is an explicit choice.' })}><Icon name="phone" /> Show code</button>
+            </span>
+          </li>}
+          <li className="link-row">
+            <span className="link-ico"><Icon name="chart" /></span>
+            <span className="row-main"><span className="overline">You</span><strong>This dashboard on your phone</strong><small>Carries your owner key. Keep it to yourself.</small></span>
+            <span className="person-acts">
+              <button className="btn" onClick={() => setShare({ title: 'Your dashboard on a phone', url: ownerLink(desk), note: 'Owner rights. Do not share.' })}><Icon name="phone" /> Show code</button>
+            </span>
+          </li>
+        </ul>
+      </section>
       {share && (
         <Modal title={share.title} onClose={() => setShare(null)}>
           <div className="qr-one">
@@ -231,10 +250,10 @@ export function Rules({ book }: { book: Book }) {
       <header className="page-head"><div><p className="overline">Owner · rules</p><h1>The rules</h1><p>The database applies these to every offer and booking. Only the owner can change them.</p></div></header>
       <section className="group spot">
         <form className="policy" onSubmit={save}>
-          <label className="field">Offer holds for (min)<input type="number" inputMode="numeric" min={1} max={240} value={policy.hold_min} onChange={num('hold_min')} /></label>
-          <label className="field">Messages per client a day<input type="number" inputMode="numeric" min={1} max={20} value={policy.max_offers} onChange={num('max_offers')} /></label>
-          <label className="field">Late if cancelled within (min)<input type="number" inputMode="numeric" min={0} max={1440} value={policy.late_cutoff_min} onChange={num('late_cutoff_min')} /></label>
-          <label className="field">No offers within (min of start)<input type="number" inputMode="numeric" min={0} max={240} value={policy.min_lead_min} onChange={num('min_lead_min')} /></label>
+          <label className="rule"><span className="row-main"><strong>Offer holds for</strong><small>How long a sent offer waits for a tap before it lapses.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={1} max={240} value={policy.hold_min} onChange={num('hold_min')} /><i>min</i></span></label>
+          <label className="rule"><span className="row-main"><strong>Messages per client a day</strong><small>No one is messaged more than this, however many gaps open.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={1} max={20} value={policy.max_offers} onChange={num('max_offers')} /><i>max</i></span></label>
+          <label className="rule"><span className="row-main"><strong>Late if cancelled within</strong><small>Cancellations closer to the start than this are tagged late.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={0} max={1440} value={policy.late_cutoff_min} onChange={num('late_cutoff_min')} /><i>min</i></span></label>
+          <label className="rule"><span className="row-main"><strong>No offers within</strong><small>Too close to the start for anyone to get there, so nobody is asked.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={0} max={240} value={policy.min_lead_min} onChange={num('min_lead_min')} /><i>min</i></span></label>
           <div className="card-acts">
             <button className="btn is-primary" type="submit">Save rules</button>
             {saved && <span className="done-line"><Icon name="check" /> Saved. Late now means under {lead(w.late_cutoff_min)}.</span>}

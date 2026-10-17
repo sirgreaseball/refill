@@ -11,10 +11,10 @@ const DAY_END = 1200
 const C = 200
 const SPAN = 300
 const ang = (m: number) => -SPAN / 2 + ((Math.min(Math.max(m, DAY_START), DAY_END) - DAY_START) / (DAY_END - DAY_START)) * SPAN
-const pt = (r: number, a: number) => [C + r * Math.sin((a * Math.PI) / 180), C - r * Math.cos((a * Math.PI) / 180)] as const
-function arc(r: number, a1: number, a2: number) {
-  const [x1, y1] = pt(r, a1)
-  const [x2, y2] = pt(r, a2)
+const pt = (r: number, a: number, c = C) => [c + r * Math.sin((a * Math.PI) / 180), c - r * Math.cos((a * Math.PI) / 180)] as const
+function arc(r: number, a1: number, a2: number, c = C) {
+  const [x1, y1] = pt(r, a1, c)
+  const [x2, y2] = pt(r, a2, c)
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
 }
 
@@ -70,5 +70,25 @@ export default function Dial({ st, onPick, center }: { st: State; onPick: (s: Db
       <text className="dial-big" x={C} y={C + 6} textAnchor="middle">{center.big}</text>
       <text className="dial-small" x={C} y={C + 30} textAnchor="middle">{center.small}</text>
     </svg>
+  )
+}
+
+/** A chronograph sub-dial: one value from 0 to 100 on the same 300-degree arc as the Day Dial. */
+export function SubDial({ pct, label, sub, out }: { pct: number; label: string; sub: string; out?: boolean }) {
+  const v = Math.min(100, Math.max(0, pct))
+  return (
+    <figure className={`subdial ${out ? 'is-out' : ''}`}>
+      <svg viewBox="0 0 120 120" role="img" aria-label={`${label}: ${pct}% of shift booked${out ? ', out today' : ''}`}>
+        {[0, 25, 50, 75, 100].map((t) => {
+          const [x1, y1] = pt(56, -SPAN / 2 + (t / 100) * SPAN, 60)
+          const [x2, y2] = pt(52, -SPAN / 2 + (t / 100) * SPAN, 60)
+          return <line key={t} className="subdial-tick" x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        <path className="dial-track subdial-track" d={arc(44, -SPAN / 2, SPAN / 2, 60)} />
+        {v > 0 && <path className="subdial-v" d={arc(44, -SPAN / 2, -SPAN / 2 + Math.max(0.6, (v / 100) * SPAN), 60)} pathLength={100} />}
+        <text className="subdial-n" x="60" y="64" textAnchor="middle">{pct}<tspan dx="1">%</tspan></text>
+      </svg>
+      <figcaption><strong>{label}</strong><small>{sub}</small></figcaption>
+    </figure>
   )
 }
