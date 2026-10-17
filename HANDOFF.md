@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **START HERE.** State at 18 Oct 2026, ~00:10 IST (v4 redesign finished on every page). Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
+> **START HERE.** State at 18 Oct 2026, ~00:15 IST. v4 redesign done on every page; Parth's bugs split into two lanes; v5 (real product + demo mode) planned in 0.7. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
 
@@ -90,6 +90,33 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 5. **Teammates:** keep `docs/TEAM_TASKS.md` current. Parth is testing on a real Android phone (Chrome + Firefox) and filing issues; check new GitHub issues and fix real bugs.
 6. **Video:** OBS recording, edited with the Premiere Pro MCP (`verify_premiere_connection` first).
 7. Refresh `docs/ops` operational check PDF before submission if Dhruv asks (re-run the checks; headless Edge `--print-to-pdf`).
+
+### 0.7 Now (18 Oct ~00:15): Parth's bugs and the v5 plan
+
+**Parth's bug reports (#9 to #20) are split into two lanes so two agents can work at once without clashing.**
+- **Parth's agent:** #15 to #18 (Lab) and #20 (guides). Branch `parth/lab-fixes`, files listed in `AGENTS.md`, brief in `docs/agents/parth-lab-fixes.md`. Do not edit `src/Lab.tsx` or `public/guide/*` until that PR is merged.
+- **Claude (main):** #10, #12, #13 and #19 are fixed and pushed. #9, #11 and #14 have their client side shipped. The SQL is `supabase/migrations/006_offer_truth.sql`, **not applied yet**: paste it into the Supabase SQL editor (project `mbvxzuuuuzgpmsjggblo`), then run `npm run dbtest` and re-check the issue steps.
+- The front desk now shows the day as a **dial or a calendar** (toggle on the Today card, remembered per device). The separate Schedule section is gone.
+
+**v5 plan: a real product with a demo mode** (Dhruv and teammates asked for it on 18 Oct). Every step must be additive: the demo path judges see stays identical.
+1. Migration 007:
+   - `workspaces.kind` ('demo' or 'live') and `business_type`. Retention deletes only demo workspaces.
+   - A `services` table per workspace (Join and Add use it; the demo falls back to the CSV).
+   - Staff create, edit and remove (refuse removal while they have future bookings; revoke their offers).
+   - A `staff_tasks` table.
+   - `add_appointment` (the desk books a client into a time).
+   - A live clock (now in IST) for live workspaces.
+2. UI:
+   - "Try the demo" in the top bar switches to a separate demo workspace (its own localStorage key). A banner reads "Demo, sample data", with an exit.
+   - A first visit with no workspace gets "Set up your business" (name, type, staff, services) instead of the seeded salon.
+   - Owner gets a staff editor, services editor and tasks.
+   - The desk gets "New appointment".
+   - Owner history: today's appointments plus the log.
+   - Client "Your places": every me-link saved on this device, with switching.
+3. Later (needs dates on slots, or accounts):
+   - Multi-day history.
+   - Cross-device client accounts.
+   - Admin console for the team: business-level data and feedback only, never client personal data.
 
 ### 0.6 Tools on the new account
 - **Same PC, Claude Code:** open `Z:\claude\refill`. `CLAUDE.md` and `.claude/skills/` load by themselves.
