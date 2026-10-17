@@ -33,6 +33,7 @@ const Welcome = lazy(fresh(() => import('./SignIn').then((m) => ({ default: m.We
 const ClientHome = lazy(fresh(() => import('./ClientHome')))
 const History = lazy(fresh(() => import('./Manage').then((m) => ({ default: m.History }))))
 const Settings = lazy(fresh(() => import('./Settings')))
+const Story = lazy(fresh(() => import('./story/Story')))
 
 /** Catches a page that fails to load or render, so the rest of the app and a way out stay on screen. */
 class Boundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -97,6 +98,11 @@ function useRoute() {
  *   #/settings                         the signed-in person's account, and the owner's business
  */
 export default function App() {
+  if (location.pathname.replace(/\/+$/, '') === '/splash') return <Boundary><Suspense fallback={phoneWait}><Story /></Suspense></Boundary>
+  return <HashApp />
+}
+
+function HashApp() {
   const route = useRoute()
   return <Boundary><Routes route={route} /></Boundary>
 }

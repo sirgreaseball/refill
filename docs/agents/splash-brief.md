@@ -244,4 +244,7 @@ npm ci
 
 ## 9. Progress (keep this section current; Dhruv may switch accounts at any time)
 
-- *(empty: start here)*
+- **18 Oct ~04:30 IST, plain version working.** Branch `splash`, worktree `C:\Projectsefillefill-splash` (this session runs on a different PC from `Z:`; the branch on GitHub is the source of truth).
+  - Files: `src/story/` (`Story.tsx` page, loader, proof, ending, still frames; `StoryDial.tsx` the dial as layered SVG; `scenes.ts` the scroll timeline and still states; `facts.ts` every number, computed from `dayPayload()`/`demoDay()` with the engine; `geo.ts`; `pointer.ts` cursor effects; `story.css`), the `/splash` switch in `src/App.tsx`, the link in `src/SignIn.tsx`, the `rewrites` in `vercel.json`, `gsap` 3.15.0 + `lenis` 1.3.27.
+  - Checks: tests 51/51, `tsc -b` and `vite build` green; main `index-*.js` 274.5 kB (unchanged), GSAP and Lenis only in `Story-*.js` (167 kB, 61 kB gzip).
+  - Next: light theme, 1280/820/390 and reduced-motion passes, the loader, frame times, then the pull request.
