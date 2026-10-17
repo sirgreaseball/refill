@@ -9,7 +9,7 @@ Refill is a hackathon product (Fynd × NMIMS Hyderabad, case C29, Appointment Re
 ## Hard rules
 
 1. **Only touch the files your task names.** The ownership table below lists them. Never create, edit, delete, move, rename or reformat anything else, not even whitespace.
-2. **Never touch** `src/`, `supabase/`, `scripts/`, `public/`, `index.html`, `package.json`, `package-lock.json`, `tsconfig*.json`, `vite.config.ts`, `vercel.json`, `.github/`, `AGENTS.md`, `CLAUDE.md` or `README.md`, unless your human is the repo owner (sirgreaseball).
+2. **Never touch** `src/`, `supabase/`, `scripts/`, `public/`, `index.html`, `package.json`, `package-lock.json`, `tsconfig*.json`, `vite.config.ts`, `vercel.json`, `.github/`, `AGENTS.md`, `CLAUDE.md` or `README.md`, unless your human is the repo owner (sirgreaseball) or your row in the table below names that exact file.
 3. **Install with `npm ci` only** (it never changes `package-lock.json`). Never `npm install`, add, remove or upgrade packages. Never run database, migration or deploy commands. Never call the Supabase or Vercel APIs.
 4. **Never push to `main`.** Never force-push, rebase or merge `main`. Work on the branch your task names and open exactly one pull request. `main` is protected; the owner reviews and merges.
 5. **If a test fails, report it. Never change application code or expected results to make it pass.** Write the failure into the pull request description.
@@ -22,6 +22,7 @@ Refill is a hackathon product (Fynd × NMIMS Hyderabad, case C29, Appointment Re
 |---|---|---|
 | Vedanth Raj (vedanth-raj) | `vedanth/handoff` | `docs/SETUP_CHECK.md`, `docs/KNOWN_LIMITS.md`, `docs/DEMO_SCRIPT.md`, `docs/contributions/vedanth.md` |
 | Parth Kachhara (parthkachhara) | `parth/scenarios` | `tests/scenarios.json`, `docs/contributions/parth.md` |
+| Parth Kachhara (lab fixes) | `parth/lab-fixes` | `src/Lab.tsx`, `src/labLogic.ts`, `src/labLogic.test.ts`, `src/lab.css`, `public/guide/mba.html`, `public/guide/engineering.html`, `tests/scenarios.json`, `docs/contributions/parth.md`. Full brief: `docs/agents/parth-lab-fixes.md`. |
 | Chirag Seervi (ChiragSeervi123) | `chirag/data` | `data/salon/staff.csv`, `data/salon/services.csv`, `data/salon/customers.csv`, `data/salon/README.md`, `docs/SHOCKS.md`, `docs/ROLEPLAY_LOG.md`, `docs/contributions/chirag.md` |
 | MBA teammates | none | Nothing in the repo. They open and reply to issues labelled `mba-request`. |
 | Dhruv Sonar (sirgreaseball) | any | Everything. Owner of the app code. |
