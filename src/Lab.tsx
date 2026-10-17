@@ -9,8 +9,7 @@ import { parseCsv } from './day'
 import { candidates, explain, matchAll, notice, race, runScenario, toHHMM, toMin, validate, type Input, type MatchResult, type Reason, type Scenario } from './engine'
 import { liveRace, type RaceReport } from './liveRace.ts'
 import { Icon, download, lead } from './ui'
-
-interface Doc { now?: string; slots: unknown; waitlist: unknown; race?: { slot: string; requests: string[] } }
+import { evaluate, type LabDocument as Doc, type LabEvaluation as Eval, type LabSuccess as Ok } from './labLogic'
 
 const presets: { id: string; label: string; doc: Doc }[] = [
   { id: 'FIX', label: 'Organiser fixture C29', doc: { slots: fixture.records.slots, waitlist: fixture.records.waitlist } },
@@ -19,23 +18,6 @@ const presets: { id: string; label: string; doc: Doc }[] = [
 ]
 
 const pretty = (d: unknown) => JSON.stringify(d, null, 2)
-
-function evaluate(text: string) {
-  let doc: Doc
-  try { doc = JSON.parse(text) } catch (e) { return { kind: 'parse' as const, message: (e as Error).message } }
-  const v = validate(doc)
-  if (!v.ok) return { kind: 'invalid' as const, error: v.error, at: v.at, message: v.message }
-  const now = typeof doc.now === 'string' && /^\d\d:\d\d$/.test(doc.now) ? toMin(doc.now) : undefined
-  const result = matchAll(v.input, { now })
-  let raced = null
-  if (doc.race) {
-    try { raced = race(v.input, doc.race.slot, doc.race.requests) } catch (e) { return { kind: 'invalid' as const, error: 'INVALID_VALUE', at: 'race', message: (e as Error).message } }
-  }
-  return { kind: 'ok' as const, input: v.input, result, raced, now, doc }
-}
-
-type Eval = ReturnType<typeof evaluate>
-type Ok = Extract<Eval, { kind: 'ok' }>
 
 export default function Lab() {
   const [text, setText] = useState(() => pretty(presets[0].doc))
@@ -202,7 +184,7 @@ function Result({ ev }: { ev: Eval }) {
         )}
       </div>
       {input.slots.map((s) => {
-        const r = result.perSlot[s.id]
+        const r = s.status === 'free' ? result.perSlot[s.id] : undefined
         return (
           <div key={s.id} className="slot-card">
             <p className="overline">{s.id} · {s.start} · {s.minutes} min · {s.skill} · <span className={s.status === 'free' ? 'beat-text' : ''}>{s.status}</span></p>
@@ -210,7 +192,7 @@ function Result({ ev }: { ev: Eval }) {
               : r.tooSoon ? <p className="quiet">Starts too soon to offer.</p> : (
                 <ul className="rows">
                   {input.waitlist.map((e) => {
-                    const why = r.excluded[e.id] as Reason | undefined
+                    const why = Object.hasOwn(r.excluded, e.id) ? r.excluded[e.id] as Reason : undefined
                     return (
                       <li key={e.id} className="skip">
                         <span className="skip-name mono">{e.id}</span>
