@@ -9,7 +9,7 @@ Four things that go wrong in a real salon day, and the exact clicks to handle ea
 1. Open a **private / incognito window** and go to <https://fillthechair.vercel.app>. A fresh browser opens **Set up your business** (the real product). Tap **Try the demo** in the top bar: you get your own new demo day, so you won't touch the day anyone else is using.
 2. Wait until the top bar shows **Demo · Exit** and the home page shows the Day Dial at **11:15**.
 3. Tap **Front desk**. The page header shows **Front desk · 11:15**. Leave the clock at 11:15; every expected result below assumes it.
-4. **Reset between shocks** so each one starts from the same day: tap the role pill (top right) → **Owner** → the **⋯** button → **Reset demo day** → **Tap again to reset the day**, then role pill → **Front desk**.
+4. **Reset between shocks** so each one starts from the same day: tap the role pill (top right) → **Owner** → the round profile button (top right) → **Reset demo day** → **Tap again to reset the day**, then role pill → **Front desk**.
 
 **How to time:** start the stopwatch on step 1 of a shock and stop it at the line marked ⏱.
 

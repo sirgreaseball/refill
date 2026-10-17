@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **START HERE.** State at 18 Oct 2026, ~01:40 IST (checks re-run: tests 51/51, build green, dbtest 28/28; demo script rewritten and rehearsed on live; fix 13255ed: route and theme changes no longer stall in a window that cannot paint). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
+> **START HERE.** State at 18 Oct 2026, ~02:40 IST (checks: tests 51/51, build green, flowtest 14/14; migration 011 applied: booking first, server clock, settings and deletes; v7 phone pass, see the last block of 0.7). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
 
@@ -146,12 +146,23 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 - `npm run dbtest` now unlists its throwaway "Test Tutors" business (6 old ones unlisted by SQL).
 - **Safety rule for Claude:** Claude must not create accounts or type passwords on the hosted Supabase Auth itself. Account flows are tested by Dhruv with the test accounts in `docs/TEST_ACCOUNTS.md`; everything else is tested by script. Avoid running `npm run dbtest` yourself: its section 12 signs up a throwaway account.
 
+**18 Oct ~02:40 (this account): v7, booking first, server clock, settings (migration 011, applied).** Dhruv's list, all done and pushed:
+- **Booking first.** The counter code / link (`#/join/<code>`, `src/Join.tsx`) now opens **Book a time today**: pick a service, today's open times show as chips (`open_times`: empty time in the shift of someone who is in and does it, plus cancelled slots nobody holds an offer for, shown amber). **Book** calls `book_time` (locks the staff row; a cancelled slot is booked as is and counts as recovered; event `SELF_BOOKED`). Nothing open: **Join the waitlist** (the old form, consent choice) or **Not now**. A slot with a live offer is never sold to a walk-in.
+- **Desk books someone already waiting.** New appointment has a **Who** select of waiting clients; `add_appointment` takes `entry`, books it as theirs (their page and account show it) and withdraws their open offers. Root cause of Dhruv's "booked but I can't see it": desk appointments typed by name were never linked to any client.
+- **"No offer on the client side":** the data showed the offers did arrive (W2 at Gaming Parlor), but the client's page put them below the dial, off a phone screen. The open offer is now the first thing on `#/me/<token>` (and the tab title says so). Entries joined while signed out have no account link; they attach on sign-in (`claim_entries`).
+- **Clock.** pg_cron job `refill-live-clock` runs `tick_live()` every minute: every live business is on India time even with no desk open (also closes a past day). The bar's live clock ticks on the device on the minute (`LiveClock`, `onEveryMinute` in `src/App.tsx`). The demo clock: tap the time to open the phone's own time picker, ±15 min on wider screens, and **Now** follows the real time (stored in `refill.realTime`; must be off for the demo script).
+- **Front desk Today** opens on the **Calendar** (lanes per person); **Dial** is the second toggle (`refill.dayView2`). On a phone the calendar scrolls sideways (960 px wide) with names pinned left, opening at the current time. The phone-only agenda list is gone. A colour key (open, refilled, needs moving, booked) sits above both views.
+- **Dial.** Names are set along each ring in the 60-degree gap at the bottom (`textPath`), truncated to fit, so they never collide with arcs or leave the face. Each ring shows the person's working hours as a brighter band.
+- **No staff.** Setup's **Who does it** is **Just me** (default: the owner is the one person, all services, their hours) or **Me and a team**.
+- **Profile menu** replaces the ⋯ menu: round initial button, head with name and email, Settings, theme (phones only; the bar hides its theme button under 520 px), Open on my phone, Install, Reset demo day, Sign out. **Settings** (`#/settings`, `src/Settings.tsx`): business name and type (`update_business`), directory listing (moved here from Team > Links), your name (`set_profile`), sign out, **Delete this business** (type its name; `delete_business`, live only, cascades everything) and **Delete my account** (`delete_account`; an owner must delete their business first).
+- **Phones.** Bar and dock blur again: they no longer carry a view-transition name (that drew the glass as plain transparency on phones). Menus open full width under the bar and scroll, never off screen. Sign-in: the form comes first on phones, the story under it; the tab opens on **Sign in** if this device made an account before. Checked with Playwright at 360, 390 and 1280: no sideways scroll on 11 routes, no console errors.
+- `npm run flowtest` = 14 checks (new: self-booking reaches the owner, no double booking, a gap with an offer out is held, desk books a waiting client, rename/delete guards).
+
 **Known limits (say them honestly if asked):**
-- A live book holds one day: no booking for future dates yet.
-- The live clock moves only while a desk or owner page is open.
+- A live book holds one day: clients book today's times only, no future dates yet.
 - Staff and front desk use private links, not accounts.
-- Clients book only through offers from a waitlist; no self-service booking of an open time yet.
 - No admin console yet.
+- No real SMS/WhatsApp yet: offers appear on the client's page and account.
 
 **Still to do, in order:**
 1. Market-shock rehearsal (0.5 item 2) on the **demo**, after these changes.
