@@ -81,7 +81,7 @@ export default function Join({ code }: { code: string }) {
           </label>
           <label className={consent === false ? 'is-on' : ''}>
             <input type="radio" name="consent" checked={consent === false} onChange={() => setConsent(false)} />
-            <strong>No messages</strong><small>You stay on the list; check your page for offers.</small>
+            <strong>No messages</strong><small>You stay on the waitlist, but you won’t be offered slots until you switch messages on from your page.</small>
           </label>
         </fieldset>
 

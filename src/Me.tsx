@@ -86,7 +86,8 @@ export default function Me({ token }: { token: string }) {
       {me.state === 'waiting' && (
         <section className={`presence-card ${me.consent ? 'is-in' : 'is-out'}`} aria-label="Messages">
           <p className="overline">Messages</p>
-          <p className="presence-state">{me.consent ? 'You get a message when a slot opens' : me.consent === false ? 'No messages; check this page' : 'You have not chosen yet'}</p>
+          <p className="presence-state">{me.consent ? 'You get a message when a slot opens' : me.consent === false ? 'No messages, so no offers' : 'You have not chosen yet'}</p>
+          {me.consent !== true && <p className="quiet small">Open slots are only offered to people who said yes to messages. Switch on to be offered the next one that fits.</p>}
           {me.consent_at && <p className="quiet small">Recorded {new Date(me.consent_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {me.consent_source}</p>}
           <button className="btn" disabled={busy} onClick={() => act('set_my_consent', { p_consent: !me.consent })}>{me.consent ? 'Stop messages' : 'Yes, message me'}</button>
         </section>
