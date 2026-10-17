@@ -294,6 +294,9 @@ function Scrolled() {
           scrollTrigger: { trigger: el.querySelector('.st-figs'), start: 'top bottom', end: 'top 72%', scrub: 0.4 },
         })
       })
+      // The mark's gap fills as the ending arrives: the logo is the story, finished.
+      const fill = el.querySelector('.st-word .mark-fill')
+      if (fill) gsap.fromTo(fill, { attr: { width: 0 } }, { attr: { width: 17 }, ease: 'power2.out', scrollTrigger: { trigger: el.querySelector('.st-word'), start: 'top 90%', end: 'top 45%', scrub: 0.6 } })
       el.querySelectorAll('.st-proof .ln > span, .st-end .st-word > *').forEach((n) => {
         gsap.fromTo(n, { yPercent: 105 }, { yPercent: 0, ease: 'power3.out', scrollTrigger: { trigger: n.parentElement, start: 'top 95%', end: 'top 55%', scrub: 0.6 } })
       })
