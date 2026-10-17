@@ -61,8 +61,20 @@ function useRoute() {
     const on = () => {
       const next = get()
       const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
-      if (doc.startViewTransition && !reduced()) doc.startViewTransition(() => { flushSync(() => setRoute(next)); scrollTo({ top: 0 }) })
-      else { setRoute(next); scrollTo({ top: 0 }) }
+      let done = false
+      const apply = (sync: boolean) => {
+        if (done) return
+        done = true
+        if (sync) flushSync(() => setRoute(next))
+        else setRoute(next)
+        scrollTo({ top: 0 })
+      }
+      if (doc.startViewTransition && !reduced()) {
+        doc.startViewTransition(() => apply(true))
+        // A window that cannot paint (hidden, minimised, captured off-screen) never runs the
+        // transition's callback; the page must change anyway.
+        setTimeout(() => apply(false), 350)
+      } else apply(false)
     }
     addEventListener('hashchange', on)
     return () => removeEventListener('hashchange', on)
@@ -279,7 +291,11 @@ function flood(btn: HTMLElement, change: () => void) {
   const far = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy)) * 1.18
   const root = document.documentElement
   root.classList.add('theme-flooding')
-  const vt = doc.startViewTransition(() => flushSync(change))
+  let done = false
+  const once = () => { if (!done) { done = true; flushSync(change) } }
+  const vt = doc.startViewTransition(once)
+  // If the window cannot paint, the callback never runs: switch the theme anyway.
+  setTimeout(() => { if (!done) { once(); root.classList.remove('theme-flooding') } }, 400)
   vt.ready.then(() => root.animate(Array.from({ length: 37 }, (_, i) => {
     const t = i / 36
     const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
