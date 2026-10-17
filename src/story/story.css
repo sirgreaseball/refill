@@ -10,10 +10,13 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-stopped { overflow: hidden; }
 
 .story {
+  /* Small labels meet AA: halfway between the app's two quiet inks in dark, the second ink in light. */
+  --st-quiet: color-mix(in srgb, var(--ink-2) 55%, var(--ink-3));
   --plate-from: inset(68px var(--gutter) var(--gutter) var(--gutter) round 20px);
   --hud-h: 64px;
   position: relative; background: var(--canvas); color: var(--ink);
 }
+:root[data-theme='light'] .story { --st-quiet: var(--ink-2); }
 .story main { display: block; }
 
 /* ------------------------------------------------------------ the HUD: brand, chapter, theme, progress */
@@ -30,7 +33,7 @@ html.lenis, html.lenis body { height: auto; }
 .st-hud.is-raised { background: var(--glass); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); box-shadow: inset 0 -1px 0 var(--line); }
 .st-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 600 16px var(--sans); letter-spacing: -0.01em; }
 .st-hud-end { display: flex; align-items: center; gap: 14px; }
-.st-chap { margin: 0; display: flex; gap: 10px; font: 500 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.st-chap { margin: 0; display: flex; gap: 10px; font: 500 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--st-quiet); }
 .st-chap [data-chap] { color: var(--ink-2); min-width: 9ch; }
 .st-theme {
   display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 0; border-radius: var(--r);
@@ -55,8 +58,12 @@ html.lenis, html.lenis body { height: auto; }
 .st-copy { position: absolute; left: var(--gutter); top: var(--hud-h); bottom: 64px; width: min(34vw, 640px); display: grid; grid-template-columns: minmax(0, 1fr); }
 .st-beat { grid-area: 1 / 1; align-self: center; }
 .st-beat[data-beat='hero'] { width: min(50vw, 860px); }
+/* The first frame is drawn here, before the timeline exists: only the hero is on stage. */
+.story:not(.is-still) .st-beat:not([data-beat='hero']), .story:not(.is-still) .sd-c:not([data-c='time']) { visibility: hidden; opacity: 0; }
+.story:not(.is-still) .sd-pulse .is-later > * { opacity: 0; }
+.story:not(.is-still) .st-dial { transform: translateX(8.5vw); }
 
-.st-over { margin: 0 0 18px; font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.st-over { margin: 0 0 18px; font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--st-quiet); }
 .st-h { margin: 0 0 22px; font: 500 clamp(34px, 3.7vw, 64px)/1 var(--display); letter-spacing: -0.03em; }
 .st-h.is-hero { font-size: clamp(46px, 5.6vw, 104px); line-height: 0.95; letter-spacing: -0.035em; margin-bottom: 28px; }
 .st-h .ln { display: block; overflow: clip; padding-bottom: 0.1em; margin-bottom: -0.1em; }
@@ -74,11 +81,11 @@ html.lenis, html.lenis body { height: auto; }
 .st-note { margin: 18px 0 0; max-width: 46ch; font: 500 12.5px/1.5 var(--mono); color: var(--ink-2); }
 
 .st-cue { position: absolute; left: 50%; bottom: 64px; translate: -50% 0; margin: 0; display: grid; justify-items: center; gap: 10px; pointer-events: none; }
-.st-cue span { font: 500 10.5px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.st-cue span { font: 500 10.5px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--st-quiet); }
 .st-cue i { width: 1px; height: 32px; background: var(--line-2); }
 .st-read {
   position: absolute; left: var(--gutter); bottom: 24px; margin: 0; max-width: 46vw; pointer-events: none;
-  font: 500 11px/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3);
+  font: 500 11px/1.4 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--st-quiet);
 }
 .st-read [data-read-hover] { display: none; color: var(--ink); }
 .st-read.is-hover [data-read] { display: none; }
@@ -147,7 +154,7 @@ html.lenis, html.lenis body { height: auto; }
 .sd-c b.is-act { color: var(--act-text); }
 .sd-c b.is-danger { color: var(--danger); }
 .sd-c b i { font-style: normal; font-size: 0.5em; letter-spacing: 0; color: var(--ink-3); margin-left: 0.08em; }
-.sd-c small { font: 500 max(9px, 1.45cqi)/1.2 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.sd-c small { font: 500 max(9px, 1.45cqi)/1.2 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--st-quiet); }
 
 /* ------------------------------------------------------------ proof */
 
@@ -159,7 +166,7 @@ html.lenis, html.lenis body { height: auto; }
 .st-figs b { font: 500 clamp(64px, 8.4vw, 140px)/0.9 var(--display); letter-spacing: -0.045em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .st-figs b i { font-style: normal; font-size: 0.5em; vertical-align: 0.3em; margin: 0 0.12em; color: var(--ink-3); letter-spacing: 0; }
 .st-figs li > span { font-size: 16px; color: var(--ink-2); }
-.st-figs code { font: 500 11.5px var(--mono); color: var(--ink-3); }
+.st-figs code { font: 500 11.5px var(--mono); color: var(--st-quiet); }
 .st-more {
   display: inline-flex; align-items: center; gap: 8px; margin-top: clamp(40px, 7vh, 72px); padding-bottom: 6px;
   color: var(--ink); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--line-2); transition: border-color 0.18s var(--ease), gap 0.18s var(--ease);
@@ -178,8 +185,8 @@ html.lenis, html.lenis body { height: auto; }
 .st-cta .btn { transition: background 0.2s var(--ease), translate 0.18s var(--ease), transform 0.12s var(--ease); }
 .st-cta .btn:active { transform: scale(0.97); }
 .st-quiet { background: transparent; }
-.st-small { margin: 16px 0 0; font: 500 11.5px var(--mono); color: var(--ink-3); }
-.st-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 96px; font-size: 13px; color: var(--ink-3); }
+.st-small { margin: 16px 0 0; font: 500 11.5px var(--mono); color: var(--st-quiet); }
+.st-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 96px; font-size: 13px; color: var(--st-quiet); }
 .st-foot a { color: var(--ink-2); }
 .st-foot a:hover { color: var(--ink); }
 
@@ -201,6 +208,7 @@ html.lenis, html.lenis body { height: auto; }
   .st-dial { --d: var(--dial); }
   .st-chap [data-chap] { min-width: 0; }
   .st-dial { left: 50%; top: calc(var(--hud-h) + var(--dial) / 2); }
+  .story:not(.is-still) .st-dial { transform: scale(1.12); }
   .st-copy { left: var(--gutter); right: var(--gutter); top: calc(var(--hud-h) + var(--dial)); bottom: max(20px, env(safe-area-inset-bottom)); width: auto; }
   .st-beat { align-self: start; padding-top: 6px; }
   .st-beat[data-beat='hero'] { width: auto; }

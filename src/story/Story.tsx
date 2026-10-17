@@ -183,12 +183,12 @@ function Loader({ ready, onReveal, onDone }: { ready: Promise<unknown>; onReveal
       gsap.to(fill, { attr: { width: (17 * done) / jobs.length }, duration: 0.6, ease: 'expo.out' })
     }
     const enter = gsap.timeline({ defaults: { ease: 'expo.out' } })
-      .fromTo(el.querySelector('.ld-l'), { x: -8, opacity: 0 }, { x: 0, opacity: 1, duration: 1 }, 0)
-      .fromTo(el.querySelector('.ld-r'), { x: 8, opacity: 0 }, { x: 0, opacity: 1, duration: 1 }, 0)
-      .fromTo(el.querySelector('.ld-o'), { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 1.1 }, 0.1)
+      .fromTo(el.querySelector('.ld-l'), { x: -8, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7 }, 0)
+      .fromTo(el.querySelector('.ld-r'), { x: 8, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7 }, 0)
+      .fromTo(el.querySelector('.ld-o'), { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.75 }, 0.05)
     Promise.all([...jobs.map((j) => j.then(step, step)), new Promise((r) => enter.eventCallback('onComplete', r))]).then(() => {
       if (!alive) return
-      gsap.to(el, { clipPath: 'inset(0% 0% 100% 0%)', duration: 1.05, ease: 'expo.inOut', delay: 0.15, onStart: onReveal, onComplete: onDone })
+      gsap.to(el, { clipPath: 'inset(0% 0% 100% 0%)', duration: 0.9, ease: 'expo.inOut', delay: 0.1, onStart: onReveal, onComplete: onDone })
     })
     return () => { alive = false; enter.kill() }
   }, [ready, onReveal, onDone])
@@ -210,13 +210,13 @@ function intro(root: HTMLElement) {
   const q = (s: string) => Array.from(root.querySelectorAll(s))
   const arcs = [...F.slots].sort((a, b) => a.startMin - b.startMin).map((s) => root.querySelector(`.sd-ring [data-arc="${s.id}"]`))
   return gsap.timeline({ defaults: { ease: 'expo.out' } })
-    .fromTo(q('.sd-track:not(.is-out), .sd-shift'), { strokeDasharray: 100, strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 2, stagger: 0.08 }, 0)
-    .fromTo(q('.sd-bezel, .sd-sweep'), { opacity: 0 }, { opacity: 1, duration: 1.6 }, 0.1)
-    .fromTo(arcs, { opacity: 0 }, { opacity: 1, duration: 0.9, stagger: 0.025 }, 0.4)
-    .fromTo(q('[data-hand]'), { rotation: ang(F.LO) - ang(F.NOW), svgOrigin: '0 0' }, { rotation: 0, svgOrigin: '0 0', duration: 2.2, ease: 'expo.inOut' }, 0.15)
-    .fromTo(q('[data-beat="hero"] .ln > span'), { yPercent: 112 }, { yPercent: 0, duration: 1.3, stagger: 0.09 }, 0.35)
-    .fromTo(q('[data-beat="hero"] .st-over, [data-beat="hero"] .st-p, .st-cue > *, .st-hud > *'), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.2, stagger: 0.08 }, 0.6)
-    .fromTo(q('.sd-c[data-c="time"] > *'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 1.1, stagger: 0.1 }, 0.9)
+    .fromTo(q('.sd-track:not(.is-out), .sd-shift'), { strokeDasharray: 100, strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 1.3, stagger: 0.06 }, 0)
+    .fromTo(q('.sd-bezel, .sd-sweep'), { opacity: 0 }, { opacity: 1, duration: 1 }, 0.05)
+    .fromTo(arcs, { opacity: 0 }, { opacity: 1, duration: 0.6, stagger: 0.015 }, 0.25)
+    .fromTo(q('[data-hand]'), { rotation: ang(F.LO) - ang(F.NOW), svgOrigin: '0 0' }, { rotation: 0, svgOrigin: '0 0', duration: 1.5, ease: 'expo.inOut' }, 0.1)
+    .fromTo(q('[data-beat="hero"] .ln > span'), { yPercent: 112 }, { yPercent: 0, duration: 1, stagger: 0.07 }, 0.2)
+    .fromTo(q('[data-beat="hero"] .st-over, [data-beat="hero"] .st-p, .st-cue > *, .st-hud > *'), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.9, stagger: 0.06 }, 0.4)
+    .fromTo(q('.sd-c[data-c="time"] > *'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.9, stagger: 0.08 }, 0.5)
 }
 
 function Scrolled() {
@@ -260,7 +260,10 @@ function Scrolled() {
       label(i ? String(i).padStart(2, '0') : '', i ? NAMES[s] : '')
       readScene.textContent = EVIDENCE[s]
     }
-    const ctx = gsap.context(() => {
+    // The CSS draws the hero's first frame, so the timeline is built in the next task, after the
+    // first paint, and the page never blocks on it. The loader waits for it as its last share.
+    const ctx = gsap.context(() => {}, el)
+    const build = setTimeout(() => ctx.add(() => {
       const tl = storyTimeline(stage)
       const story = ScrollTrigger.create({ trigger: track, start: 'top top', end: 'bottom bottom', scrub: 0.6, animation: tl, invalidateOnRefresh: true })
       const proof = ScrollTrigger.create({ trigger: el.querySelector('.st-proof'), start: 'top 55%' })
@@ -291,16 +294,17 @@ function Scrolled() {
       el.querySelectorAll('.st-proof .ln > span, .st-end .st-word > *').forEach((n) => {
         gsap.fromTo(n, { yPercent: 105 }, { yPercent: 0, ease: 'power3.out', scrollTrigger: { trigger: n.parentElement, start: 'top 95%', end: 'top 55%', scrub: 0.6 } })
       })
-    }, el)
+      // Two frames after the story is built, it is really on screen.
+      requestAnimationFrame(() => requestAnimationFrame(() => ready.r()))
+    }), 0)
     const off = attachPointer(stage, (text) => {
       readHover.textContent = text ?? ''
       readHover.parentElement!.classList.toggle('is-hover', !!text)
     })
     readScene.textContent = EVIDENCE.hero
-    // Two frames after the story is built, it is really on screen: the loader's last share.
-    requestAnimationFrame(() => requestAnimationFrame(() => ready.r()))
-    if (seen()) intro(el)
+    if (seen()) ctx.add(() => intro(el))
     return () => {
+      clearTimeout(build)
       off()
       ctx.revert()
       gsap.ticker.remove(raf)

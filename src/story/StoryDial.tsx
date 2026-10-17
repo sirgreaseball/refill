@@ -93,7 +93,7 @@ export default function StoryDial({ label }: { label: string }) {
             <Layer key={p.id} className="sd-pulse" z={5 + i * 5} data-ring={p.id}>
               {gaps.filter((s) => s.staffId === p.id).map((s) => {
                 const d = segD(ringR(i), s.startMin, s.minutes)
-                return <g key={s.id} data-arc={s.id}><path className="sd-glow" data-ov="beat" d={d} /><path className="sd-ov is-beat" data-ov="beat" d={d} /></g>
+                return <g key={s.id} data-arc={s.id} className={s.id === harsh.id ? 'is-later' : undefined}><path className="sd-glow" data-ov="beat" d={d} /><path className="sd-ov is-beat" data-ov="beat" d={d} /></g>
               })}
             </Layer>
           ))}
