@@ -118,7 +118,59 @@ await rpc('leave_waitlist', { p_token: joined.token })
 const after = await rpc<{ state: string; consent: boolean }>('get_my_entry', { p_token: joined.token })
 check('sign-up needs an explicit consent choice; the token manages only that entry', noChoice.code === 'CONSENT_CHOICE_REQUIRED' && mine.state === 'waiting' && after.consent === false && after.state === 'removed', `${noChoice.code}, ${mine.state}, ${after.state}`)
 
-// 10. rate limit: 260 writes in a burst on one demo day, 240 allowed per minute
+// 10. v2.1: the front desk runs the day but cannot change policy, links or reset
+const dk = await rpc<string>('desk_link', { p_ws: s.id, p_key: s.owner_key })
+const asDesk = await rpc<{ role: string }>('get_state', { p_ws: s.id, p_key: dk })
+const deskPolicy = await fails(rpc('set_policy', { p_ws: s.id, p_key: dk, p_policy: { hold_min: 30 } }))
+const deskLink = await fails(rpc('staff_link', { p_ws: s.id, p_key: dk, p_staff: 'ST1' }))
+const ownerPolicy = await rpc<Res>('set_policy', { p_ws: s.id, p_key: s.owner_key, p_policy: { hold_min: 30 } })
+const badPolicy = await rpc<Res>('set_policy', { p_ws: s.id, p_key: s.owner_key, p_policy: { hold_min: 999 } })
+check('front desk key: runs the day, refused policy and links; owner policy is bounds-checked',
+  asDesk.role === 'desk' && deskPolicy === 'FORBIDDEN' && deskLink === 'FORBIDDEN' && ownerPolicy.ok && badPolicy.code === 'INVALID_VALUE',
+  `${asDesk.role}, ${deskPolicy}, ${deskLink}, ${badPolicy.code}`)
+
+// 11. v2.1: moves stay inside working hours, and the time left behind opens for the waitlist
+type Opt = { staff: string; start_min: number; same_time: boolean }
+const shiftDay = {
+  salon: 'Move test', now_min: 600,
+  staff: [
+    { id: 'ST1', name: 'Riya', skills: ['hair'], present: true, shift_start: 600, shift_end: 1200 },
+    { id: 'ST2', name: 'Arjun', skills: ['hair'], present: true, shift_start: 600, shift_end: 780 },
+  ],
+  slots: [
+    { id: 'R1', start_min: 900, minutes: 60, skill: 'hair', status: 'booked', customer: 'Ananya', staff: 'ST1' },
+    { id: 'A1', start_min: 660, minutes: 60, skill: 'hair', status: 'booked', customer: 'Rohan', staff: 'ST2' },
+  ],
+  waitlist: [{ id: 'W1', name: 'Meera', minutes: 60, skill: 'hair', consent: true }],
+}
+const m = await make(shiftDay)
+await rpc('set_staff_presence', { p_ws: m.id, p_staff: 'ST1', p_key: m.owner_key, p_present: false })
+const opts = await rpc<Opt[]>('get_move_options', { p_ws: m.id, p_key: m.owner_key, p_slot: 'R1' })
+const offShift = await rpc<Res>('reassign_slot', { p_ws: m.id, p_key: m.owner_key, p_slot: 'R1', p_to: 'ST2' })
+check('a stylist who has gone home is never offered: no option after their shift, reassign refused',
+  opts.length > 0 && opts.every((o) => o.staff === 'ST2' && o.start_min + 60 <= 780 && (o.start_min >= 720 || o.start_min + 60 <= 660)) && offShift.code === 'TARGET_OFF_SHIFT',
+  `${opts.length} options, ${offShift.code}`)
+const link = await rpc<{ move: string }>('move_link', { p_ws: m.id, p_key: m.owner_key, p_slot: 'R1' })
+const view1 = await rpc<{ state: string; reason: string; options: Opt[] }>('get_move', { p_move: link.move })
+const pick = view1.options[0]
+const chose = await rpc<Res & { slot: string }>('choose_move', { p_move: link.move, p_staff: pick.staff, p_start: pick.start_min })
+const twice = await rpc<Res>('choose_move', { p_move: link.move, p_staff: pick.staff, p_start: pick.start_min })
+const ms = await rpc<{ slots: { id: string; status: string; customer: string | null }[] }>('get_state', { p_ws: m.id, p_key: m.owner_key })
+const fromSlot = ms.slots.find((x) => x.id === 'R1')
+const toSlot = ms.slots.find((x) => x.id === chose.slot)
+check('the customer picks a new time from their link: moved once, old time held (stylist out)',
+  view1.state === 'open' && view1.reason === 'STAFF_ABSENT' && chose.ok && twice.code === 'MOVED' && toSlot?.customer === 'Ananya' && fromSlot?.status === 'blocked',
+  `${view1.reason}, ${chose.code ?? 'ok'}, ${twice.code}, from ${fromSlot?.status}`)
+
+// 12. v2.1: a customer can cancel from their link; the slot opens for the waitlist
+const c = await make({ ...shiftDay, staff: shiftDay.staff.map((p) => ({ ...p, shift_end: 1200 })) })
+const cl = await rpc<{ move: string }>('move_link', { p_ws: c.id, p_key: c.owner_key, p_slot: 'R1' })
+const gone = await rpc<Res & { notice: string }>('cancel_my_booking', { p_move: cl.move })
+const refill = await rpc<Sent>('send_offers', { p_ws: c.id, p_key: c.owner_key, p_slot: 'R1', p_entries: ['W1'] })
+check('a customer cancelling from their link opens the slot, and it can be offered at once',
+  gone.ok && refill.results[0].outcome === 'SENT', `${gone.notice}, ${refill.results[0].outcome}`)
+
+// 13. rate limit: 260 writes in a burst on one demo day, 240 allowed per minute
 const burst = await make(day())
 let limited = 0
 let okCount = 0

@@ -34,6 +34,9 @@ export interface Staff {
   name?: string
   skills: string[]
   present: boolean
+  /** Working hours in minutes from midnight. The database keeps every move inside them. */
+  shift_start?: number
+  shift_end?: number
 }
 
 export interface Input {

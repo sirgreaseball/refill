@@ -4,9 +4,9 @@ import staffCsv from '../data/salon/staff.csv?raw'
 import servicesCsv from '../data/salon/services.csv?raw'
 import scheduleCsv from '../data/salon/schedule.csv?raw'
 import customersCsv from '../data/salon/customers.csv?raw'
-import type { Entry, Slot } from './engine'
+import { toMin, type Entry, type Slot } from './engine'
 
-export interface Staff { id: string; name: string; skills: string[]; present: boolean }
+export interface Staff { id: string; name: string; skills: string[]; present: boolean; shift_start: number; shift_end: number }
 export interface Service { id: string; name: string; skill: string; minutes: number; price_inr: number }
 export interface Day { salon: string; staff: Staff[]; services: Service[]; slots: Slot[]; waitlist: Entry[] }
 
@@ -49,6 +49,7 @@ const num = (v: string, what: string) => {
 export function buildDay(csv: { staff: string; services: string; schedule: string; customers: string }): Day {
   const staff = parseCsv(csv.staff).map((r) => ({
     id: r.id, name: r.name, skills: r.skills.split('|').map((s) => s.trim()).filter(Boolean), present: bool(r.present) !== false,
+    shift_start: r.shift_start ? toMin(r.shift_start) : 600, shift_end: r.shift_end ? toMin(r.shift_end) : 1200,
   }))
   const services = parseCsv(csv.services).map((r) => ({
     id: r.id, name: r.name, skill: r.skill, minutes: num(r.minutes, `service ${r.id} minutes`), price_inr: num(r.price_inr, `service ${r.id} price_inr`),
