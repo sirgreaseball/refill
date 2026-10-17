@@ -4,7 +4,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { servicesOf, skillOf, type DbHistory, type DbService, type DbStaff, type State } from './api'
 import { kindOf, plural, staffFor, useRun, type Book, type Run } from './desk/common'
-import { Icon, Modal, clock, money } from './ui'
+import { Icon, Modal, Select, clock, money } from './ui'
 
 const hhmm = (m: number) => clock(Math.min(m, 1439))
 const toMin = (t: string) => (/^\d\d:\d\d$/.test(t) ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : NaN)
@@ -90,7 +90,7 @@ export function Tasks({ book }: { book: Book }) {
     <section className="group spot" aria-label="Tasks">
       <div className="group-head"><h2>Tasks</h2><p>{tasks.filter((t) => !t.done).length} open. Staff tick them off from their own link.</p></div>
       <form className="task-add" onSubmit={add}>
-        <select value={who} onChange={(e) => setWho(e.target.value)} aria-label="For">{st.staff.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+        <Select value={who} onChange={setWho} label="For" choices={st.staff.map((p) => ({ value: p.id, label: p.name }))} />
         <input value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="For example, restock towels" aria-label="Task" />
         <button className="btn" type="submit" disabled={!text.trim() || !who}><Icon name="plus" /> Add</button>
       </form>

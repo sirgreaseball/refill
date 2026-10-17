@@ -2,7 +2,7 @@
 // Nobody without a yes is ever offered anything; the database checks it again at booking.
 import { useState, type FormEvent } from 'react'
 import { servicesOf, type DbEntry } from '../api'
-import { Icon, Modal, clock, money } from '../ui'
+import { Icon, Modal, Select, clock, money } from '../ui'
 import { Num } from '../motion'
 import { plural, useRun, type Book, type Run } from './common'
 
@@ -128,9 +128,8 @@ function AddEntry({ run, services, onDone }: { run: Run; services: ReturnType<ty
     <form className="add" onSubmit={submit} noValidate>
       <label className="field">Name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" maxLength={60} /></label>
       <label className="field">Service
-        <select value={service} onChange={(e) => setService(e.target.value)}>
-          {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min{s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}</option>)}
-        </select>
+        <Select value={service} onChange={setService} label="Service"
+          choices={services.map((s) => ({ value: s.id, label: s.name, hint: `${s.minutes} min${s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}` }))} />
       </label>
       <fieldset className="seg"><legend>May we message them when a slot opens?</legend>
         {(['yes', 'no', 'unknown'] as const).map((c) => (

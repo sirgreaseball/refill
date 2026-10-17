@@ -1,5 +1,5 @@
 // Shared pieces: the mark, one thin icon set, number formats, the QR code and the modal.
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type KeyboardEvent as KeyEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 const inr = new Intl.NumberFormat('en-IN')
@@ -151,5 +151,81 @@ export function ToastHost({ children }: { children: ReactNode }) {
       {children}
       <div className={`toast ${t ? 'is-on' : ''} ${t?.bad ? 'is-bad' : ''}`} role="status" aria-live="polite">{t?.text}</div>
     </ToastCtx.Provider>
+  )
+}
+
+/** One choice in a Select: what it is, and an optional quiet detail (length, price, hours). */
+export interface Choice { value: string; label: string; hint?: string }
+
+/**
+ * The app's dropdown, in place of the browser's own list: a field that opens a short menu of
+ * choices under it (or above it near the bottom of the screen). Arrow keys, Enter, Escape and
+ * typing a first letter work as in a native select.
+ */
+export function Select({ value, choices, onChange, placeholder = 'Choose', disabled, label }: {
+  value: string; choices: Choice[]; onChange: (v: string) => void; placeholder?: string; disabled?: boolean; label?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [up, setUp] = useState(false)
+  const [active, setActive] = useState(0)
+  const wrap = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLDivElement>(null)
+  const current = choices.find((c) => c.value === value)
+
+  const show = () => {
+    if (disabled || !choices.length) return
+    const r = wrap.current?.getBoundingClientRect()
+    setUp(!!r && innerHeight - r.bottom < 300 && r.top > innerHeight - r.bottom)
+    setActive(Math.max(0, choices.findIndex((c) => c.value === value)))
+    setOpen(true)
+  }
+  const pick = (v: string) => { onChange(v); setOpen(false) }
+  useEffect(() => {
+    if (!open) return
+    const off = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false) }
+    addEventListener('pointerdown', off)
+    return () => removeEventListener('pointerdown', off)
+  }, [open])
+  useEffect(() => { if (open) list.current?.children[active]?.scrollIntoView({ block: 'nearest' }) }, [open, active])
+
+  const key = (e: KeyEvent) => {
+    if (!open) {
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); show() }
+      return
+    }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setOpen(false) }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(choices.length - 1, a + 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)) }
+    else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); setActive(e.key === 'Home' ? 0 : choices.length - 1) }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (choices[active]) pick(choices[active].value) }
+    else if (e.key === 'Tab') setOpen(false)
+    else if (e.key.length === 1) {
+      const i = choices.findIndex((c, j) => j > active && c.label.toLowerCase().startsWith(e.key.toLowerCase()))
+      const k = i >= 0 ? i : choices.findIndex((c) => c.label.toLowerCase().startsWith(e.key.toLowerCase()))
+      if (k >= 0) setActive(k)
+    }
+  }
+
+  return (
+    <div className={`sel ${open ? 'is-open' : ''} ${up ? 'is-up' : ''}`} ref={wrap}>
+      <button type="button" className="sel-btn" disabled={disabled} aria-haspopup="listbox" aria-expanded={open} aria-label={label}
+        onClick={() => (open ? setOpen(false) : show())} onKeyDown={key}>
+        <span className={`sel-v ${current ? '' : 'is-empty'}`}>{current?.label ?? placeholder}</span>
+        {current?.hint && <span className="sel-hint">{current.hint}</span>}
+        <Icon name="chevron" size={16} />
+      </button>
+      {open && (
+        <div className="sel-pop" role="listbox" ref={list} aria-label={label}>
+          {choices.map((c, i) => (
+            <button type="button" key={c.value} role="option" aria-selected={c.value === value} tabIndex={-1}
+              className={`sel-opt ${i === active ? 'is-active' : ''}`} onPointerEnter={() => setActive(i)} onClick={() => pick(c.value)}>
+              <span className="sel-check">{c.value === value && <Icon name="check" size={16} />}</span>
+              <span className="sel-v">{c.label}</span>
+              {c.hint && <span className="sel-hint">{c.hint}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

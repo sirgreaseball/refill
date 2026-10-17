@@ -97,14 +97,16 @@ export default function Move({ id }: { id: string }) {
       )}
 
       {v.state === 'moved' && v.moved_to && (
+        <div className="phone-lead">
         <SlotDial segs={[{ start: v.moved_to.start_min, minutes: v.moved_to.minutes, kind: 'refilled' }]} now={v.now_min}
           big={clock(v.moved_to.start_min)} small={`${v.moved_to.minutes} min · ${v.moved_to.stylist ?? ''}`} label={`Moved to ${span(v.moved_to.start_min, v.moved_to.minutes)}`} />
+        </div>
       )}
       {v.state === 'moved' && v.moved_to && (
-        <div className="verdict is-act">
+        <div className="phone-body"><div className="verdict is-act">
           <h1 className="phone-h">You’re moved</h1>
           <p>{v.moved_to.service} at {span(v.moved_to.start_min, v.moved_to.minutes)} with {v.moved_to.stylist}. See you then.</p>
-        </div>
+        </div></div>
       )}
       {v.state === 'cancelled' && (
         <div className="verdict">
