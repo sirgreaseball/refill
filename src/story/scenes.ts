@@ -71,9 +71,10 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
       .fromTo(rest(id), { opacity: 0, y: 16 }, { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: 'power2.out' }, at + 0.08)
   }
   const beatOut = (id: string, at: number) => tl.to(beat(id), { autoAlpha: 0, y: -28, duration: 0.32, ease: 'power2.in' }, at)
+  // The centre hands over cleanly: the old figure is gone before the new one arrives.
   const swap = (from: string, to: string, at: number) => {
-    tl.to(center(from), { autoAlpha: 0, y: -10, duration: 0.25 }, at)
-      .fromTo(center(to), { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.3 }, at + 0.15)
+    tl.to(center(from), { autoAlpha: 0, y: -10, duration: 0.18 }, at)
+      .fromTo(center(to), { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.3 }, at + 0.2)
   }
 
   // Before the story starts: every scene's extras are hidden, the counters at their first value.
@@ -139,6 +140,7 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
     .to(kept, { x: 0, y: 0, duration: 0.45, ease: 'power3.out' }, 5.23)
     .to(kept, { opacity: 0, duration: 0.15 }, 5.6)
     .fromTo($(`${K} [data-ov="act"]`), { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.45, ease: 'power3.out' }, 5.23)
+    .fromTo($('[data-wave]'), { attr: { r: 8 }, opacity: 0.85 }, { attr: { r: 330 }, opacity: 0, duration: 0.75, ease: 'power2.out' }, 5.25)
     .to($(`${K} [data-ov="beat"]`), { opacity: 0, duration: 0.3 }, 5.3)
     .to($(`[data-offer="${winner.id}"], [data-offer="${keeper.id}"]`), { opacity: 0, duration: 0.3 }, 5.35)
     .to($(`[data-mark="${keeper.id}"] [data-lit]`), { opacity: 0, duration: 0.25 }, 5.4)
