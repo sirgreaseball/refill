@@ -170,6 +170,38 @@ const refill = await rpc<Sent>('send_offers', { p_ws: c.id, p_key: c.owner_key, 
 check('a customer cancelling from their link opens the slot, and it can be offered at once',
   gone.ok && refill.results[0].outcome === 'SENT', `${gone.notice}, ${refill.results[0].outcome}`)
 
+// 12b. 006: an accepted offer follows its booking (#9); a withdrawn offer is not an opt-out (#11);
+// the sign-up shows the owner's message cap (#14)
+type OfferView = { state: string; reason?: string | null; moved?: boolean; booking: number | null; slot: { start_min: number; staff: string | null } }
+const t = await make({
+  salon: 'Offer truth', now_min: 600,
+  staff: [{ id: 'ST1', name: 'Riya', skills: ['hair'], present: true }, { id: 'ST2', name: 'Arjun', skills: ['hair'], present: true }],
+  slots: [
+    { id: 'R1', start_min: 870, minutes: 60, skill: 'hair', status: 'free', staff: 'ST1' },
+    { id: 'R2', start_min: 960, minutes: 60, skill: 'hair', status: 'free', staff: 'ST1' },
+  ],
+  waitlist: [{ id: 'W1', name: 'Omar', minutes: 60, skill: 'hair', consent: true }, { id: 'W2', name: 'Meera', minutes: 60, skill: 'hair', consent: true }],
+})
+const o1 = (await rpc<Sent>('send_offers', { p_ws: t.id, p_key: t.owner_key, p_slot: 'R1', p_entries: ['W1'] })).results[0].offer!
+await rpc('accept_offer', { p_offer: o1 })
+await rpc<Res>('move_booking', { p_ws: t.id, p_key: t.owner_key, p_slot: 'R1', p_staff: 'ST2', p_start: 780 })
+const afterMove = await rpc<OfferView>('get_offer', { p_offer: o1 })
+const ts = await rpc<{ slots: { id: string; status: string; customer: string | null }[] }>('get_state', { p_ws: t.id, p_key: t.owner_key })
+const movedTo = ts.slots.find((x) => x.customer === 'Omar' && x.status === 'booked')!
+await rpc('cancel_slot', { p_ws: t.id, p_key: t.owner_key, p_slot: movedTo.id })
+const afterCancel = await rpc<OfferView>('get_offer', { p_offer: o1 })
+check('an accepted offer follows its booking: moved shows the new time, cancelled says so',
+  afterMove.state === 'CONFIRMED' && afterMove.moved === true && afterMove.slot.start_min === 780 && afterMove.slot.staff === 'Arjun' && afterCancel.state === 'CANCELLED',
+  `${afterMove.state} ${afterMove.slot.start_min} ${afterMove.slot.staff}, then ${afterCancel.state}`)
+const o2 = (await rpc<Sent>('send_offers', { p_ws: t.id, p_key: t.owner_key, p_slot: 'R2', p_entries: ['W2'] })).results[0].offer!
+await rpc('set_staff_presence', { p_ws: t.id, p_staff: 'ST1', p_key: t.owner_key, p_present: false })
+const withdrawn = await rpc<OfferView>('get_offer', { p_offer: o2 })
+await rpc('set_policy', { p_ws: t.id, p_key: t.owner_key, p_policy: { max_offers: 4 } })
+const info = await rpc<{ ok: boolean; max_offers?: number }>('join_info', { p_code: t.join_code })
+check('staff out withdraws an offer without claiming an opt-out; sign-up shows the real cap',
+  withdrawn.state === 'WITHDRAWN' && withdrawn.reason === 'STAFF_ABSENT' && info.max_offers === 4,
+  `${withdrawn.state}/${withdrawn.reason}, cap ${info.max_offers}`)
+
 // 13. rate limit: 260 writes in a burst on one demo day, 240 allowed per minute
 const burst = await make(day())
 let limited = 0
