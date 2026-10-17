@@ -2,7 +2,7 @@
 
 You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
 
-Last updated: 17 Oct 2026, ~23:55 IST, after v3.1 (home screen + motion layer, commit `8f75752`).
+Last updated: 17 Oct 2026, ~23:55 IST, after v3.1 (home screen + motion layer + refill sweep, commit `67d8ad6`).
 
 ---
 
@@ -67,7 +67,7 @@ npx tsc -b && npx vite build
 
 ## 5. What to do next (priority order)
 
-1. **Keep raising the premium feel** (Dhruv: "basic and dull" before v3.1; wants Trace/Cascade/Apple-level motion). Next ideas, in order: scroll-linked reveals on long pages, refill animation when a gap gets booked (amber block fills green left-to-right), number roll on change in the bar, haptic-like press on phones, a dedicated splash page later (separate route, Lenis + GSAP ScrollTrigger like Threshold; do NOT turn Home into a splash).
+1. **Keep raising the premium feel** (Dhruv: "basic and dull" before v3.1; wants Trace/Cascade/Apple-level motion). Next ideas, in order: scroll-linked reveals on long pages, number roll on change in the bar, haptic-like press on phones, a dedicated splash page later (separate route, Lenis + GSAP ScrollTrigger like Threshold; do NOT turn Home into a splash).
 1b. **Polish pass on the v3 UI (done once, keep going if time allows).** Revamp shipped 17 Oct ~23:15. Verified at 375, 689 and 1366 px in Chromium, dark and light, no horizontal scroll. Not yet verified on a real Android phone or Firefox: Dhruv reported layout faults there on v2. Ask for screenshots if anything still looks wrong. Remaining ideas: scroll-linked motion on Home, a second demo business (clinic CSVs under `data/clinic/`) to prove the product is not salon-only.
 2. **Docs to v3:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1 screens; README screenshots in `docs/screens` are old. Operational check PDF lives in `docs/ops/`.
 3. **Market-shock rehearsal (9 AM 18 Oct).** All four shocks already work: late cancel (cancel near start, tag LATE), staff absence (mark stylist out, rebook or send link), duration change (Lab edit or a 90-min request vs 60-min gap), consent withdrawn (customer page or STOP). Prepare the exact click path for each; be ready to change data or a rule live and redeploy in minutes.
