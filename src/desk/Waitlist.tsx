@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { DbEntry } from '../api'
 import { demoDay } from '../day'
 import { Icon, Modal, clock, money } from '../ui'
+import { Num } from '../motion'
 import { plural, useRun, type Book, type Run } from './common'
 
 export default function Waitlist({ book }: { book: Book }) {
@@ -13,6 +14,7 @@ export default function Waitlist({ book }: { book: Book }) {
   const waiting = st.waitlist.filter((e) => e.status === 'waiting')
   const booked = st.waitlist.filter((e) => e.status === 'booked')
   const yes = waiting.filter((e) => e.consent === true).length
+  const no = waiting.filter((e) => e.consent === false).length
 
   const setConsent = (e: DbEntry, v: boolean | null) =>
     run<{ ok: boolean; revoked_offers: number }>('set_consent', { p_entry: e.id, p_consent: v, p_source: 'front desk' }, (r) =>
@@ -29,15 +31,28 @@ export default function Waitlist({ book }: { book: Book }) {
         <button className="btn is-primary" onClick={() => setAdding(true)}><Icon name="plus" /> Add someone</button>
       </header>
 
+      <section className="group wl-consent" aria-label="Consent">
+        <div className="consent-bar" role="img" aria-label={`${yes} may be messaged, ${no} said no, ${waiting.length - yes - no} not asked`}>
+          <span className="is-yes" style={{ flex: yes || 0.0001 }} /><span className="is-no" style={{ flex: no || 0.0001 }} /><span className="is-unknown" style={{ flex: waiting.length - yes - no || 0.0001 }} />
+        </div>
+        <dl className="figs is-three">
+          <div className="is-act"><dt>May be messaged</dt><dd><Num value={yes} /></dd></div>
+          <div><dt>Said no</dt><dd><Num value={no} /></dd></div>
+          <div><dt>Not asked yet</dt><dd><Num value={waiting.length - yes - no} /></dd></div>
+        </dl>
+      </section>
+
       <section className="group" aria-label="Waiting">
+        <div className="wl-axis" aria-hidden="true"><span>Free, 10:00 to 20:00</span></div>
         <ol className="rows">
           {waiting.map((e) => (
             <li key={e.id} className="wl-row">
               <span className="wl-pos">{e.pos}</span>
               <span className="wl-main">
                 <strong>{e.name}{e.source === 'self sign-up' && <span className="tag">signed up</span>}</strong>
-                <small>{e.service} · {e.minutes} min{e.free_from != null || e.free_until != null ? ` · free ${clock(e.free_from ?? 600)}–${clock(Math.min(e.free_until ?? 1200, 1439))}` : ''}</small>
+                <small>{e.service} · {e.minutes} min</small>
               </span>
+              <Window e={e} />
               <span className="consent" role="group" aria-label={`${e.name}: may we message them?`}>
                 {([[true, 'Yes', 'is-yes'], [false, 'No', 'is-no'], [null, '?', '']] as const).map(([v, t, c]) => (
                   <button key={t} className={`${e.consent === v ? 'is-on' : ''} ${c}`} aria-pressed={e.consent === v}
@@ -67,6 +82,20 @@ export default function Waitlist({ book }: { book: Book }) {
 
       {adding && <Modal title="Add to the waitlist" onClose={() => setAdding(false)}><AddEntry run={run} onDone={() => setAdding(false)} /></Modal>}
     </div>
+  )
+}
+
+// When this person is free, on the same 10:00 to 20:00 scale as the day.
+function Window({ e }: { e: DbEntry }) {
+  const from = Math.max(600, e.free_from ?? 600)
+  const until = Math.min(1200, e.free_until ?? 1200)
+  const any = e.free_from == null && e.free_until == null
+  const at = (m: number) => `${((m - 600) / 600) * 100}%`
+  return (
+    <span className={`wl-win ${any ? 'is-any' : ''}`}>
+      <span className="wl-track"><i style={{ left: at(from), width: `calc(${at(until)} - ${at(from)})` }} /></span>
+      <small className="mono">{any ? 'any time' : `${clock(e.free_from ?? 600)}–${clock(Math.min(e.free_until ?? 1200, 1439))}`}</small>
+    </span>
   )
 }
 
