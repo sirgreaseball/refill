@@ -259,3 +259,4 @@ npm ci
   - Frame times while scrolling: p95 8.5 ms at 1440 (dev) and at 1280 (production build).
   - The brief's exact path on the production build: `/splash` → **Open Refill** → sign-in → demo → `#/desk` scrolls, `<html>` has no classes, no console errors.
   - After the merge: add the splash line to `HANDOFF.md` 0.7.
+- **18 Oct ~04:30 IST, polish on the same branch.** Screen readers get the whole story as text (one h1, an h2 per chapter). The gap headline uses the demo script's words. The race names `accept_offer`'s row lock and `bookings_one_per_slot`. The stage closes back into its frame as the story ends, and the mark's gap fills as the ending arrives. A final sweep at 1440, 1280, 820 and 390, in both themes and with reduced motion, shows no console errors and no horizontal scroll.
