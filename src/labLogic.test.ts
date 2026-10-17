@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import core from '../tests/core-scenarios.json'
+import fixture from '../data/fixture/C29.fixture.json'
 import { type Scenario } from './engine'
-import { candidateExplanation, compareResults, evaluate, importJson, presetDocument, slotExplanation, type LabSuccess } from './labLogic'
+import { candidateExplanation, compareResults, evaluate, exportResult, importJson, presetDocument, slotExplanation, type LabSuccess } from './labLogic'
 
 const slot = { id: 'S1', start: '14:30', minutes: 60, skill: 'hair', status: 'free' }
 const entry = { id: 'W1', minutes: 60, skill: 'hair', consent: true }
@@ -143,5 +144,34 @@ describe('Lab explanations (#17)', () => {
     expect(slotExplanation(ev.input.slots[0], ev.result).code).toBe('BOOKED')
     const free = success({ slots: [{ ...slot, id }], waitlist: [{ ...entry, id }] })
     expect(describeCandidate(free, id, id).code).toBe('MATCHED')
+  })
+})
+
+describe('Lab export/import roundtrip (#18)', () => {
+  it.each([
+    fixture.records,
+    { slots: [slot], waitlist: [entry], records: null },
+    { slots: [slot], waitlist: [entry], staff: [], now: '13:00', race: { slot: 'S1', requests: ['W1', 'W1'] }, metadata: { note: 'Keep nested context' } },
+    presetDocument((core as Scenario[]).find((item) => item.id === 'C22')!),
+  ])('restores the exported input and reproduces all results', (doc) => {
+    const original = success(doc)
+    const file = JSON.stringify(exportResult(original))
+    const imported = importJson(file)
+    expect(imported).toEqual(doc)
+    const restored = success(imported)
+    expect(restored.result).toEqual(original.result)
+    expect(restored.raced).toEqual(original.raced)
+    expect(restored.now).toEqual(original.now)
+  })
+
+  it('does not replace plain input with an unrelated input metadata field', () => {
+    const doc = { slots: [slot], waitlist: [entry], input: { note: 'Metadata, not an export wrapper' } }
+    expect(importJson(JSON.stringify(doc))).toEqual(doc)
+  })
+
+  it('leaves malformed wrapper inputs visible to validation', () => {
+    for (const input of [null, 42, { slots: 'bad', waitlist: [] }])
+      expect(run(importJson(JSON.stringify({ input }))).kind).toBe('invalid')
+    expect(run(importJson('[]')).kind).toBe('invalid')
   })
 })

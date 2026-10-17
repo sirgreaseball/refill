@@ -32,7 +32,13 @@ export function presetDocument(scenario: Scenario): LabDocument {
 export function importJson(text: string): unknown {
   const parsed: unknown = JSON.parse(text)
   const selected = Array.isArray(parsed) ? parsed[0] ?? null : parsed
-  return isObject(selected) && Object.hasOwn(selected, 'records') ? selected.records : selected
+  const input = isObject(selected) && Object.hasOwn(selected, 'input') && !Object.hasOwn(selected, 'slots') && !Object.hasOwn(selected, 'waitlist')
+    ? selected.input : selected
+  return isObject(input) && isObject(input.records) ? input.records : input
+}
+
+export function exportResult(evaluation: LabSuccess) {
+  return { input: evaluation.doc, matches: evaluation.result.matches, perSlot: evaluation.result.perSlot, race: evaluation.raced }
 }
 
 /** Untrusted editor input must always produce a result, including fields outside engine validation. */

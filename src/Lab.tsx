@@ -9,7 +9,7 @@ import { parseCsv } from './day'
 import { candidates, matchAll, notice, race, runScenario, toHHMM, toMin, validate, type Input, type MatchResult, type Scenario } from './engine'
 import { liveRace, type RaceReport } from './liveRace.ts'
 import { Icon, download, lead } from './ui'
-import { candidateExplanation, compareResults, evaluate, importJson, presetDocument, slotExplanation, type LabDocument as Doc, type LabEvaluation as Eval, type LabSuccess as Ok } from './labLogic'
+import { candidateExplanation, compareResults, evaluate, exportResult, importJson, presetDocument, slotExplanation, type LabDocument as Doc, type LabEvaluation as Eval, type LabSuccess as Ok } from './labLogic'
 
 const presets: { id: string; label: string; doc: Doc }[] = [
   { id: 'FIX', label: 'Organiser fixture C29', doc: structuredClone(fixture.records) },
@@ -145,7 +145,7 @@ export default function Lab() {
 
         <section className="lab-out" aria-label="Result" aria-live="polite">
           <header className="section-head"><h2>Result</h2>
-            {ev.kind === 'ok' && <button className="btn is-quiet" onClick={() => download('refill-lab-result.json', pretty({ input: ev.doc, matches: ev.result.matches, perSlot: ev.result.perSlot, race: ev.raced }))}><Icon name="download" /> JSON</button>}
+            {ev.kind === 'ok' && <button className="btn is-quiet" onClick={() => download('refill-lab-result.json', pretty(exportResult(ev)))}><Icon name="download" /> JSON</button>}
           </header>
           <Result ev={ev} />
           {before && ev.kind === 'ok' && <BeforeAfter before={before} after={ev} />}
