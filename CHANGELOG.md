@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.0.0 · 17 Oct 2026 · one clear dashboard per role
+
+- Home asks who is using Refill: front desk, owner, staff member, client; proof for judges one tap away. A role pill switches views; a dock moves between a role's pages.
+- Front desk: Today (what needs you now, team in/out with shift hours, schedule), Waitlist, Activity. Every action on an appointment lives in one sheet; on phones it is a bottom sheet.
+- Owner: Overview, Team and links, Rules with the who-can-do-what matrix.
+- Business-neutral wording (staff, clients) so any appointment business fits; the demo business stays a salon.
+- New design system: grey canvas, white groups, glass bar and dock; Hanken Grotesk and JetBrains Mono. Phone-first, no horizontal scroll.
+- Fixed: dialogs stole focus on every poll; polls re-rendered when nothing changed (now skipped, every 2 s). Main bundle 90.9 kB to 84.7 kB gzipped.
+
 ## v2.0.0 · 17 Oct 2026 · roles, stylists, rescheduling
 
 - Four roles, each proven by a key the database checks on every call: owner, front desk, stylist, customer. Owner-only: the rules, stylist and front-desk links, reset. "View as front desk" uses the real front-desk key.

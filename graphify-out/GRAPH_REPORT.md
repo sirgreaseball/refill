@@ -1,30 +1,30 @@
 # Graph Report - refill  (2026-10-17)
 
 ## Corpus Check
-- 47 files · ~61,443 words
+- 59 files · ~94,827 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 11 file(s) not represented in the graph (top: (none) 4, .csv 4, .example 1)
+- Unclassified: 12 file(s) not represented in the graph (top: (none) 5, .csv 4, .example 1)
 
 ## Summary
-- 392 nodes · 805 edges · 25 communities (19 shown, 6 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.87)
+- 694 nodes · 1194 edges · 50 communities (45 shown, 5 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `14eb4623`
+- Built from commit: `57b77fa0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- App.tsx
-- engine.ts
+- SlotSheet.tsx
+- Lab.tsx
 - api.ts
 - package.json
 - compilerOptions
 - compilerOptions
 - db-test.ts
 - Refill
-- Desk.tsx
+- App.tsx
 - Rules for AI agents and assistants in this repository
 - .oxlintrc.json
 - pull_request_template.md
@@ -35,52 +35,77 @@
 - salon/README.md
 - dhruv.md
 - vercel.json
-- day.ts
-- Lab.tsx
-- toMin
-- Checks
+- Apple Design
+- Rules
+- Appendix B - Canonical Sources (read these before reinventing)
+- Flagship feel
 - rpc.ts
+- Design Audit
+- 4. DESIGN ENGINEERING DIRECTIVES (Bias Correction)
+- 10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know)
+- tasteskill: Anti-Slop Frontend Skill
+- Design Engineering
+- Ponytail
+- 9. AI TELLS (Forbidden Patterns)
+- Component Building Principles
+- 11. REDESIGN PROTOCOL
+- 3. DEFAULT ARCHITECTURE & CONVENTIONS
+- 6. PERFORMANCE & ACCESSIBILITY GUARDRAILS
+- The Animation Decision Framework
+- clip-path for Animation
+- Performance Rules
+- Gesture and Drag Interactions
+- 0. BRIEF INFERENCE (Read the Room Before Anything Else)
+- 12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)
+- 5. CONTEXT-AWARE PROACTIVITY
+- 8. DARK MODE PROTOCOL
+- CSS Transform Mastery
+- The Sonner Principles (Building Loved Components)
+- Spring Animations
+- 7. DIAL DEFINITIONS (Technical Reference)
+- Core Philosophy
+- Debugging Animations
 
 ## God Nodes (most connected - your core abstractions)
-1. `Icon()` - 31 edges
-2. `Recovery()` - 23 edges
-3. `clock()` - 22 edges
-4. `compilerOptions` - 19 edges
-5. `rpc()` - 18 edges
-6. `Desk()` - 17 edges
-7. `react` - 15 edges
-8. `money()` - 15 edges
-9. `Mark()` - 15 edges
-10. `compilerOptions` - 15 edges
+1. `Icon()` - 35 edges
+2. `clock()` - 30 edges
+3. `money()` - 23 edges
+4. `Apple Design` - 21 edges
+5. `Flagship feel` - 20 edges
+6. `compilerOptions` - 19 edges
+7. `react` - 18 edges
+8. `rpc()` - 18 edges
+9. `tasteskill: Anti-Slop Frontend Skill` - 16 edges
+10. `Design Engineering` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `The three case checks` --references--> `reasonFor()`  [INFERRED]
   README.md → src/engine.ts
+- `4. What is built (v3.0.0, all live and tested)` --references--> `useRun()`  [INFERRED]
+  HANDOFF.md → src/desk/common.tsx
+- `4. What is built (v3.0.0, all live and tested)` --references--> `useBook()`  [INFERRED]
+  HANDOFF.md → src/api.ts
 - `make()` --calls--> `rpc()`  [EXTRACTED]
   scripts/db-test.ts → src/rpc.ts
-- `Checks()` --indirect_call--> `runScenario()`  [INFERRED]
-  src/Lab.tsx → src/engine.ts
-- `App()` --calls--> `readDesk()`  [EXTRACTED]
-  src/App.tsx → src/api.ts
-- `Shell()` --calls--> `useBook()`  [EXTRACTED]
-  src/App.tsx → src/api.ts
+- `OpenGap()` --indirect_call--> `asEntry()`  [INFERRED]
+  src/desk/SlotSheet.tsx → src/api.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (25 total, 6 thin omitted)
+## Communities (50 total, 5 thin omitted)
 
-### Community 0 - "App.tsx"
-Cohesion: 0.10
-Nodes (45): react, react-dom, MoveOption, App(), ClockControl(), Entry(), Header(), InstallEvent (+37 more)
+### Community 0 - "SlotSheet.tsx"
+Cohesion: 0.08
+Nodes (76): react, asStaff(), DbEvent, DbOffer, DbSlot, MoveOption, moveUrl(), State (+68 more)
 
-### Community 1 - "engine.ts"
-Cohesion: 0.11
-Nodes (20): Input, InputError, isObj(), LABEL, MatchResult, Options, pairKey(), posInt() (+12 more)
+### Community 1 - "Lab.tsx"
+Cohesion: 0.06
+Nodes (59): RFC-4180, N, RUNS, asEntry(), asSlot(), dayPayload(), buildDay(), Day (+51 more)
 
 ### Community 2 - "api.ts"
-Cohesion: 0.08
-Nodes (40): CORE, dayPayload(), DbBooking, DbEntry, DbEvent, DbMove, DbOffer, DbSlot (+32 more)
+Cohesion: 0.06
+Nodes (43): 10. First message to paste into a new Claude session, 1. Where things are, 2. The event and the deadline, 3. Team, 4. What is built (v3.0.0, all live and tested), 5. What to do next (priority order), 6. How Dhruv works (follow this exactly), 7. Gotchas already hit (+35 more)
 
 ### Community 3 - "package.json"
 Cohesion: 0.05
@@ -99,12 +124,12 @@ Cohesion: 0.04
 Nodes (47): after, again, allOk, asDesk, b1, badPolicy, busy, chose (+39 more)
 
 ### Community 7 - "Refill"
-Cohesion: 0.18
-Nodes (10): Data, Edge cases from the card, How it is built, Known limits, Refill, Run it, Security and abuse limits, Team (+2 more)
+Cohesion: 0.15
+Nodes (12): Beyond salons, Data, Edge cases from the card, How it is built, Known limits, Refill, Run it, Security and abuse limits (+4 more)
 
-### Community 8 - "Desk.tsx"
-Cohesion: 0.13
-Nodes (32): asEntry(), asSlot(), asStaff(), moveUrl(), atRisk(), Board(), Book, chip() (+24 more)
+### Community 8 - "App.tsx"
+Cohesion: 0.12
+Nodes (24): react-dom, Activity, App(), Area, areaOf(), Dock(), DOCKS, InstallEvent (+16 more)
 
 ### Community 9 - "Rules for AI agents and assistants in this repository"
 Cohesion: 0.29
@@ -123,48 +148,152 @@ Cohesion: 0.50
 Nodes (3): Competitor table (screenshot), Gaps doc — "Key Gaps in Existing Apps - Product Opportunity" (Google Doc 17iw3vcB4V98EHGlFVA2b8k8OfEYyt54NRaLRCUlMqK8), MBA research received 2026-10-17 (source: MBA teammates; not yet verified)
 
 ### Community 13 - "Changelog"
-Cohesion: 0.40
-Nodes (4): Changelog, v1.0.0 · `v1-mba-handover` · 17 Oct 2026, v1.1.0 · 17 Oct 2026 · engineering hardening (not a business-team change), v2.0.0 · 17 Oct 2026 · roles, stylists, rescheduling
-
-### Community 20 - "day.ts"
-Cohesion: 0.17
-Nodes (9): RFC-4180, buildDay(), Day, num(), parseCsv(), Service, Staff, Entry (+1 more)
-
-### Community 21 - "Lab.tsx"
-Cohesion: 0.26
-Nodes (12): explain(), notice, Scenario, BeforeAfter(), Doc, Eval, Lab(), Ok (+4 more)
-
-### Community 22 - "toMin"
 Cohesion: 0.33
-Nodes (9): The three case checks, candidates(), matchAll(), race(), reasonFor(), staffOf(), toMin(), tooSoon() (+1 more)
+Nodes (5): Changelog, v1.0.0 · `v1-mba-handover` · 17 Oct 2026, v1.1.0 · 17 Oct 2026 · engineering hardening (not a business-team change), v2.0.0 · 17 Oct 2026 · roles, stylists, rescheduling, v3.0.0 · 17 Oct 2026 · one clear dashboard per role
 
-### Community 23 - "Checks"
-Cohesion: 0.25
-Nodes (7): N, RUNS, Checks(), liveRace(), RaceReport, Sent, Tap
+### Community 14 - "Devlog"
+Cohesion: 0.50
+Nodes (3): 17 Oct 2026, day, 17 Oct 2026, evening: v2.0.0 (roles, stylists, rescheduling), Devlog
+
+### Community 20 - "Apple Design"
+Cohesion: 0.09
+Nodes (21): 10. Gesture design details (the "feel" checklist), 11. Frame-level smoothness, 12. Materials & depth — translucency conveys hierarchy, 13. Multimodal feedback — motion + sound + haptics, 14. Reduced motion & accessibility, 15. Typography — optical sizing, tracking, leading, 16. Design foundations — the eight principles, 17. Process (+13 more)
+
+### Community 21 - "Rules"
+Cohesion: 0.09
+Nodes (20): caveman, Example output, How to invoke, See also, What it does, 1. Answer first, 2. Kill ceremony, 3. Short word (+12 more)
+
+### Community 22 - "Appendix B - Canonical Sources (read these before reinventing)"
+Cohesion: 0.09
+Nodes (21): APPENDICES - Real Source-Backed Reference Material, Appendix A - Install Commands per Design System, Appendix B - Canonical Sources (read these before reinventing), Appendix C - Apple Liquid Glass: Honest Web Approximation, Apple Liquid Glass (Apple platforms only), Atlassian, Bootstrap, Carbon (+13 more)
+
+### Community 23 - "Flagship feel"
+Cohesion: 0.10
+Nodes (20): 0. Choose the direction before you code, 10. Everyone, every device, 11. Smoothness is the premium, 12. Voice, 13. How to work (this is how the originals were made), 14. Never, 15. Starting numbers, 1. The content is the hero (+12 more)
 
 ### Community 24 - "rpc.ts"
-Cohesion: 0.60
-Nodes (3): SUPABASE_KEY, SUPABASE_URL, FRIENDLY
+Cohesion: 0.38
+Nodes (4): SUPABASE_KEY, SUPABASE_URL, ApiError, FRIENDLY
+
+### Community 25 - "Design Audit"
+Cohesion: 0.10
+Nodes (19): Code Quality, Color and Surfaces, Component Patterns, Content, Design Audit, Fix Priority, How This Works, Iconography (+11 more)
+
+### Community 26 - "4. DESIGN ENGINEERING DIRECTIVES (Bias Correction)"
+Cohesion: 0.17
+Nodes (12): 4.10 Quotes & Testimonials, 4.11 Page Theme Lock (Light / Dark Mode Consistency), 4.1 Typography, 4.2 Color Calibration, 4.3 Layout Diversification, 4.4 Materiality, Shadows, Cards, 4.5 Interactive UI States, 4.6 Data & Form Patterns (+4 more)
+
+### Community 27 - "10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know)"
+Cohesion: 0.20
+Nodes (10): 10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know), Animation Library Choice, Cards & Containers, Galleries & Media, Hero Paradigms, Layout & Grids, Micro-Interactions & Effects, Navigation & Menus (+2 more)
+
+### Community 28 - "tasteskill: Anti-Slop Frontend Skill"
+Cohesion: 0.20
+Nodes (10): 13. OUT OF SCOPE, 14. FINAL PRE-FLIGHT CHECK, 1.A Dial Inference (design read → dial values), 1.B Use-Case Presets, 1.C How the Dials Drive Output, 1. THE THREE DIALS (Core Configuration), 2.A When to reach for a real design system (use official packages), 2.B When the brief is an aesthetic, not a system (+2 more)
+
+### Community 29 - "Design Engineering"
+Cohesion: 0.22
+Nodes (8): Accessibility, Design Engineering, Initial Response, prefers-reduced-motion, Review Checklist, Review Format (Required), Stagger Animations, Touch device hover states
+
+### Community 30 - "Ponytail"
+Cohesion: 0.22
+Nodes (8): Boundaries, Intensity, Output, Persistence, Ponytail, Rules, The ladder, When NOT to be lazy
+
+### Community 31 - "9. AI TELLS (Forbidden Patterns)"
+Cohesion: 0.25
+Nodes (8): 9.A Visual & CSS, 9. AI TELLS (Forbidden Patterns), 9.B Typography, 9.C Layout & Spacing, 9.D Content & Data ("Jane Doe" Effect), 9.E External Resources & Components, 9.F Production-Test Tells (banned outright), 9.G EM-DASH BAN (the single most-violated Tell)
+
+### Community 32 - "Component Building Principles"
+Cohesion: 0.25
+Nodes (8): Animate enter states with @starting-style, Buttons must feel responsive, Component Building Principles, Make popovers origin-aware, Never animate from scale(0), Tooltips: skip delay on subsequent hovers, Use blur to mask imperfect transitions, Use CSS transitions over keyframes for interruptible UI
+
+### Community 33 - "11. REDESIGN PROTOCOL"
+Cohesion: 0.29
+Nodes (7): 11.A Detect the Mode (first action), 11.B Audit Before Touching, 11.C Preservation Rules, 11.D Modernisation Levers (priority order), 11.E Decision Tree: Targeted Evolution vs Full Redesign, 11.F What Never Changes Silently, 11. REDESIGN PROTOCOL
+
+### Community 34 - "3. DEFAULT ARCHITECTURE & CONVENTIONS"
+Cohesion: 0.29
+Nodes (7): 3.A Stack, 3.B State, 3.C Icons, 3.D Emoji Policy, 3. DEFAULT ARCHITECTURE & CONVENTIONS, 3.E Responsiveness & Layout Mechanics, 3.F Dependency Verification (mandatory)
+
+### Community 35 - "6. PERFORMANCE & ACCESSIBILITY GUARDRAILS"
+Cohesion: 0.29
+Nodes (7): 6.A Hardware Acceleration, 6.B Reduced Motion (mandatory), 6.C Dark Mode (mandatory for any consumer-facing page), 6.D Core Web Vitals Targets, 6.E DOM Cost, 6.F Z-Index Restraint, 6. PERFORMANCE & ACCESSIBILITY GUARDRAILS
+
+### Community 36 - "The Animation Decision Framework"
+Cohesion: 0.33
+Nodes (6): 1. Should this animate at all?, 2. What is the purpose?, 3. What easing should it use?, 4. How fast should it be?, Perceived performance, The Animation Decision Framework
+
+### Community 37 - "clip-path for Animation"
+Cohesion: 0.33
+Nodes (6): clip-path for Animation, Comparison sliders, Hold-to-delete pattern, Image reveals on scroll, Tabs with perfect color transitions, The inset shape
+
+### Community 38 - "Performance Rules"
+Cohesion: 0.33
+Nodes (6): CSS animations beat JS under load, CSS variables are inheritable, Framer Motion hardware acceleration caveat, Only animate transform and opacity, Performance Rules, Use WAAPI for programmatic CSS animations
+
+### Community 39 - "Gesture and Drag Interactions"
+Cohesion: 0.33
+Nodes (6): Damping at boundaries, Friction instead of hard stops, Gesture and Drag Interactions, Momentum-based dismissal, Multi-touch protection, Pointer capture for drag
+
+### Community 40 - "0. BRIEF INFERENCE (Read the Room Before Anything Else)"
+Cohesion: 0.40
+Nodes (5): 0.A Read these signals first, 0.B Output a one-line "Design Read" before generating, 0. BRIEF INFERENCE (Read the Room Before Anything Else), 0.C If the brief is ambiguous, ask one question, do not guess, 0.D Anti-Default Discipline
+
+### Community 41 - "12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)"
+Cohesion: 0.40
+Nodes (5): 12.A File Location, 12.B Required Frontmatter, 12.C Required Body Sections, 12.D Block-Library Discipline, 12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)
+
+### Community 42 - "5. CONTEXT-AWARE PROACTIVITY"
+Cohesion: 0.40
+Nodes (5): 5.A Sticky-Stack - Canonical Skeleton, 5.B Horizontal-Pan - Canonical Skeleton, 5.C Scroll-Reveal Stagger - Canonical Skeleton (lighter alternative), 5. CONTEXT-AWARE PROACTIVITY, 5.D Forbidden Animation Patterns
+
+### Community 43 - "8. DARK MODE PROTOCOL"
+Cohesion: 0.40
+Nodes (5): 8.A Token Strategy (pick one, stick to it), 8.B Do Not Prescribe Specific Colors Here, 8.C Default Mode, 8.D Test in Both Modes Before Finishing, 8. DARK MODE PROTOCOL
+
+### Community 44 - "CSS Transform Mastery"
+Cohesion: 0.40
+Nodes (5): 3D transforms for depth, CSS Transform Mastery, scale() scales children too, transform-origin, translateY with percentages
+
+### Community 45 - "The Sonner Principles (Building Loved Components)"
+Cohesion: 0.40
+Nodes (5): Asymmetric enter/exit timing, Cohesion matters, Review your work the next day, The opacity + height combination, The Sonner Principles (Building Loved Components)
+
+### Community 46 - "Spring Animations"
+Cohesion: 0.40
+Nodes (5): Interruptibility advantage, Spring Animations, Spring-based mouse interactions, Spring configuration, When to use springs
+
+### Community 47 - "7. DIAL DEFINITIONS (Technical Reference)"
+Cohesion: 0.50
+Nodes (4): 7. DIAL DEFINITIONS (Technical Reference), DESIGN_VARIANCE (Level 1-10), MOTION_INTENSITY (Level 1-10), VISUAL_DENSITY (Level 1-10)
+
+### Community 48 - "Core Philosophy"
+Cohesion: 0.50
+Nodes (4): Beauty is leverage, Core Philosophy, Taste is trained, not innate, Unseen details compound
+
+### Community 49 - "Debugging Animations"
+Cohesion: 0.50
+Nodes (4): Debugging Animations, Frame-by-frame inspection, Slow motion testing, Test on real devices
 
 ## Knowledge Gaps
 - **7 isolated node(s):** `@types/node`, `@types/qrcode`, `@types/react`, `@types/react-dom`, `oxlint` (+2 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 212 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 447 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `App.tsx` to `Desk.tsx`, `api.ts`, `package.json`, `Lab.tsx`?**
-  _High betweenness centrality (0.132) - this node is a cross-community bridge._
+- **Why does `react` connect `SlotSheet.tsx` to `App.tsx`, `Lab.tsx`, `api.ts`, `package.json`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **What connects `@types/node`, `@types/qrcode`, `@types/react` to the rest of the system?**
   _7 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `App.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.10150375939849623 - nodes in this community are weakly interconnected._
-- **Why does `rpc()` connect `App.tsx` to `api.ts`, `db-test.ts`, `Desk.tsx`, `Checks`, `rpc.ts`?**
-  _High betweenness centrality (0.123) - this node is a cross-community bridge._
-- **Should `engine.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
-- **Why does `reasonFor()` connect `toMin` to `Desk.tsx`, `engine.ts`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Should `SlotSheet.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.08043922369765066 - nodes in this community are weakly interconnected._
+- **Why does `rpc()` connect `SlotSheet.tsx` to `Lab.tsx`, `api.ts`, `db-test.ts`, `App.tsx`, `rpc.ts`?**
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+- **Should `Lab.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.0593607305936073 - nodes in this community are weakly interconnected._
+- **Why does `tasteskill: Anti-Slop Frontend Skill` connect `tasteskill: Anti-Slop Frontend Skill` to `11. REDESIGN PROTOCOL`, `3. DEFAULT ARCHITECTURE & CONVENTIONS`, `6. PERFORMANCE & ACCESSIBILITY GUARDRAILS`, `0. BRIEF INFERENCE (Read the Room Before Anything Else)`, `12. THE BLOCK LIBRARY (Contract - Implementations Land Here Iteratively)`, `5. CONTEXT-AWARE PROACTIVITY`, `8. DARK MODE PROTOCOL`, `7. DIAL DEFINITIONS (Technical Reference)`, `Appendix B - Canonical Sources (read these before reinventing)`, `4. DESIGN ENGINEERING DIRECTIVES (Bias Correction)`, `10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know)`, `9. AI TELLS (Forbidden Patterns)`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **Should `api.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.07928118393234672 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06382978723404255 - nodes in this community are weakly interconnected._

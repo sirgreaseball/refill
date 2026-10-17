@@ -2,7 +2,7 @@
 
 You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
 
-Last updated: 17 Oct 2026, ~22:00 IST, at tag `v2.0.0` (commit after `c9084f8`).
+Last updated: 17 Oct 2026, ~23:20 IST, after the v3 UI revamp (tag `v3.0.0`).
 
 ---
 
@@ -37,21 +37,22 @@ Launch configs for the browser preview live in `Z:\claude\.claude\launch.json`: 
 - Two MBA students. They only file `mba-request` issues and give feedback.
 - **Messages to teammates or the MBA pair: write them paste-ready in chat. Dhruv sends them.** Do not send email or sweep inboxes unless Dhruv asks in that turn. Never put deadlines in teammate messages.
 
-## 4. What is built (v2.0.0, all live and tested)
+## 4. What is built (v3.0.0, all live and tested)
 
-Roles, each proven by a key the **database** checks on every call (UI hiding is not the security):
-- **Owner** (`#/owner`): recovered revenue, money still open, money lost, offers, consent split, reschedules, stylist load; the rules (offer hold window, daily message cap, late cut-off, lead time; owner only); front-desk link; "see it as each person" hub; who-can-do-what matrix.
-- **Front desk** (`#/`, the Desk): day book per stylist with demo clock; cancel / undo; open gaps with who fits and plain-language reasons for every skip; send offers; live offer states; QR per offer; two-phone race; waitlist with consent; evidence log with filters and CSV/JSON export; stylist in/out; **reschedule** (pick a new time, or "Let X choose" link). Owner can "View as front desk", which uses the real front-desk key.
-- **Stylist** (`#/s/<ws>/<staff>/<key>`, owner preview `#/staff/<id>`): own day, first names only, "I can't come in today".
-- **Customer**: sign-up `#/join/<code>` (explicit yes/no to messages, never pre-ticked), own page `#/me/<token>` (queue place, booking, consent, change or cancel, leave), offer `#/o/<uuid>` (book, decline, stop messages), move link `#/m/<uuid>` (pick a time that truly works, or cancel).
-- **Lab** (`#/lab`): the three case checks live, organiser fixture, scenario files, editable input, edge toggles with before/after, live database race.
-- Matching is staff-aware: a freed slot can go to anyone whose service that stylist does. Stylist absence revokes their open offers, holds their gaps, flags their customers; nothing moves until the desk or the customer chooses. Working hours (shift) bound every move and option.
-- Hardening: offers hold 15 demo-minutes then lapse; max 3 offers per customer per day; rate limits per IP / day / offer; payload and text caps; 20k workspace cap, 3-day retention; table privileges revoked from the public key; append-only events; CSV formula-injection guard. Installable PWA.
+The app opens on **Home (`#/`)**: "who is using Refill?" with four cards. Each role is its own dashboard so it can be demoed on its own. A role pill in the top bar switches views; a floating dock (bottom bar on phones) moves between a role's pages. Wording is business-neutral (staff, clients); the demo business is Kesar Salon. Roles are proven by keys the **database** checks on every call (UI hiding is not the security):
+- **Front desk** (`#/desk`, `#/desk/waitlist`, `#/desk/activity`): Today = "needs you now" queue (clients whose staff member is out, held gaps, open gaps), team in/out chips with shift hours, schedule (lanes on desktop, list on phones). Tapping anything opens one **sheet** (bottom sheet on phones) with every action: offer an open gap to the waitlist (who fits, "not offered, and why"), offers out with QR and two-phone race, record a cancellation (two-step), undo, move to another time, "Let X choose" link, give a held gap to someone free. Waitlist page with consent Yes/No/? per person and an Add form. Activity = evidence log with filters and CSV/JSON export. Demo clock in the bar.
+- **Owner** (`#/owner`, `#/owner/team`, `#/owner/rules`): Overview numbers (recovered, still open, lost, refilled/cancelled, offers, consent, reschedules, staff load); Team (staff in/out, their view, their link; front-desk link and "open as front desk"; client sign-up QR; owner's phone QR); Rules (hold window, message cap, late cut-off, lead time; owner only) and the who-can-do-what matrix. "View as front desk" uses the real front-desk key.
+- **Staff member** (`#/staff/<id>` preview, own link `#/s/<ws>/<staff>/<key>`): own day, first names only, "I can't come in today".
+- **Client**: sign-up `#/join/<code>` (explicit yes/no to messages, never pre-ticked), own page `#/me/<token>`, offer `#/o/<uuid>`, move link `#/m/<uuid>`.
+- **Proof for judges** (`#/lab`): the three case checks live, organiser fixture, scenario files, editable input, edge toggles with before/after, live database race.
+- Matching is staff-aware; staff absence revokes their open offers, holds their gaps, flags their clients; nothing moves until the desk or the client chooses. Working hours bound every move and option.
+- Hardening: offers hold 15 demo-minutes then lapse; max 3 offers per client per day; rate limits per IP / day / offer; payload and text caps; 20k workspace cap, 3-day retention; table privileges revoked from the public key; append-only events; CSV formula-injection guard. Installable PWA (service worker cache `refill-shell-v3`, network-first navigation).
+- Design system (v3): grey canvas, white groups, glass only on the bar, dock and sheets; green `--act` = you can act, amber `--beat` = open gap, red `--danger` = needs moving; Hanken Grotesk + JetBrains Mono; radius 18/12/8 concentric. All tokens in `src/styles.css`.
 
 Files that matter:
 - `src/engine.ts` pure rules (reason order NO_CONSENT > SKILL_MISMATCH > DURATION_TOO_LONG > NOT_AVAILABLE), `src/engine.test.ts`, `tests/core-scenarios.json`, `tests/scenarios.json` (Parth's, currently `[]`).
 - `src/api.ts` (types, `useBook`, role keys, `DESK_FUNCS`), `src/rpc.ts` (plain fetch to PostgREST RPC), `src/config.ts` (public URL + publishable key).
-- Pages: `src/App.tsx` (routes), `Desk.tsx`, `Owner.tsx`, `Team.tsx`, `StaffView.tsx`, `Join.tsx`, `Me.tsx`, `Offer.tsx`, `Move.tsx`, `MovePicker.tsx`, `Lab.tsx`, `ui.tsx`, `styles.css`.
+- Pages: `src/App.tsx` (routes, Home, top bar with role pill and demo clock, dock), `src/desk/` (`common.tsx` shared rules text + `useRun`, `Today.tsx`, `SlotSheet.tsx`, `Waitlist.tsx`, `Activity.tsx`), `Owner.tsx` (Overview, Team, Rules, Access), `StaffView.tsx`, `Join.tsx`, `Me.tsx`, `Offer.tsx`, `Move.tsx`, `MovePicker.tsx`, `Lab.tsx`, `ui.tsx` (icons, Modal, QR, toast), `styles.css`.
 - Data: `data/salon/{staff,services,schedule,customers}.csv` via `src/day.ts` (staff now have `shift_start,shift_end`).
 - Database: `supabase/migrations/001`–`005` (all applied). 005 = working hours, `moves` table, front-desk role (`desk_hash`, `desk_link`), `set_policy`, `do_cancel`, `apply_move`, `move_options`, `get_move`, `choose_move`, `cancel_my_booking`, `my_move`.
 
@@ -65,15 +66,14 @@ npx tsc -b && npx vite build
 
 ## 5. What to do next (priority order)
 
-1. **UI revamp.** Dhruv thinks the current look is "AI slop". Rebuild the visual layer with the `flagship-feel` skill (plus `design-taste-frontend`, `emil-design-eng`, `apple-design`, `redesign-existing-projects`). Reference for the feel: the Trace dashboard (section 1). Keep every feature and the database contract; this is a visual and UX pass, not a rewrite of logic. Each role gets a dashboard that feels its own (front desk, owner, stylist, customer). New look must differ from every fingerprint in the flagship-feel appendix.
-2. **Android/mobile bugs.** Dhruv saw UI bugs on Android Chrome; details not captured. Ask Dhruv for the list (or screenshots), and test at 360×800 and 412×915 in the browser preview. Fix inside the revamp.
+1. **Polish pass on the v3 UI (done once, keep going if time allows).** Revamp shipped 17 Oct ~23:15. Verified at 375, 689 and 1366 px in Chromium, dark and light, no horizontal scroll. Not yet verified on a real Android phone or Firefox: Dhruv reported layout faults there on v2. Ask for screenshots if anything still looks wrong. Remaining ideas: scroll-linked motion on Home, a second demo business (clinic CSVs under `data/clinic/`) to prove the product is not salon-only.
+2. **Docs to v3:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1 screens; README screenshots in `docs/screens` are old. Operational check PDF lives in `docs/ops/`.
 3. **Market-shock rehearsal (9 AM 18 Oct).** All four shocks already work: late cancel (cancel near start, tag LATE), staff absence (mark stylist out, rebook or send link), duration change (Lab edit or a 90-min request vs 60-min gap), consent withdrawn (customer page or STOP). Prepare the exact click path for each; be ready to change data or a rule live and redeploy in minutes.
-4. **Docs to v2:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1. Update README screenshots (`docs/screens`). DEVLOG entry for the MBA-driven reschedule change.
-5. **Teammate PRs:** review against `AGENTS.md` scope, run CI, merge. Parth: scenarios JSON. Chirag: CSVs and shock docs. Vedanth: handoff and presentation docs.
-6. **Demo video:** OBS screen recording, edit with the Premiere Pro MCP (`mcp__premiere-pro__*`, call `verify_premiere_connection` first). Same approach as Dhruv's Cascade project.
-7. **Pitch:** 4-minute path below, plus answers for "how do you prevent double booking", "what if the stylist is out", "consent", "what changed after MBA feedback".
+4. **Teammate PRs:** review against `AGENTS.md` scope, run CI, merge. Parth: scenarios JSON. Chirag: CSVs and shock docs. Vedanth: handoff and presentation docs.
+5. **Demo video:** OBS screen recording, edit with the Premiere Pro MCP (`mcp__premiere-pro__*`, call `verify_premiere_connection` first). Same approach as Dhruv's Cascade project.
+6. **Pitch:** 4-minute path below, plus answers for "how do you prevent double booking", "what if the stylist is out", "consent", "what changed after MBA feedback".
 
-4-minute demo path that works today: Owner tab (numbers at ₹0) → Desk: mark Riya **Out** (her customers turn red, her gap is held) → tap Pooja 13:30 → Pick a new time → "13:30 with Meher" → Move → tap Varun 16:00 → Let Varun choose → Open as Varun → pick a time → back on the Desk, the log shows "by customer" → fill an open gap from the waitlist (consent skips, race) → Owner tab: numbers moved.
+4-minute demo path (v3): Home → **Front desk** → Team today: tap **Riya** to mark her out (her clients turn red in "Needs you now", her gap is held) → tap a red client → Pick a new time → choose "same time with someone else" → Move → tap another red client → Let them choose → Open as client → pick a time → back on Today, tap the amber open gap → Send offers (the sheet shows who was not offered and why: consent, service, duration) → open an offer on a phone via QR, or "Two phones, one slot" → Activity shows every step → role pill → **Owner**: numbers moved; Rules and who-can-do-what → **Proof for judges**: the three case checks pass live.
 
 ## 6. How Dhruv works (follow this exactly)
 

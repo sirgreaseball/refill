@@ -352,3 +352,4 @@ These are the looks of the builds this language came from. Every new build must 
   - v2: Archivo and Geist Mono, with a cobalt rope.
   - v3: Onest and Reddit Mono, daylight glass, an ember accent and glossy 3D rings.
 - **Refill:** cotton paper #f3eee6, kohl ink #1f1a1e, mehendi #4b6626 (act) and haldi #d99a14 (the open gap); Fraunces (SOFT) and DM Mono; a day line whose cancelled gap breathes and floods with ink when refilled.
+- **Refill v3:** canvas #f3f2ef, white groups, act green #0f7a5a and gap amber #d97706, danger #cf3329; Hanken Grotesk and JetBrains Mono; glass bar and floating dock; a day line per staff member whose open gap breathes amber and fills green.
