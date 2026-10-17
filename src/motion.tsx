@@ -51,7 +51,16 @@ export function useSpotlight() {
   useEffect(() => {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches || reduced()) return
     let last: HTMLElement | null = null
+    let pull: HTMLElement | null = null
     const on = (e: PointerEvent) => {
+      const m = (e.target as HTMLElement).closest?.('.btn.is-primary, .role-pill') as HTMLElement | null
+      if (pull && pull !== m) pull.style.translate = ''
+      pull = m
+      if (m) {
+        const b = m.getBoundingClientRect()
+        const lean = (d: number, size: number) => Math.max(-3, Math.min(3, (d / size) * 6))
+        m.style.translate = `${lean(e.clientX - b.left - b.width / 2, b.width)}px ${lean(e.clientY - b.top - b.height / 2, b.height)}px`
+      }
       const el = (e.target as HTMLElement).closest?.('.spot') as HTMLElement | null
       if (last && last !== el) last.style.removeProperty('--spot')
       last = el
