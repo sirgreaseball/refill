@@ -1,8 +1,38 @@
 # Brief: the Refill splash (the story page)
 
-You are a Claude working for Dhruv on a **different account** from the Claude that builds the Refill app. That session is still active in this repo. Your job is one thing: **build the splash**, a cinematic, scroll-driven story page that sells Refill in under a minute and hands the visitor into the product. Read this whole file before writing code. Do not ask Dhruv to re-explain anything that is in this brief.
+You are a Claude working for Dhruv on a **different account** from the Claude that builds the Refill app. That session is still active in this repo. Your job is one thing: **build the splash at `/splash`** (live: https://fillthechair.vercel.app/splash). It is a cinematic, scroll-driven story page that sells Refill in under a minute and hands the visitor into the product. Read this whole file before writing code. Do not ask Dhruv to re-explain anything that is in this brief.
 
 ---
+
+## 0. Master prompt (what Dhruv pastes to start you)
+
+```
+You're building the splash page for Refill, Dhruv's hackathon app. It lives at its own address: https://fillthechair.vercel.app/splash (a real path, not a hash route). Repo: Z:\claude\refill (github.com/sirgreaseball/refill).
+
+Read docs/agents/splash-brief.md first, all of it. Then read HANDOFF.md section 0.3 (the locked design language) and .claude/skills/flagship-feel/SKILL.md (the build spec). Ignore HANDOFF's task list: another Claude session owns the app and is working in that folder right now.
+
+The job: a cinematic, scroll-scrubbed story page at /splash, built with GSAP + ScrollTrigger + Lenis. The Day Dial (src/Dial.tsx) is the hero, rendered as art, and everything reacts to the cursor. Use the app's chronograph theme: its tokens, its three fonts, and colour only where it means something. Study Dhruv's own splash pages for technique: Threshold, Sandbox and Cascade (paths and live links are in the brief). Use lusion.co and Awwwards Sites of the Day for feel. Show only true numbers from the repo's sample data.
+
+Plumbing (the brief has exact code):
+- App.tsx switches on location.pathname === '/splash' to a lazy src/story/Story.tsx.
+- vercel.json gets a rewrite for /splash and leaves the CSP untouched.
+- SignIn.tsx gets a "See how Refill works" link to /splash.
+- GSAP and Lenis are imported only inside src/story/, so the app bundle does not grow.
+
+Work rules:
+- Work only in your own worktree: git worktree add ..\refill-splash -b splash origin/main.
+- Touch only the files the brief lists.
+- Push the branch often and share its Vercel preview URL with /splash on the end.
+- Open a pull request when the checks in section 7 pass. Dhruv merges it; never push to main.
+- No AI co-author trailers in commits.
+- Never create accounts or run npm run dbtest.
+
+How to work:
+- Build the plain working version first with real content, then polish in passes.
+- Screenshot at 1440, 1280, 820 and 390 px, in dark and light, with reduced motion; check frame times while scrolling.
+- Keep the brief's Progress section current after each milestone.
+- Talk tersely and show screenshots.
+```
 
 ## 1. What Refill is (the story you are telling)
 
@@ -88,8 +118,8 @@ Dhruv built three splash pages in this style. Open them live, read their code, a
 
 ## 4. What to build
 
-**A route `#/story`**, the Refill story. It is linked from the sign-in page ("See how Refill works") and is the pitch opener.
-- Do **not** replace `#/`. Dhruv asked that the first thing on the app is sign-in, especially on phones.
+**The splash lives at its own address: `https://fillthechair.vercel.app/splash`** (locally `http://localhost:<port>/splash`). It is a real path, not a hash route. It is linked from the sign-in page ("See how Refill works") and is the pitch opener.
+- Do **not** replace `/` or `#/`. Dhruv asked that the first thing on the app is sign-in, especially on phones.
 - Whether the splash later becomes the root is his call, so ask before changing it.
 
 **Suggested chapters.** Each holds while you read and morphs between beats. The dial carries every beat.
@@ -104,7 +134,7 @@ Dhruv built three splash pages in this style. Open them live, read their code, a
 5. **The race.** Two phones tap at the same instant and one booking lands. The line: "never double-booked: the database decides, once."
 6. **Staff out.** A ring turns coral, then its appointment slides to a new time with someone else (Manav to 16:30 with Riya).
 7. **Proof.** One row of three or four large, true numbers with small labels. For example: recovered today from the sample day (computed with the engine), 51 rule tests, 14 live cross-role checks, 0 double bookings in the race test. Every figure must be traceable to the repo.
-8. **Ending.** Two buttons: **Open Refill** (to `#/`) and **Try the demo**. **Try the demo** must open the sample day the same way the app's "Try the demo" button does: `localStorage.setItem('refill.mode', 'demo')`, then go to `#/`.
+8. **Ending.** Two buttons: **Open Refill** (`location.assign('/#/')`) and **Try the demo**. **Try the demo** must open the sample day the same way the app's "Try the demo" button does: `localStorage.setItem('refill.mode', 'demo')` inside try/catch, then `location.assign('/#/')`. Both leave `/splash` for the root path, so the app loads fresh.
 
 **Everything reacts to the cursor, on fine pointers only:**
 - magnetic primary buttons that lean 1.5–3 px;
@@ -117,17 +147,31 @@ On touch screens, none of this should get stuck.
 
 ## 5. How to build it (stack and plumbing)
 
-- **Stack.** The app is Vite 8, React 19 and TypeScript, using hash routing. Routes are in the `Routes` function in `src/App.tsx`. Pages that render without the app bar (for example `/places`) are lazy imports, matched before the `Shell`.
+- **Stack.** The app is Vite 8, React 19 and TypeScript, using hash routing (`#/desk`, `#/join/<code>` and so on). Routes are in the `Routes` function in `src/App.tsx`. Pages that render without the app bar (for example `#/places`) are lazy imports, matched before the `Shell`. The splash is the one page on a real path, `/splash`.
 - **Add exactly this to the app:**
-  - In `src/App.tsx`, one lazy import, `const Story = lazy(fresh(() => import('./story/Story')))`, plus one route line: `if (route === '/story') return <Suspense fallback={phoneWait}><Story /></Suspense>`.
-  - In `src/SignIn.tsx`, one link: `<a className="link" href="#/story">See how Refill works</a>`.
+  - In `src/App.tsx`:
+    - One lazy import: `const Story = lazy(fresh(() => import('./story/Story')))`.
+    - Rename today's `App` body (the `useRoute` call and `<Routes>`) to `HashApp`, and make `App` choose by path. The path never changes without a full page load, so the hook order stays stable:
+      ```tsx
+      export default function App() {
+        if (location.pathname.replace(/\/+$/, '') === '/splash') return <Boundary><Suspense fallback={phoneWait}><Story /></Suspense></Boundary>
+        return <HashApp />
+      }
+      ```
+  - In `vercel.json`, add a rewrite so a refresh or a shared link to `/splash` serves the app:
+    - `"rewrites": [{ "source": "/splash", "destination": "/index.html" }, { "source": "/splash/", "destination": "/index.html" }]`
+    - Keep the existing `headers` block, including the CSP, exactly as it is.
+    - Vite's dev and preview servers already fall back to `index.html`, so `/splash` works locally without this.
+    - The service worker (`public/sw.js`) fetches pages from the network first, so it needs no change.
+  - In `src/SignIn.tsx`, one link: `<a className="link" href="/splash">See how Refill works</a>`.
   - Everything else goes in **new files under `src/story/`**, including the splash's own CSS file, imported from `Story.tsx`.
+- **Links out of the splash** go to the root path with a hash (`/#/`, `/#/places`), never a bare `#/...`, because the splash is not on `/`.
 - **Dependencies.** `npm i gsap@^3.15.0 lenis@^1.3.26`, the same versions Cascade and Threshold use. All GSAP plugins, including ScrollTrigger and SplitText, are free and in the npm package. **Import them only inside `src/story/`**, so they land in the story's lazy chunk and the app's main bundle does not grow. Check this after a build: `ls -la dist/assets`.
 - **CSP.** `vercel.json` allows only `script-src 'self'`. Bundle everything; no CDN scripts and no inline scripts. WebGL and canvas are fine. Leave the CSP alone unless something truly needs it, and say why if it does.
 - **Lenis + ScrollTrigger in a single-page app.** This is the classic bug.
   - Create Lenis on mount with `lenis.on('scroll', ScrollTrigger.update)`, `gsap.ticker.add((t) => lenis.raf(t * 1000))` and `gsap.ticker.lagSmoothing(0)`.
   - On unmount, call `lenis.destroy()`, kill every ScrollTrigger and timeline you made (`gsap.context(...).revert()`), and remove the ticker callback.
-  - Otherwise the app's own pages break after leaving `#/story`: scroll gets stuck and classes get left on `<html>`. Test this by going story, then sign-in, then demo, and checking the desk still scrolls.
+  - Links out of `/splash` load the app fresh, so a leak there would mostly clear itself, but clean up anyway: hot reload and the back/forward cache keep the page alive. A leak shows as stuck scrolling and `lenis` classes left on `<html>`.
 - **Route changes.** The app's route-change handler already scrolls to the top and cross-fades with a view transition (`useRoute` in `App.tsx`). Do not fight it.
 - **Reduced motion.** Turn Lenis off, show still frames of the same scenes, and keep all the content. Honour `prefers-reduced-transparency`.
 - **Phones.** Recompose for phones; don't shrink the desktop layout.
@@ -155,7 +199,13 @@ npm ci
 
 - Work only in `Z:\claude\refill-splash` on branch `splash`.
 - Commit small and often, and **push the branch** (`git push -u origin splash`). Vercel gives every pushed branch a preview URL; share that with Dhruv.
-- Touch only `src/story/**`, the two lines in `src/App.tsx`, the one link in `src/SignIn.tsx`, `package.json` / `package-lock.json` for the two dependencies, and this brief's **Progress** section below.
+- Touch only:
+  - `src/story/**`;
+  - the lazy import and the `/splash` check in `src/App.tsx`;
+  - the one link in `src/SignIn.tsx`;
+  - the `rewrites` entry in `vercel.json`;
+  - `package.json` / `package-lock.json` for the two dependencies;
+  - this brief's **Progress** section below.
 - When it is ready:
   1. `git fetch && git rebase origin/main`.
   2. Run the checks in section 7.
@@ -172,7 +222,9 @@ npm ci
   - dark and light themes;
   - reduced motion on.
 - No console errors, and no horizontal scroll at any width.
-- Go from story to sign-in to **Try the demo** to the front desk: the desk scrolls normally, and `<html>` keeps no `lenis` classes.
+- `/splash` and `/splash/` load on the branch's Vercel preview URL, including after a hard refresh. A refresh is the check that the rewrite works.
+- `/` still opens the app as before, with sign-in first on phones.
+- Go from `/splash` to sign-in to **Try the demo** to the front desk: the desk scrolls normally, and `<html>` keeps no `lenis` classes.
 - Frame times while scrolling, sampled with `performance.now()` in a `requestAnimationFrame` loop. Report the 95th percentile.
 - Every number on the page traces to the repo: name the file or script in a code comment.
 
