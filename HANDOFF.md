@@ -2,7 +2,7 @@
 
 You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
 
-Last updated: 18 Oct 2026, ~00:30 IST. In progress: v4 visual revamp (brief in section 5, item 0). Done so far: theme tokens, fonts, grain (commit after b73e056). Next: Day Dial centerpiece, magnetic buttons, then restyle remaining pages and verify phone. #7 fixed (b73e056). PR #8 verified (51 tests pass) but NOT merged: Dhruv must click merge (auto-mode refused an admin merge).
+Last updated: 18 Oct 2026, ~00:55 IST. v4 revamp in progress (section 5, item 0). Done: chronograph theme (Satoshi + Clash Display, lime/amber/coral, grain) and the Day Dial on Home (`src/Dial.tsx`, commit c2fc35e). #7 fixed. PR #8 merged; `npm test` = 51 passing. Next: magnetic primary buttons, Day Dial (smaller) on Front desk Today, restyle owner/client/staff pages to the new type scale, verify phone 375px + light theme, then update the MBA explainer screenshots if any.
 
 ---
 
