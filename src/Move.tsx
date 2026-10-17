@@ -11,7 +11,7 @@ import { Icon, Mark, clock, span } from './ui'
 interface Appt { start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present?: boolean }
 interface View {
   state: 'open' | 'moved' | 'cancelled' | 'withdrawn' | 'NOT_FOUND'
-  salon: string; now_min: number; reason: 'STAFF_ABSENT' | 'CUSTOMER_REQUEST' | 'SALON_REQUEST'; customer: string
+  salon: string; kind?: string; now_min: number; reason: 'STAFF_ABSENT' | 'CUSTOMER_REQUEST' | 'SALON_REQUEST'; customer: string
   current: Appt | null; moved_to: Appt | null; options: MoveOption[]
 }
 const NOT_DONE: Record<string, string> = {
@@ -117,7 +117,7 @@ export default function Move({ id }: { id: string }) {
 
       <footer className="phone-foot">
         <p><Icon name="shield" size={14} /> Only times that truly work are listed. Every choice is checked again before it is booked.</p>
-        <p>Synthetic demo. No real message is ever sent.</p>
+        {v.kind !== 'live' && <p>Synthetic demo. No real message is ever sent.</p>}
       </footer>
     </main>
   )

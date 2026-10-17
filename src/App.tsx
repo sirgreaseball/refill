@@ -23,7 +23,10 @@ const Lab = lazy(fresh(() => import('./Lab')))
 const StaffView = lazy(fresh(() => import('./StaffView')))
 const Join = lazy(fresh(() => import('./Join')))
 const Me = lazy(fresh(() => import('./Me')))
+const Places = lazy(fresh(() => import('./Me').then((m) => ({ default: m.Places }))))
 const Move = lazy(fresh(() => import('./Move')))
+const Setup = lazy(fresh(() => import('./Setup')))
+const History = lazy(fresh(() => import('./Manage').then((m) => ({ default: m.History }))))
 
 /** Catches a page that fails to load or render, so the rest of the app and a way out stay on screen. */
 class Boundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -93,6 +96,7 @@ function Routes({ route }: { route: string }) {
   if (join) return <Suspense fallback={phoneWait}><Join code={join[1]} /></Suspense>
   const me = /^\/me\/([0-9a-f]{32})$/i.exec(route)
   if (me) return <Suspense fallback={phoneWait}><Me token={me[1]} /></Suspense>
+  if (route === '/me') return <Suspense fallback={phoneWait}><Places /></Suspense>
   return <ToastHost><Shell route={route === '/team' ? '/owner/team' : route} /></ToastHost>
 }
 
@@ -108,6 +112,7 @@ function Shell({ route }: { route: string }) {
 
   let page: ReactNode
   if (area === 'lab') page = <Lab />
+  else if (book.phase === 'setup') page = <Setup book={book} />
   else if (area === 'home') page = <Home book={book} />
   else if (!st) page = <Loading phase={book.phase} />
   else if (route === '/desk/waitlist') page = <Waitlist book={book} />
@@ -115,6 +120,7 @@ function Shell({ route }: { route: string }) {
   else if (route.startsWith('/desk')) page = <Today key={slot ?? 'today'} book={book} initial={slot} />
   else if (route === '/owner/team') page = <OwnerTeam book={book} />
   else if (route === '/owner/rules') page = <Rules book={book} />
+  else if (route === '/owner/history') page = <History book={book} />
   else page = <Overview book={book} />
 
   return (
@@ -122,7 +128,9 @@ function Shell({ route }: { route: string }) {
       <Glow st={st} />
       <Bar route={route} area={area} book={book} />
       {book.offline && <p className="banner" role="status">Offline. Showing the last saved state; changes resume when the connection is back.</p>}
-      {area === 'home' ? <Boundary key={route}>{page}</Boundary> : <main className="page"><Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary></main>}
+      {book.phase === 'setup' && area !== 'lab' ? <Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary>
+        : area === 'home' ? <Boundary key={route}>{page}</Boundary>
+        : <main className="page"><Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary></main>}
       {st && (area === 'desk' || (area === 'owner' && st.role === 'owner')) && <Dock route={route} area={area} book={book} />}
     </div>
   )
@@ -144,6 +152,7 @@ type InstallEvent = Event & { prompt: () => Promise<void> }
 function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
   const st = book.state
   const role = st?.role
+  const live = st?.workspace.kind === 'live'
   const canOwn = role === 'owner' || !!book.desk?.deskKey
   const [menu, setMenu] = useState<'roles' | 'more' | null>(null)
   const [qr, setQr] = useState(false)
@@ -186,11 +195,16 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
     <header className="bar">
       <div className="bar-in" ref={ref}>
         <a className="brand" href="#/" aria-label="Refill home"><Mark size={14} /><span>Refill</span></a>
-        {st && <span className="biz"><strong>{st.workspace.salon}</strong><small>demo day</small></span>}
+        {st && <span className="biz"><strong>{st.workspace.salon}</strong><small>{live ? st.workspace.business_type ?? 'today' : 'demo day'}</small></span>}
 
         <div className="bar-end">
-          {st && (area === 'desk' || area === 'owner') && <Clock now={st.workspace.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />}
-          <div className="menu-wrap">
+          {book.mode === 'live'
+            ? <button className="demo-pill" onClick={() => book.setMode('demo')}>Try the demo</button>
+            : <span className="demo-pill is-on"><span>Demo</span><button onClick={() => book.setMode('live')} aria-label="Leave the demo">Exit</button></span>}
+          {st && (area === 'desk' || area === 'owner') && (live
+            ? <span className="clock is-live" title="Real time, India"><output>{clock(st.workspace.now_min)}</output></span>
+            : <Clock now={st.workspace.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />)}
+          {book.phase !== 'setup' && <div className="menu-wrap">
             <button className={`role-pill ${area === 'desk' ? 'is-desk' : ''}`} onClick={() => setMenu(menu === 'roles' ? null : 'roles')} aria-expanded={menu === 'roles'} aria-haspopup="menu">
               <span className="dot" /><span className="label">{label}</span><Icon name="chevron" size={16} />
             </button>
@@ -205,7 +219,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
                 <a role="menuitem" href="#/"><Icon name="users" /> All views</a>
               </div>
             )}
-          </div>
+          </div>}
           <div className="menu-wrap">
             <button className="icon-btn" onClick={() => setMenu(menu === 'more' ? null : 'more')} aria-expanded={menu === 'more'} aria-label="More"><Icon name="more" /></button>
             {menu === 'more' && (
@@ -216,7 +230,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
                 <button role="menuitem" onClick={() => setTheme(theme === 'auto' ? 'dark' : theme === 'dark' ? 'light' : 'auto')}>
                   <Icon name={theme === 'dark' ? 'moon' : 'sun'} /> Theme<small>{theme}</small>
                 </button>
-                {role === 'owner' && <button role="menuitem" className={armed ? 'is-armed' : ''} onClick={async () => {
+                {role === 'owner' && !live && <button role="menuitem" className={armed ? 'is-armed' : ''} onClick={async () => {
                   if (!armed) return setArmed(true)
                   await book.reset(); setMenu(null)
                 }}><Icon name="reset" /> {armed ? 'Tap again to reset the day' : 'Reset demo day'}</button>}
@@ -255,7 +269,7 @@ function Clock({ now, onCommit }: { now: number; onCommit: (v: number) => void }
 
 const DOCKS = {
   desk: [['#/desk', 'Today', 'calendar'], ['#/desk/waitlist', 'Waitlist', 'list'], ['#/desk/activity', 'Activity', 'pulse']],
-  owner: [['#/owner', 'Overview', 'chart'], ['#/owner/team', 'Team', 'users'], ['#/owner/rules', 'Rules', 'sliders']],
+  owner: [['#/owner', 'Overview', 'chart'], ['#/owner/team', 'Team', 'users'], ['#/owner/history', 'History', 'book'], ['#/owner/rules', 'Rules', 'sliders']],
 } as const
 
 const isDockOn = (href: string, route: string) => (href === '#/desk' ? route === '/desk' || route.startsWith('/desk/slot') : route === href.slice(1))

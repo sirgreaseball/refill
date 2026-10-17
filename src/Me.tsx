@@ -9,9 +9,43 @@ interface Mine {
   state: 'waiting' | 'booked' | 'removed' | 'NOT_FOUND'
   name: string; service: string | null; minutes: number; price_inr: number | null
   consent: boolean | null; consent_at: string | null; consent_source: string | null
-  free_from: number | null; free_until: number | null; salon: string; now_min: number; place: number
+  free_from: number | null; free_until: number | null; salon: string; now_min: number; place: number; kind?: string
   offers: { id: string; start_min: number; minutes: number; expires_min: number | null; status: string; slot_status: string }[]
   booking: { status: 'confirmed' | 'cancelled'; start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present: boolean | null } | null
+  history?: { day: string; start_min: number; minutes: number; service: string | null; staff: string | null }[]
+}
+
+// Every place this phone has joined, so one person can switch between their salon, clinic and tutor.
+// Kept on this device only; each entry is the private link that place gave them.
+type Place = { token: string; salon: string }
+const PLACES = 'refill.places'
+export function readPlaces(): Place[] {
+  try { const p = JSON.parse(localStorage.getItem(PLACES) ?? '[]'); return Array.isArray(p) ? p.filter((x) => typeof x?.token === 'string') : [] } catch { return [] }
+}
+function keepPlace(token: string, salon: string | null) {
+  try {
+    const rest = readPlaces().filter((x) => x.token !== token)
+    localStorage.setItem(PLACES, JSON.stringify(salon ? [{ token, salon }, ...rest] : rest))
+  } catch { /* private mode: this page still works */ }
+}
+
+/** Your places: every waitlist this phone has joined. */
+export function Places() {
+  const places = readPlaces()
+  return (
+    <main className="phone">
+      <header className="phone-top"><span className="avatar" aria-hidden="true">R</span><span><strong>Your places</strong><small>on this phone</small></span></header>
+      <div>
+        <h1 className="phone-h">{places.length ? 'Pick a place' : 'No places yet'}</h1>
+        <p className="quiet">{places.length ? 'Each one keeps your place in its queue, your messages choice and your past visits.' : 'Join a waitlist from a business’s sign-up link and it appears here.'}</p>
+      </div>
+      {places.length > 0 && (
+        <ul className="rows">
+          {places.map((p) => <li key={p.token}><a className="row place-row" href={`#/me/${p.token}`}><span className="row-main"><strong>{p.salon}</strong><small>Open my page</small></span><Icon name="arrow" size={16} /></a></li>)}
+        </ul>
+      )}
+    </main>
+  )
 }
 
 export default function Me({ token }: { token: string }) {
@@ -21,7 +55,12 @@ export default function Me({ token }: { token: string }) {
   const [offline, setOffline] = useState(false)
 
   const load = useCallback(async () => {
-    try { setMe(await rpc<Mine>('get_my_entry', { p_token: token })); setOffline(false) } catch { setOffline(true) }
+    try {
+      const m = await rpc<Mine>('get_my_entry', { p_token: token })
+      setMe(m)
+      keepPlace(token, m.state === 'NOT_FOUND' ? null : m.salon)
+      setOffline(false)
+    } catch { setOffline(true) }
   }, [token])
 
   useEffect(() => {
@@ -56,6 +95,11 @@ export default function Me({ token }: { token: string }) {
         <span className="avatar" aria-hidden="true">{me.salon.slice(0, 1)}</span>
         <span><strong>{me.salon}</strong><small>your waitlist place</small></span>
       </header>
+      {readPlaces().length > 1 && (
+        <nav className="chips places" aria-label="Your places">
+          {readPlaces().map((p) => <a key={p.token} href={`#/me/${p.token}`} className={p.token === token ? 'is-on' : ''} aria-current={p.token === token ? 'page' : undefined}>{p.salon.split(',')[0]}</a>)}
+        </nav>
+      )}
 
       {me.state === 'waiting' && (
         <SlotDial segs={[{ start: Math.max(600, me.free_from ?? 600), minutes: Math.min(1200, me.free_until ?? 1200) - Math.max(600, me.free_from ?? 600), kind: 'booked' }]} now={me.now_min} big={me.free_from != null ? clock(me.free_from) : 'Any'} small={me.free_until != null ? `free until ${clock(Math.min(me.free_until, 1439))}` : me.free_from != null ? 'free from then on' : 'time today'}
@@ -113,9 +157,25 @@ export default function Me({ token }: { token: string }) {
         ) : <button className="link" onClick={() => setLeaving(true)}>Leave the waitlist</button>
       )}
 
+      {(me.history?.length ?? 0) > 0 && (
+        <section aria-label="Past visits">
+          <p className="overline">Your past visits</p>
+          <ul className="rows">
+            {me.history!.map((h, i) => (
+              <li key={i} className="my-slot">
+                <span className="mono">{clock(h.start_min)}</span>
+                <span className="my-slot-main"><strong>{h.service ?? 'Appointment'}</strong><small>{new Date(`${h.day}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}{h.staff ? ` · ${h.staff}` : ''}</small></span>
+                <span className="tag">Visited</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <footer className="phone-foot">
+        {readPlaces().length > 0 && <p><a href="#/me">All your places</a></p>}
         <p><Icon name="shield" size={14} /> Only you can open this page. Keep the link private.</p>
-        <p>Synthetic demo. No real message is ever sent.</p>
+        {me.kind !== 'live' && <p>Synthetic demo. No real message is ever sent.</p>}
       </footer>
     </main>
   )

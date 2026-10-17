@@ -10,6 +10,7 @@ interface Day {
   now_min: number
   staff: { id: string; name: string; skills: string[]; present: boolean }
   slots: { id: string; start_min: number; minutes: number; service: string | null; status: 'free' | 'booked' | 'blocked'; refilled: boolean; customer: string }[]
+  tasks?: { id: number; text: string; done: boolean }[]
 }
 
 export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; staff: string; keyStr: string; preview?: boolean }) {
@@ -38,6 +39,10 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
     try { await rpc('set_staff_presence', { p_ws: ws, p_staff: staff, p_key: keyStr, p_present: present }); await load() } catch { setState('offline') }
     setConfirm(false)
     setBusy(false)
+  }
+
+  const toggleTask = async (id: number, done: boolean) => {
+    try { await rpc('set_task', { p_ws: ws, p_key: keyStr, p_task: id, p_done: done }); await load() } catch { setState('offline') }
   }
 
   if (state === 'forbidden') return <main className="phone"><Mark /><h1 className="phone-h">This link no longer works</h1><p className="quiet">Ask the desk for a new stylist link.</p></main>
@@ -82,6 +87,20 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
           <button className="btn is-primary is-big" disabled={busy} onClick={() => setPresent(true)}>I’m in after all</button>
         )}
       </div>
+
+      {(day.tasks?.length ?? 0) > 0 && (
+        <section aria-label="My tasks">
+          <p className="overline">Tasks from the owner</p>
+          <ul className="rows">
+            {day.tasks!.map((t) => (
+              <li key={t.id} className={`task ${t.done ? 'is-done' : ''}`}>
+                <input type="checkbox" checked={t.done} onChange={() => toggleTask(t.id, !t.done)} aria-label={`${t.done ? 'Done' : 'Open'}: ${t.text}`} />
+                <span className="row-main"><strong>{t.text}</strong></span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-label="My appointments">
         <p className="overline">My day</p>

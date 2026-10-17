@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react'
 import { deskLinkUrl, joinLink, ownerLink, staffLinkUrl, type DbStaff, type State } from './api'
 import { figures, plural, togglePresence, useRun, type Book } from './desk/common'
 import { SubDial } from './Dial'
+import { Services, StaffForm, Tasks } from './Manage'
 import { Num } from './motion'
 import { Icon, Modal, Qr, clock, copy, lead, money } from './ui'
 
@@ -52,7 +53,7 @@ export function Overview({ book }: { book: Book }) {
         <div>
           <p className="overline">Owner · {st.workspace.salon}</p>
           <h1>{f.recovered ? `${money(f.recovered)} back in the book today` : 'Nothing recovered yet today'}</h1>
-          <p>Counted live from the database. Synthetic demo day.</p>
+          <p>Counted live from the database.{st.workspace.kind === 'live' ? '' : ' Synthetic demo day.'}</p>
         </div>
       </header>
       <section className="group ov-hero spot" aria-label="Where cancelled money went">
@@ -145,6 +146,7 @@ export function Team({ book }: { book: Book }) {
   const st = book.state!
   const run = useRun(book)
   const [share, setShare] = useState<{ title: string; url: string; note: string } | null>(null)
+  const [editing, setEditing] = useState<DbStaff | 'new' | null>(null)
   if (st.role !== 'owner') return <OwnerOnly />
   const desk = book.desk!
   const now = st.workspace.now_min
@@ -165,16 +167,18 @@ export function Team({ book }: { book: Book }) {
         <div><p className="overline">Owner · team and links</p><h1>Everyone sees only their part</h1><p>Each person gets their own link. The database checks the key behind it on every action.</p></div>
       </header>
       <section className="group spot">
-        <div className="group-head"><h2>Staff</h2><p>Working hours keep every move inside a shift.</p></div>
+        <div className="group-head"><h2>Staff</h2><button className="btn" onClick={() => setEditing('new')}><Icon name="plus" /> Add someone</button></div>
+        <p className="quiet small" style={{ marginBottom: 6 }}>Working hours keep every booking and move inside a shift.</p>
         <ul className="rows">
           {st.staff.map((p) => {
             const ahead = st.slots.filter((s) => s.staff_id === p.id && s.status === 'booked' && s.start_min >= now).length
             return (
               <li key={p.id} className={`person ${p.present ? '' : 'is-out'}`}>
                 <span className="avatar-sm">{p.name.slice(0, 1)}</span>
-                <span className="row-main"><strong>{p.name}</strong><small>{p.skills.join(' · ')} · {clock(p.shift_start)}–{clock(p.shift_end)} · {ahead} booked ahead</small></span>
+                <span className="row-main"><strong>{p.name}</strong><small>{p.skills.join(' · ')} · {clock(p.shift_start)}–{clock(Math.min(p.shift_end, 1439))} · {ahead} booked ahead{(st.tasks ?? []).some((t) => t.staff_id === p.id && !t.done) ? ` · ${(st.tasks ?? []).filter((t) => t.staff_id === p.id && !t.done).length} open tasks` : ''}</small></span>
                 <span className="person-acts">
                   <button className={`toggle-pill ${p.present ? '' : 'is-out'}`} onClick={() => togglePresence(run, p)}>{p.present ? 'In' : 'Out'}</button>
+                  <button className="btn is-quiet" onClick={() => setEditing(p)}>Edit</button>
                   <a className="btn is-quiet" href={`#/staff/${p.id}`}>Their view</a>
                   <button className="btn" onClick={() => staffLink(p)}><Icon name="share" /> Link</button>
                 </span>
@@ -183,6 +187,7 @@ export function Team({ book }: { book: Book }) {
           })}
         </ul>
       </section>
+      <Tasks book={book} />
       <section className="group spot" aria-label="Links">
         <div className="group-head"><h2>Links</h2><p>One key per person. A new link turns the old one off.</p></div>
         <ul className="rows">
@@ -211,6 +216,9 @@ export function Team({ book }: { book: Book }) {
           </li>
         </ul>
       </section>
+      {editing && <Modal title={editing === 'new' ? 'Add someone to the team' : `Edit ${editing.name}`} onClose={() => setEditing(null)}>
+        <StaffForm st={st} run={run} person={editing === 'new' ? undefined : editing} onDone={() => setEditing(null)} />
+      </Modal>}
       {share && (
         <Modal title={share.title} onClose={() => setShare(null)}>
           <div className="qr-one">
@@ -264,6 +272,7 @@ export function Rules({ book }: { book: Book }) {
           </div>
         </form>
       </section>
+      <Services book={book} />
       <Access />
     </div>
   )
