@@ -200,3 +200,35 @@
 .blk.is-refilled { animation: fill-in 0.9s var(--ease-rare) both; }
 @keyframes fill-in { from { background: var(--beat-soft); border-color: var(--beat); } }
 @media (prefers-reduced-motion: reduce) { .rb.is-refilled::after, .blk.is-refilled::after { display: none; } }
+
+/* ---------- the Day Dial */
+.hero-body { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: center; flex: 1; }
+.tile.is-hero .hero-body .hero-nums { grid-template-columns: 1fr; margin-top: 0; padding-top: 0; border-top: 0; gap: 18px; }
+.dial { width: 100%; max-width: 440px; height: auto; display: block; margin: 0 auto; overflow: visible; }
+.dial-hour line { stroke: var(--ink-3); stroke-width: 1.2; }
+.dial-hour text { fill: var(--ink-3); font: 500 10px var(--mono); }
+.dial-track { fill: none; stroke: var(--surface-3); stroke-width: 15; stroke-linecap: round; }
+.dial-seg { fill: none; stroke-width: 13; stroke-linecap: round; stroke: color-mix(in srgb, var(--ink) 22%, transparent); cursor: pointer; transition: stroke 0.8s var(--ease), stroke-width 0.3s var(--spring), opacity 0.6s var(--ease); outline: none; }
+.dial-seg:hover, .dial-seg:focus-visible { stroke-width: 17; }
+.dial-seg.is-open { stroke: var(--beat); filter: url(#dial-glow); animation: dial-pulse 2.4s ease-in-out infinite; }
+.dial-seg.is-refilled { stroke: var(--act); stroke-dasharray: 100; animation: dial-draw 1.4s var(--ease-rare) both; }
+.dial-seg.is-risk { stroke: var(--danger); }
+.dial-seg.is-blocked { stroke: var(--ink-3); stroke-dasharray: 2 3; stroke-linecap: butt; opacity: 0.6; }
+.dial-seg.is-lapsed { stroke: var(--ink-3); stroke-dasharray: 1 2; stroke-linecap: butt; }
+.dial-seg.is-past { opacity: 0.32; }
+.dial-ring.is-out .dial-track { stroke: color-mix(in srgb, var(--danger) 16%, var(--surface-3)); }
+.dial-name { fill: var(--ink-2); font: 600 10.5px var(--sans); }
+.dial-ring.is-out .dial-name { fill: var(--danger); }
+.dial-hand { transform-box: view-box; transform-origin: 200px 200px; transition: transform 1.2s var(--spring); }
+.dial-hand line { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
+.dial-hand circle { fill: var(--ink); }
+.dial-hand-tip { fill: var(--act); transition: cx 1.2s var(--spring), cy 1.2s var(--spring); }
+.dial-big { fill: var(--ink); font: 500 54px var(--display); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.dial-small { fill: var(--ink-2); font: 500 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+@keyframes dial-pulse { 50% { stroke-opacity: 0.55; } }
+@keyframes dial-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@media (max-width: 900px) {
+  .hero-body { grid-template-columns: minmax(0, 1fr); }
+  .tile.is-hero .hero-body .hero-nums { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .dial-seg { animation: none !important; } }
