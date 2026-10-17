@@ -27,5 +27,4 @@
 ## Pull request
 
 - Published branch: [parth/scenarios](https://github.com/sirgreaseball/refill/tree/parth/scenarios).
-- Pull request publication is in progress.
-- [Open the prepared pull request](https://github.com/sirgreaseball/refill/pull/new/parth/scenarios) once GitHub write access is available.
+- Pull request: [#8 — test: add Parth's 12 matching and booking scenarios](https://github.com/sirgreaseball/refill/pull/8).
