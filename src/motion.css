@@ -188,3 +188,15 @@
   .glow span { animation: none; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
+
+/* The core moment: when a gap is booked, green sweeps across it from the left, once. */
+.rb.is-refilled, .blk.is-refilled { overflow: hidden; }
+.rb.is-refilled::after, .blk.is-refilled::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  transform: translateX(-100%); animation: sweep 1.2s var(--ease-rare) 0.2s 1 both;
+}
+@keyframes sweep { to { transform: translateX(100%); } }
+.blk.is-refilled { animation: fill-in 0.9s var(--ease-rare) both; }
+@keyframes fill-in { from { background: var(--beat-soft); border-color: var(--beat); } }
+@media (prefers-reduced-motion: reduce) { .rb.is-refilled::after, .blk.is-refilled::after { display: none; } }
