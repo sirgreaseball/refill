@@ -127,6 +127,14 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 - Also fixed: the dial's glow clipped shallow arcs flat (filter now `userSpaceOnUse`); the top bar's glass did not blur (moved from `.bar::before` onto `.bar`); theme is one tap in the top bar with Threshold's flood; the calendar has no sideways scrollbar.
 - Note: `src/auth.ts` and a page called `Auth.tsx` clash on Windows (case-insensitive), hence `SignIn.tsx`.
 
+**v6 no boxes (18 Oct ~01:45, pushed):**
+- Every page puts content on the canvas, grouped by space and hairlines, the way Threshold reads. The rule set is the "v6" block at the end of `src/motion.css`.
+- One tonal **stage** per page holds the centrepiece: `.today-hero`, `.ov-hero`, and Home's `.tile.is-hero`. Sections (`.group`, `.tile`) have no background, shadow or radius, only a top hairline.
+- Figures are split by hairlines. Verdicts and states use a coloured left rail instead of a tinted box. The chat bubble stays because it is a message.
+- Rows (queue, agenda, people, links, waitlist, history, role choices) get the pointer spotlight (`GLOW` in `src/motion.tsx`).
+- Glass is only on what floats: bar, dock, sheets, menus, toasts.
+- Keep this when adding pages: no new panels around sections.
+
 **Known limits (say them honestly if asked):**
 - A live book holds one day: no booking for future dates yet.
 - The live clock moves only while a desk or owner page is open.
