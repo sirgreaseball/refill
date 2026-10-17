@@ -254,7 +254,7 @@ npm ci
   - Flow: `/splash` → **Try the demo** → `/#/` in demo mode with no `lenis` classes left on `<html>`, and the desk scrolls; sign-in shows **See how Refill works** → `/splash`; `/` is unchanged, sign-in first on phones.
   - Vercel preview: https://refill-git-splash-sirgreaseballs-projects.vercel.app/splash sits behind Vercel's login (deployment protection), so the `/splash` rewrite on Vercel could not be checked from here; it opens when signed in to Vercel.
   - The splash fingerprint is in the appendix of `.claude/skills/flagship-feel/SKILL.md`.
-- **18 Oct ~05:00 IST, pull request #22 open; polish passes on the same branch.** https://github.com/sirgreaseball/refill/pull/22 (CI `test` green).
+- **18 Oct ~04:15 IST, pull request #22 open; polish passes on the same branch.** https://github.com/sirgreaseball/refill/pull/22 (CI `test` green).
   - Lighthouse mobile on the production build (`vite preview`): performance 88 to 89, accessibility 100, best practices 100, layout shift 0. The app's own `/` scores 91 on the same machine. The gap is the loader the brief asks for, and the render-blocking font stylesheets in `index.html` (outside the splash's files).
   - Frame times while scrolling: p95 8.5 ms at 1440 (dev) and at 1280 (production build).
   - The brief's exact path on the production build: `/splash` → **Open Refill** → sign-in → demo → `#/desk` scrolls, `<html>` has no classes, no console errors.
