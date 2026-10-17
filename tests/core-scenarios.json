@@ -1,0 +1,159 @@
+[
+  {
+    "id": "C01",
+    "title": "Organiser reference case: W1 takes S2",
+    "slots": [
+      { "id": "S1", "start": "10:00", "minutes": 30, "skill": "hair", "status": "free" },
+      { "id": "S2", "start": "10:30", "minutes": 60, "skill": "hair", "status": "free" }
+    ],
+    "waitlist": [
+      { "id": "W1", "minutes": 60, "skill": "hair", "consent": true },
+      { "id": "W2", "minutes": 60, "skill": "hair", "consent": false }
+    ],
+    "expect": {
+      "matches": [["W1", "S2"]],
+      "excluded": { "S1": { "W1": "DURATION_TOO_LONG", "W2": "NO_CONSENT" }, "S2": { "W2": "NO_CONSENT" } }
+    }
+  },
+  {
+    "id": "C02",
+    "title": "Case check 1: a 60-minute request cannot occupy a 30-minute slot",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 30, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 60, "skill": "hair", "consent": true }],
+    "expect": { "matches": [], "excluded": { "S1": { "W1": "DURATION_TOO_LONG" } } }
+  },
+  {
+    "id": "C03",
+    "title": "A 30-minute request may take a 60-minute slot",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 30, "skill": "hair", "consent": true }],
+    "expect": { "matches": [["W1", "S1"]] }
+  },
+  {
+    "id": "C04",
+    "title": "Case check 2: two requests compete for one slot",
+    "slots": [{ "id": "S1", "start": "17:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [
+      { "id": "W1", "minutes": 60, "skill": "hair", "consent": true },
+      { "id": "W2", "minutes": 45, "skill": "hair", "consent": true }
+    ],
+    "race": { "slot": "S1", "requests": ["W1", "W2"] },
+    "expect": { "confirmed": "W1", "waitlisted": ["W2"], "rejected": {} }
+  },
+  {
+    "id": "C05",
+    "title": "Case check 3: consent false is never contacted",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 30, "skill": "hair", "consent": false }],
+    "expect": { "matches": [], "excluded": { "S1": { "W1": "NO_CONSENT" } } }
+  },
+  {
+    "id": "C06",
+    "title": "Unknown consent (null) is treated as no",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 30, "skill": "hair", "consent": null }],
+    "expect": { "matches": [], "excluded": { "S1": { "W1": "NO_CONSENT" } } }
+  },
+  {
+    "id": "C07",
+    "title": "Skill must match: nails request, hair slot",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 45, "skill": "nails", "consent": true }],
+    "expect": { "matches": [], "excluded": { "S1": { "W1": "SKILL_MISMATCH" } } }
+  },
+  {
+    "id": "C08",
+    "title": "A booked slot is never filled",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "booked" }],
+    "waitlist": [{ "id": "W1", "minutes": 30, "skill": "hair", "consent": true }],
+    "expect": { "matches": [] }
+  },
+  {
+    "id": "C09",
+    "title": "The same customer tapping Accept twice is one request",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 60, "skill": "hair", "consent": true }],
+    "race": { "slot": "S1", "requests": ["W1", "W1"] },
+    "expect": { "confirmed": "W1", "waitlisted": [], "rejected": {} }
+  },
+  {
+    "id": "C10",
+    "title": "Duplicate waitlist id stops the run",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [
+      { "id": "W1", "minutes": 60, "skill": "hair", "consent": true },
+      { "id": "W1", "minutes": 30, "skill": "hair", "consent": true }
+    ],
+    "expect": { "error": "DUPLICATE_ID" }
+  },
+  {
+    "id": "C11",
+    "title": "Missing minutes stops the run",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "skill": "hair", "consent": true }],
+    "expect": { "error": "MISSING_FIELD" }
+  },
+  {
+    "id": "C12",
+    "title": "Negative: a customer without consent never blocks the next one in the queue",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [
+      { "id": "W1", "minutes": 60, "skill": "hair", "consent": false },
+      { "id": "W2", "minutes": 60, "skill": "hair", "consent": true }
+    ],
+    "expect": { "matches": [["W2", "S1"]], "excluded": { "S1": { "W1": "NO_CONSENT" } } }
+  },
+  {
+    "id": "C13",
+    "title": "Negative: nobody is given two slots",
+    "slots": [
+      { "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" },
+      { "id": "S2", "start": "12:00", "minutes": 60, "skill": "hair", "status": "free" }
+    ],
+    "waitlist": [{ "id": "W1", "minutes": 60, "skill": "hair", "consent": true }],
+    "expect": { "matches": [["W1", "S1"]] }
+  },
+  {
+    "id": "C14",
+    "title": "Race for a slot that is already booked: everyone keeps their waitlist place",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "booked" }],
+    "waitlist": [
+      { "id": "W1", "minutes": 60, "skill": "hair", "consent": true },
+      { "id": "W2", "minutes": 60, "skill": "hair", "consent": true }
+    ],
+    "race": { "slot": "S1", "requests": ["W1", "W2"] },
+    "expect": { "confirmed": null, "waitlisted": ["W1", "W2"], "rejected": {} }
+  },
+  {
+    "id": "C15",
+    "title": "Race: the first tap has no consent, so the second is confirmed",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [
+      { "id": "W1", "minutes": 60, "skill": "hair", "consent": null },
+      { "id": "W2", "minutes": 60, "skill": "hair", "consent": true }
+    ],
+    "race": { "slot": "S1", "requests": ["W1", "W2"] },
+    "expect": { "confirmed": "W2", "waitlisted": [], "rejected": { "W1": "NO_CONSENT" } }
+  },
+  {
+    "id": "C16",
+    "title": "Minutes written as text is an invalid value",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": "60", "skill": "hair", "consent": true }],
+    "expect": { "error": "INVALID_VALUE" }
+  },
+  {
+    "id": "C17",
+    "title": "Consent written as \"yes\" is an invalid value, not a yes",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 60, "skill": "hair", "consent": "yes" }],
+    "expect": { "error": "INVALID_VALUE" }
+  },
+  {
+    "id": "C18",
+    "title": "A customer free only in the evening is not offered a morning slot",
+    "slots": [{ "id": "S1", "start": "10:00", "minutes": 60, "skill": "hair", "status": "free" }],
+    "waitlist": [{ "id": "W1", "minutes": 60, "skill": "hair", "consent": true, "free_from": "17:00", "free_until": "20:00" }],
+    "expect": { "matches": [], "excluded": { "S1": { "W1": "NOT_AVAILABLE" } } }
+  }
+]

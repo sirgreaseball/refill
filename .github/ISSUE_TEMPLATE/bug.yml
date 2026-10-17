@@ -1,0 +1,16 @@
+name: Bug
+description: Something in the app does not do what it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: steps
+    attributes: { label: Steps, description: "Exact clicks or inputs, starting from a fresh demo day (menu: Reset demo day)." }
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes: { label: Expected }
+    validations: { required: true }
+  - type: textarea
+    id: actual
+    attributes: { label: Actual, description: "Paste text or attach a screenshot." }
+    validations: { required: true }

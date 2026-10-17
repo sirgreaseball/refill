@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;background:#f3eee6;overflow:hidden}
+body{display:grid;place-items:center}
+.og{width:1200px;height:630px;background:#f3eee6;position:relative;font-family:'Fraunces',Georgia,serif;color:#1f1a1e}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&display=swap">
+</head><body><div id="v"></div><script>
+const q=new URLSearchParams(location.search), kind=q.get('k'), n=Number(q.get('s')||512)
+const mark=(w,pad)=>{const u=w/64;return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${w}" viewBox="0 0 64 64"><rect width="64" height="64" fill="#f3eee6"/>
+<g transform="translate(32 32) scale(${1-pad}) translate(-32 -32)"><rect x="4" y="28" width="15" height="8" rx="4" fill="#1f1a1e"/><rect x="22" y="25" width="20" height="14" rx="7" fill="none" stroke="#d99a14" stroke-width="2.4"/><rect x="22" y="25" width="13" height="14" rx="7" fill="#4b6626"/><rect x="45" y="28" width="15" height="8" rx="4" fill="#1f1a1e"/></g></svg>`}
+if(kind==='og'){document.getElementById('v').outerHTML=`<div class="og">
+<div style="position:absolute;left:84px;top:72px;font:500 20px/1 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#645b5f">Appointment recovery desk · salon</div>
+<div style="position:absolute;left:76px;top:120px;font-size:232px;line-height:.85;letter-spacing:-.045em;font-variation-settings:'SOFT' 100">Refill</div>
+<div style="position:absolute;left:84px;right:84px;top:356px;display:grid;grid-template-columns:1.1fr .9fr 2fr;gap:14px;align-items:center">
+<span style="height:9px;border-radius:5px;background:#1f1a1e"></span><span style="height:34px;border-radius:17px;border:2.5px solid #d99a14;background:linear-gradient(90deg,#4b6626 62%,transparent 62%)"></span><span style="height:9px;border-radius:5px;background:#1f1a1e"></span></div>
+<div style="position:absolute;left:84px;top:430px;font-size:46px;line-height:1.08;letter-spacing:-.02em;max-width:900px">An empty chair is money walking out of the salon.</div>
+<div style="position:absolute;left:84px;bottom:64px;font:400 20px/1 'DM Mono',monospace;letter-spacing:.06em;color:#645b5f">Consent first · no double booking · every decision explained</div></div>`}
+else{document.getElementById('v').outerHTML=mark(n, kind==='maskable'?0.36:0.16)}
+</script></body></html>

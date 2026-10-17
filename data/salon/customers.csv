@@ -1,0 +1,15 @@
+id,name,service_id,consent,free_from,free_until
+W1,Meera,SV3,true,,
+W2,Zoya,SV1,true,13:00,17:00
+W3,Arnav,SV3,,,
+W4,Leela,SV4,true,,
+W5,Sameer,SV6,true,,
+W6,Nisha,SV2,false,,
+W7,Kiran,SV3,true,17:00,20:00
+W8,Rhea,SV8,true,,
+W9,Omar,SV1,true,,
+W10,Tanvi,SV7,true,,
+W11,Aarav,SV5,true,,
+W12,Fatima,SV9,,,
+W13,Vikram,SV2,true,10:00,13:00
+W14,Ira,SV6,true,,

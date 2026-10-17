@@ -1,0 +1,49 @@
+{
+  "case_id": "C29",
+  "synthetic": true,
+  "data_version": "v3.2",
+  "currency": "INR unless explicitly stated",
+  "missing_values": "null means unknown, never zero",
+  "records": {
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      },
+      {
+        "id": "S2",
+        "start": "10:30",
+        "minutes": 60,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": true
+      },
+      {
+        "id": "W2",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": false
+      }
+    ],
+    "expected_match": [
+      "W1",
+      "S2"
+    ]
+  },
+  "public_checks": [
+    "A 60-minute request cannot occupy a 30-minute slot.",
+    "Two requests competing for one slot result in one confirmed booking and one waitlist entry.",
+    "A customer without contact consent is excluded from outreach."
+  ],
+  "limit": "Small teaching fixture for a bounded prototype. Market demand, willingness to pay and production performance remain unproven."
+}

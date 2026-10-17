@@ -1,0 +1,38 @@
+name: MBA product request
+description: A change the business team wants in the product. Engineering replies here with scope, an offer or a counter-offer.
+title: "[mba-request] "
+labels: ["mba-request"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What the salon owner experiences today in the product (v1).
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: What you observed, interviews or labelled role play. Facts only.
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Requested change
+      description: Must-have vs nice-to-have.
+    validations:
+      required: true
+  - type: textarea
+    id: verify
+    attributes:
+      label: How we will verify it
+      description: A before/after test anyone can repeat.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Business reason
+      description: Value, cost or risk. Mark assumptions as assumptions.
