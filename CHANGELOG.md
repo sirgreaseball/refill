@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.0.0 · 17 Oct 2026 · roles, stylists, rescheduling
+
+- Four roles, each proven by a key the database checks on every call: owner, front desk, stylist, customer. Owner-only: the rules, stylist and front-desk links, reset. "View as front desk" uses the real front-desk key.
+- Staff-aware matching: a freed slot goes to anyone whose service that stylist can do. Plain-language reasons for every skip.
+- Stylist absence: their open offers are revoked, their gaps held, their customers flagged; nothing moves until the desk or the customer chooses.
+- Working hours per stylist: no move, reassignment or option ever lands outside a shift.
+- Reschedule: the desk picks a new time (same time with another stylist first), or sends the customer a private link listing only times that work; the customer can also cancel there. The time they leave opens for the waitlist.
+- Customer self sign-up with an explicit yes or no to messages (never pre-ticked), a private page with place in queue, booking, consent and leave.
+- Owner page: recovered revenue, offers, consent, reschedules, stylist load, the rules, the who-can-do-what matrix.
+- `npm run dbtest`: 20 live database checks.
+
 ## v1.1.0 · 17 Oct 2026 · engineering hardening (not a business-team change)
 
 - Offers hold for 15 demo-minutes, then lapse (`OFFER_EXPIRED`), are logged, and the next people in the queue are suggested; a lapsed offer cannot be booked.
