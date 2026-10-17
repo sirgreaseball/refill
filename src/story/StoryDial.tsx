@@ -42,9 +42,13 @@ export default function StoryDial({ label }: { label: string }) {
   const [tx, ty] = pt(205, handA)
   return (
     <div className="sd" role="img" aria-label={label}>
+      {/* At rest the face drifts a degree or so, so it is never quite still; the pointer tilts it further. */}
+      <div className="sd-drift">
       <div className="sd-tilt">
         <div className="sd-face">
           <Layer className="sd-bezel" z={0}>
+            {/* The bezel turns a little with the scroll, like a crown, and settles home. */}
+            <g className="sd-bezel-g">
             <path className="sd-hair" d={arc(184, -SPAN / 2, SPAN / 2)} />
             {quarters.map((m) => {
               const [x1, y1] = pt(188, ang(m))
@@ -62,6 +66,7 @@ export default function StoryDial({ label }: { label: string }) {
                 </g>
               )
             })}
+            </g>
           </Layer>
 
           {staff.map((p, i) => {
@@ -138,6 +143,8 @@ export default function StoryDial({ label }: { label: string }) {
 
           <div className="sd-sweep" aria-hidden="true"><svg viewBox="-280 -280 560 560"><line x1="0" y1="-186" x2="0" y2="-199" /></svg></div>
           <Layer className="sd-hand" z={26}>
+            {/* The reading hand: it follows the pointer round the face and reads the time there. */}
+            <line className="sd-ghost" data-ghost x1="0" y1={-(inner - 16)} x2="0" y2="-200" />
             <g data-hand>
               <line x1={h1x} y1={h1y} x2={h2x} y2={h2y} />
               <circle className="sd-tip" cx={tx} cy={ty} r="4" />
@@ -152,6 +159,7 @@ export default function StoryDial({ label }: { label: string }) {
           <p className="sd-c" data-c="won"><b className="is-act">{inr(recovered)}</b><small>back in the book</small></p>
           <p className="sd-c" data-c="move"><b className="is-danger">{toMove.length - 1}</b><small>still to move</small></p>
         </div>
+      </div>
       </div>
     </div>
   )

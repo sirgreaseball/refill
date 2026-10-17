@@ -2,7 +2,7 @@
 // Lenis smooths the wheel and ScrollTrigger maps the scroll onto one timeline (scenes.ts): scroll
 // back and it rewinds, stop and it stops. Only the gap's pulse and the seconds sweep keep their own
 // time. Under reduced motion the story is a column of still frames with every word kept.
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -38,9 +38,11 @@ const reasons = [
   [F.reasonCount('DURATION_TOO_LONG'), `need more than ${F.harsh.minutes} minutes`],
   [F.reasonCount('NOT_AVAILABLE'), `aren't free at ${F.hhmm(F.harsh.startMin)}`],
 ] as const
+/** The chapter rail: where each chapter's still holds, in viewport heights of the story's scroll. */
+const RAIL: [string, string, string, number][] = [['gap', '01', 'The gap', 1.3], ['fits', '02', 'Who fits', 3.95], ['race', '03', 'The race', 5.9], ['out', '04', 'Staff out', 7.95], ['proof', '05', 'Proof', 0]]
 const list = (names: string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 
-function Copy({ scene }: { scene: Scene }) {
+function Copy({ scene, live }: { scene: Scene; live?: boolean }) {
   switch (scene) {
     case 'hero': return <>
       <p className="st-over">Refill · appointment recovery desk</p>
@@ -63,7 +65,8 @@ function Copy({ scene }: { scene: Scene }) {
     case 'race': return <>
       <p className="st-over">03 · the race</p>
       <h2 className="st-h">{ln('Two phones tap at once.', 'One booking lands.')}</h2>
-      <p className="st-p">{F.winner.name} and {F.keeper.name} both tap Book in the same instant. {F.winner.name} gets the chair. {F.keeper.name} keeps their place in line.</p>
+      <p className={live ? 'sr' : 'st-p'}>{F.winner.name} and {F.keeper.name} both tap Book in the same instant. {F.winner.name} gets the chair. {F.keeper.name} keeps their place in line.</p>
+      {live && <Phones />}
       <p className="st-note">Never double-booked: the database decides, once.</p>
       {/* supabase/migrations/001_refill.sql: accept_offer locks the slot row; the unique index is the backstop. */}
       <p className="st-note is-quiet">accept_offer locks the slot row; the unique index bookings_one_per_slot is the backstop.</p>
@@ -75,6 +78,43 @@ function Copy({ scene }: { scene: Scene }) {
     </>
   }
 }
+
+/** The two phones of the race, as the app's own offer page draws them (src/Offer.tsx). */
+function Phones() {
+  const at = F.hhmm(F.harsh.startMin)
+  return (
+    <div className="st-phones" aria-hidden="true">
+      {[F.winner, F.keeper].map((e) => (
+        <div key={e.id} className={`st-phone ${e === F.winner ? 'is-won' : 'is-lost'}`} data-phone={e.id}>
+          <p className="ph-over">Offer · {F.SALON.split(',')[0]}</p>
+          <p className="ph-who">{e.name}</p>
+          <p className="ph-time">{at}</p>
+          <p className="ph-what">{e.service} · {e.minutes} min · {k}</p>
+          <span className="ph-btn" data-ph-btn>Book {at}<i className="ph-tap" data-ph-tap /></span>
+          <div className="ph-result" data-ph-result>
+            {e === F.winner
+              ? <><span className="ph-tick"><Icon name="check" size={18} /></span><b>You’re booked</b><small>{e.service}, {at} with {k}</small></>
+              : <><b>Someone got there first</b><small>You keep your place on the waitlist.</small></>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** The desk's evidence log, filling in as the story plays: the same event codes as the app's Activity page. */
+const LOG_LINES = [F.LOG.cancel, ...F.LOG.skipped, ...F.LOG.sent, F.LOG.booked, F.LOG.retained, F.LOG.absent, F.LOG.moved, F.LOG.link]
+function Ledger() {
+  return (
+    <div className="st-ledger" aria-hidden="true">
+      <p className="st-ledger-h">Evidence log</p>
+      <div className="st-ledger-win"><ol>{LOG_LINES.map((l, i) => <li key={i} data-log={i}><b>{l.code}</b><span>{l.text}</span></li>)}</ol></div>
+    </div>
+  )
+}
+
+/** Real time, India, ticking: the seconds the dial's sweep keeps. */
+const istNow = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false })
 
 function useTheme() {
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem('refill.theme') ?? 'auto' } catch { return 'auto' } })
@@ -111,10 +151,16 @@ const tryDemo = () => {
 }
 
 function Hud({ dark, toggle }: { dark: boolean; toggle: (b: HTMLElement) => void }) {
+  const now = useRef<HTMLOutputElement>(null)
+  useEffect(() => {
+    const id = setInterval(() => { const t = istNow(); if (now.current && now.current.textContent !== t) now.current.textContent = t }, 250)
+    return () => clearInterval(id)
+  }, [])
   return (
     <header className="st-hud">
       <a className="st-brand" href="/#/" aria-label="Open Refill"><Mark size={13} /><span>Refill</span></a>
       <div className="st-hud-end">
+        <p className="st-now" title="Real time, India"><span>IST</span> <output ref={now}>{istNow()}</output></p>
         <p className="st-chap"><span data-chap-n /><span data-chap /></p>
         <button className="st-theme" onClick={(e) => toggle(e.currentTarget)} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}><Icon name={dark ? 'sun' : 'moon'} size={18} /></button>
       </div>
@@ -173,7 +219,7 @@ function Loader({ ready, onReveal, onDone }: { ready: Promise<unknown>; onReveal
     const wait = <T,>(p: Promise<T>) => Promise.race([p, new Promise((r) => setTimeout(r, 4000))])
     const jobs = [
       wait(document.fonts.load('500 1em "Clash Display"')),
-      wait(document.fonts.load('400 1em Satoshi')),
+      wait(Promise.all([document.fonts.load('400 1em Satoshi'), document.fonts.load('700 1em Satoshi')])),
       wait(document.fonts.load('500 1em "JetBrains Mono"')),
       wait(ready),
     ]
@@ -239,6 +285,9 @@ function Scrolled() {
     const readScene = el.querySelector<HTMLElement>('[data-read]')!
     const readHover = el.querySelector<HTMLElement>('[data-read-hover]')!
 
+    // Every face the story uses is fetched now, not when its first chapter scrolls in (the phones'
+    // bold Satoshi would otherwise arrive mid-scroll and cost a frame).
+    for (const f of ['500 1em "Clash Display"', '400 1em Satoshi', '700 1em Satoshi', '500 1em "JetBrains Mono"']) document.fonts.load(f).catch(() => {})
     history.scrollRestoration = 'manual'
     scrollTo(0, 0)
     el.style.setProperty('--sweep-at', `${-((Date.now() / 1000) % 60).toFixed(2)}s`)
@@ -251,24 +300,48 @@ function Scrolled() {
     if (!seen()) l.stop()
 
     // The HUD names the chapter on screen; the corner readout shows the facts driving the scene.
+    const rail = el.querySelector<HTMLElement>('.st-rail')!
     let current = ''
-    const label = (n: string, name: string) => {
+    const label = (n: string, name: string, key: string) => {
       if (n + name === current) return
       current = n + name
       chapN.textContent = n
       chapName.textContent = name
+      rail.querySelectorAll<HTMLElement>('[data-go]').forEach((b) => b.toggleAttribute('aria-current', b.dataset.go === key))
     }
     const show = (s: Scene) => {
       const i = CHAPTERS.findIndex((c) => c.scene === s)
-      label(i ? String(i).padStart(2, '0') : '', i ? NAMES[s] : '')
+      label(i ? String(i).padStart(2, '0') : '', i ? NAMES[s] : '', s)
       readScene.textContent = EVIDENCE[s]
     }
+    // The rail glides to a chapter's still; Lenis carries the scroll, so the story plays on the way.
+    let storyST: ScrollTrigger | null = null
+    const go = (e: MouseEvent) => {
+      const b = (e.target as Element).closest<HTMLElement>('[data-go]')
+      const r = b && RAIL.find(([id]) => id === b.dataset.go)
+      if (!r || !storyST) return
+      const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+      if (r[0] === 'proof') l.scrollTo(el.querySelector<HTMLElement>('.st-proof')!, { duration: 1.8, easing: ease })
+      else l.scrollTo(storyST.start + (r[3] / LENGTH) * (storyST.end - storyST.start), { duration: 1.8, easing: ease })
+    }
+    rail.addEventListener('click', go)
+    // The scroll's speed turns the bezel a few degrees, like a crown, and it settles when the page does.
+    const bezel = stage.querySelector('.sd-bezel-g')
+    gsap.set(bezel, { svgOrigin: '0 0', rotation: 0 })
+    const crown = gsap.quickTo(bezel, 'rotation', { duration: 0.9, ease: 'power3' })
+    let lastTurn = 0
+    const turn = () => {
+      const v = Math.max(-9, Math.min(9, l.velocity * 0.28))
+      if (Math.abs(v - lastTurn) > 0.05) { crown(v); lastTurn = v }
+    }
+    gsap.ticker.add(turn)
     // The CSS draws the hero's first frame, so the timeline is built in the next task, after the
     // first paint, and the page never blocks on it. The loader waits for it as its last share.
     const ctx = gsap.context(() => {}, el)
     const build = setTimeout(() => ctx.add(() => {
       const tl = storyTimeline(stage)
       const story = ScrollTrigger.create({ trigger: track, start: 'top top', end: 'bottom bottom', scrub: 0.6, animation: tl, invalidateOnRefresh: true })
+      storyST = story
       const proof = ScrollTrigger.create({ trigger: el.querySelector('.st-proof'), start: 'top 55%' })
       const end = ScrollTrigger.create({ trigger: el.querySelector('.st-end'), start: 'top 55%' })
       // One reading of the scroll names the chapter, so a jump anywhere always lands on the right label.
@@ -276,8 +349,8 @@ function Scrolled() {
         start: 0, end: 'max', onUpdate: (self) => {
           bar.style.transform = `scaleX(${self.progress.toFixed(4)})`
           const y = self.scroll()
-          if (y >= end.start) { label('', ''); return }
-          if (y >= proof.start) { label('05', 'Proof'); return }
+          if (y >= end.start) { label('', '', 'end'); return }
+          if (y >= proof.start) { label('05', 'Proof', 'proof'); return }
           const t = Math.min(1, Math.max(0, (y - story.start) / Math.max(1, story.end - story.start))) * LENGTH
           show([...CHAPTERS].reverse().find((c) => t >= c.at - 0.1)?.scene ?? 'hero')
         },
@@ -303,14 +376,21 @@ function Scrolled() {
       // Two frames after the story is built, it is really on screen.
       requestAnimationFrame(() => requestAnimationFrame(() => ready.r()))
     }), 0)
-    const off = attachPointer(stage, (text) => {
-      readHover.textContent = text ?? ''
-      readHover.parentElement!.classList.toggle('is-hover', !!text)
-    })
+    // The cursor wakes in its own task too, after the timeline.
+    let off = () => {}
+    const wake = setTimeout(() => {
+      off = attachPointer(stage, (text) => {
+        readHover.textContent = text ?? ''
+        readHover.parentElement!.classList.toggle('is-hover', !!text)
+      })
+    }, 0)
     readScene.textContent = EVIDENCE.hero
     if (seen()) ctx.add(() => intro(el))
     return () => {
       clearTimeout(build)
+      clearTimeout(wake)
+      rail.removeEventListener('click', go)
+      gsap.ticker.remove(turn)
       off()
       ctx.revert()
       gsap.ticker.remove(raf)
@@ -341,8 +421,9 @@ function Scrolled() {
             <div className="st-dial"><StoryDial label={`${F.SALON}'s sample day as a watch face: one ring per staff member, one arc per appointment.`} /></div>
             {/* The animated copy shows one chapter at a time; screen readers get the whole story at once, below. */}
             <div className="st-copy" aria-hidden="true">
-              {CHAPTERS.map((c) => <div key={c.scene} className="st-beat" data-beat={c.scene}><Copy scene={c.scene} /></div>)}
+              {CHAPTERS.map((c) => <div key={c.scene} className="st-beat" data-beat={c.scene}><Copy scene={c.scene} live /></div>)}
             </div>
+            <Ledger />
             <div className="sr">{CHAPTERS.map((c) => <section key={c.scene}><Copy scene={c.scene} /><p>{EVIDENCE[c.scene]}.</p></section>)}</div>
             <p className="st-cue" aria-hidden="true"><span>Scroll</span><i /></p>
             <p className="st-read" aria-hidden="true"><span data-read /><span data-read-hover /></p>
@@ -351,6 +432,10 @@ function Scrolled() {
         <Proof />
         <End />
       </main>
+      <nav className="st-rail" aria-label="Chapters">
+        {RAIL.map(([id, n, name]) => <button key={id} type="button" data-go={id} aria-label={`${n} ${name}`}><i /><span>{n} · {name}</span></button>)}
+      </nav>
+      <div className="st-cursor" aria-hidden="true"><i className="st-cursor-ring"><b data-cursor-label /></i><i className="st-cursor-dot" /></div>
       {loading && <Loader ready={ready.p} onReveal={reveal} onDone={done} />}
     </div>
   )
@@ -373,7 +458,7 @@ function Stills() {
         {CHAPTERS.map((c) => (
           <section key={c.scene} className="st-frame" data-still={c.scene}>
             <div className="st-dial"><StoryDial label={`${NAMES[c.scene]}: ${EVIDENCE[c.scene]}`} /></div>
-            <div className="st-copy"><div className="st-beat" data-beat={c.scene}><Copy scene={c.scene} /></div></div>
+            <div className="st-copy"><div className="st-beat" data-beat={c.scene}><Copy scene={c.scene} live /></div></div>
           </section>
         ))}
         <Proof />
