@@ -483,7 +483,7 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
   .setup-person-top > :nth-child(3) { grid-column: 2 / 4; grid-row: 2; }
   .setup-person-top > .icon-btn { grid-column: 3; grid-row: 1; }
   .task-add { grid-template-columns: minmax(0, 1fr) auto; }
-  .task-add select { grid-column: 1 / -1; }
+  .task-add .sel { grid-column: 1 / -1; }
   .demo-pill { padding: 0 10px; font-size: 12px; }
 }
 @media (max-width: 420px) {
@@ -727,3 +727,64 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
   .phone:has(.phone-lead) > .phone-top, .phone:has(.phone-lead) > .phone-foot { margin-top: 0; }
   .phone:has(.phone-lead) > .phone-foot { padding-top: 28px; border-top: 1px solid var(--line); }
 }
+
+/* ---------- v7.1: the app's own dropdown, and today's times as an hour-by-hour face. */
+.sel { position: relative; min-width: 0; }
+.sel-btn {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 14px 0 16px;
+  border: 1px solid var(--line-2); border-radius: var(--r); background: var(--surface); color: var(--ink); text-align: left;
+  font: 500 16px/1.2 var(--sans); letter-spacing: normal; text-transform: none; box-shadow: inset 0 1px 0 var(--glass-edge);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+.sel-btn:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ink) 28%, transparent); }
+.sel-btn:focus-visible, .sel.is-open .sel-btn { outline: none; border-color: var(--act); box-shadow: 0 0 0 3px var(--act-soft); }
+.sel-btn:disabled { opacity: 0.55; }
+.sel-btn .icon { color: var(--ink-3); transition: transform 0.35s var(--spring); }
+.sel.is-open .sel-btn .icon { transform: rotate(180deg); color: var(--ink); }
+.sel-v { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-v.is-empty { color: var(--ink-3); font-weight: 400; }
+.sel-hint { font: 500 12px var(--mono); letter-spacing: 0.02em; color: var(--ink-3); white-space: nowrap; }
+.sel-pop {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 80; max-height: min(320px, 50vh); overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 var(--glass-edge); transform-origin: top center; animation: pop 0.22s var(--ease);
+}
+.sel.is-up .sel-pop { top: auto; bottom: calc(100% + 6px); transform-origin: bottom center; }
+.sel-opt {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px 0 10px;
+  border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink); text-align: left; font: 500 15px var(--sans); letter-spacing: normal; text-transform: none;
+}
+.sel-opt.is-active { background: var(--hover); }
+.sel-opt[aria-selected='true'] { color: var(--act-text); }
+.sel-opt[aria-selected='true'] .sel-hint { color: color-mix(in srgb, var(--act-text) 70%, transparent); }
+.sel-check { display: grid; place-items: center; color: var(--act-text); }
+.sel-pop::-webkit-scrollbar { width: 8px; }
+.sel-pop::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 8px; border: 2px solid var(--surface); }
+/* The one native select left (the Lab's case picker) opens styled where the browser allows it. */
+@supports (appearance: base-select) {
+  .select-row select, .select-row select::picker(select) { appearance: base-select; }
+  .select-row select::picker(select) { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); padding: 6px; box-shadow: var(--shadow-lg); }
+  .select-row select option { padding: 10px 12px; border-radius: var(--r-sm); }
+  .select-row select option:hover, .select-row select option:checked { background: var(--hover); }
+}
+/* Inputs in the client forms read as text, not as the mono labels around them. */
+.join label > input { font: 400 16px/1.3 var(--sans); letter-spacing: normal; text-transform: none; color: var(--ink); }
+
+/* Today's times: one row per hour, quarters in fixed columns; a missing quarter is already taken. */
+.slot-grid { display: grid; gap: 2px; }
+.slot-row { display: grid; grid-template-columns: 52px repeat(4, minmax(0, 1fr)); gap: 6px; align-items: center; padding: 4px 0; border-top: 1px solid var(--line); }
+.slot-row:first-child { border-top: 0; }
+.slot-h { grid-column: 1; font: 500 22px/1 var(--display); color: var(--ink-2); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.slot-q {
+  grid-row: 1; min-height: 42px; border: 1px solid var(--line-2); border-radius: var(--r-sm); background: transparent; color: var(--ink);
+  font: 500 14px var(--mono); letter-spacing: 0.02em; transition: background 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.45s var(--spring);
+}
+.slot-q:hover { border-color: color-mix(in srgb, var(--ink) 35%, transparent); background: var(--hover); }
+.slot-q:active { transform: scale(0.96); transition-duration: 0.1s; }
+.slot-q:focus-visible { outline: 2px solid var(--act); outline-offset: 2px; }
+.slot-q.is-gap { border-color: color-mix(in srgb, var(--beat) 60%, transparent); color: var(--beat-text); }
+.slot-q.is-on { background: var(--ink); border-color: var(--ink); color: var(--canvas); }
+.slot-key { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-3); }
+.slot-key i { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--beat); }
+.slot-with { margin-top: 2px; }
+@media (max-width: 380px) { .slot-row { grid-template-columns: 40px repeat(4, minmax(0, 1fr)); gap: 4px; } .slot-h { font-size: 18px; } }

@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   "src/ui.tsx": {
-    "mtime": 1792261651.0323088,
-    "seen": 1792264188.9997973,
-    "ast_hash": "dceacebae4859a31b52d45f1217186a5",
+    "mtime": 1792272242.5352333,
+    "seen": 1792272603.5211396,
+    "ast_hash": "d7359afb51114fe6c8b3483480d47711",
     "semantic_hash": ""
   },
   "tests/core-scenarios.json": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "src/Join.tsx": {
-    "mtime": 1792271930.4857874,
-    "seen": 1792272015.703131,
-    "ast_hash": "ddcddb1fe5d94f54b9183d629d34bc86",
+    "mtime": 1792272332.35662,
+    "seen": 1792272603.515121,
+    "ast_hash": "ff8c34cbb0a27a6b6ecd0e58cbee4be0",
     "semantic_hash": ""
   },
   "src/Me.tsx": {
@@ -324,9 +324,9 @@
     "semantic_hash": ""
   },
   "src/Move.tsx": {
-    "mtime": 1792271906.8940895,
-    "seen": 1792272015.7041316,
-    "ast_hash": "f4422156f02bda2873cac0788989ac99",
+    "mtime": 1792272360.1339054,
+    "seen": 1792272603.5161211,
+    "ast_hash": "c242dafe0cb179eb6db7a035fefa48b3",
     "semantic_hash": ""
   },
   "src/MovePicker.tsx": {
@@ -360,15 +360,15 @@
     "semantic_hash": ""
   },
   "src/desk/Today.tsx": {
-    "mtime": 1792270649.4672897,
-    "seen": 1792270977.9757063,
-    "ast_hash": "6aaaef0f9873d56f3da2c818f2be99ac",
+    "mtime": 1792272274.3705323,
+    "seen": 1792272603.5191374,
+    "ast_hash": "51569ecf645b4c529eeb90deaf2b6fb7",
     "semantic_hash": ""
   },
   "src/desk/Waitlist.tsx": {
-    "mtime": 1792263696.486673,
-    "seen": 1792264188.9977956,
-    "ast_hash": "3e392f207f8e4329058afa67a88731fc",
+    "mtime": 1792272278.6786914,
+    "seen": 1792272603.5191374,
+    "ast_hash": "7ea864d06355db8f8da3a47d3e6d4bbc",
     "semantic_hash": ""
   },
   "src/desk/common.tsx": {
@@ -426,9 +426,9 @@
     "semantic_hash": ""
   },
   "HANDOFF.md": {
-    "mtime": 1792271989.4860625,
-    "seen": 1792272015.7227364,
-    "ast_hash": "5299663455b4b3c80fd82a3b70a5c4f6",
+    "mtime": 1792272505.7761376,
+    "seen": 1792272603.5280256,
+    "ast_hash": "b5bc45bfd42d0647fd35ab13ae5cc1aa",
     "semantic_hash": ""
   },
   "docs/ops/operational-check.html": {
@@ -522,9 +522,9 @@
     "semantic_hash": ""
   },
   "src/Manage.tsx": {
-    "mtime": 1792263083.739748,
-    "seen": 1792264188.9957948,
-    "ast_hash": "1c848057883d5366dcd7b8e41f941e33",
+    "mtime": 1792272278.7300632,
+    "seen": 1792272603.515121,
+    "ast_hash": "1866a4174d0f3aaa5d488ad5b645d663",
     "semantic_hash": ""
   },
   "src/Setup.tsx": {
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "src/Directory.tsx": {
-    "mtime": 1792271906.9142034,
-    "seen": 1792272015.703131,
-    "ast_hash": "24644544750c57fc3947f6f403d34e34",
+    "mtime": 1792272505.7751372,
+    "seen": 1792272603.515121,
+    "ast_hash": "dfe27a0c7b36b62ec38b9dcdf684b2e0",
     "semantic_hash": ""
   },
   "src/Settings.tsx": {

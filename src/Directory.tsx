@@ -37,7 +37,7 @@ export function DirectoryList({ joined = [] }: { joined?: string[] }) {
                     <strong>{b.name}</strong>
                     <small>{[b.type, b.services.slice(0, 3).map((s) => s.name).join(', '), from ? `from ${money(from.price_inr)}` : null].filter(Boolean).join(' · ')}</small>
                   </span>
-                  <span className={`tag ${mine ? 'is-act' : ''}`}>{mine ? 'Joined' : b.waiting ? `${b.waiting} waiting` : 'Join'}</span>
+                  <span className={`tag ${mine ? 'is-act' : ''}`}>{mine ? 'Joined' : 'Book'}</span>
                 </a>
               </li>
             )
@@ -58,7 +58,7 @@ export default function Directory() {
       </header>
       <div className="phone-lead">
         <h1 className="phone-h">Find a place</h1>
-        <p className="quiet">Join a waiting list and get offered the next time that fits, from any of these places, in one account.</p>
+        <p className="quiet">Book an open time today, or join a waiting list and get offered the next time that fits. Any of these places, one account.</p>
       </div>
       <div className="phone-body"><DirectoryList /></div>
       <footer className="phone-foot">

@@ -2,7 +2,7 @@
 // open its sheet. The schedule is a calendar (one lane per person) or the Day Dial.
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { servicesOf, type DbSlot, type State } from '../api'
-import { Icon, Modal, clock, money, span } from '../ui'
+import { Icon, Modal, Select, clock, money, span } from '../ui'
 import Dial, { dayRange } from '../Dial'
 import { Num } from '../motion'
 import { SlotSheet } from './SlotSheet'
@@ -209,23 +209,18 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
     <form className="add" onSubmit={submit} noValidate>
       {waiting.length > 0 && (
         <label className="field">Who
-          <select value={entry} onChange={(e) => pickEntry(e.target.value)}>
-            <option value="">Someone new, or open time</option>
-            {waiting.map((e) => <option key={e.id} value={e.id}>{e.name} · waiting for {e.service ?? e.skill}</option>)}
-          </select>
+          <Select value={entry} onChange={pickEntry} label="Who"
+            choices={[{ value: '', label: 'Someone new, or open time' }, ...waiting.map((e) => ({ value: e.id, label: e.name, hint: `waiting for ${e.service ?? e.skill}` }))]} />
         </label>
       )}
       {!en && <label className="field">Client<input value={customer} onChange={(e) => setCustomer(e.target.value)} maxLength={60} autoComplete="off" placeholder="Leave blank to add open time" /></label>}
       <label className="field">Service
-        <select value={service} onChange={(e) => pickService(e.target.value)}>
-          {services.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.minutes} min{x.price_inr != null ? ` · ${money(x.price_inr)}` : ''}</option>)}
-        </select>
+        <Select value={service} onChange={pickService} label="Service"
+          choices={services.map((x) => ({ value: x.id, label: x.name, hint: `${x.minutes} min${x.price_inr != null ? ` · ${money(x.price_inr)}` : ''}` }))} />
       </label>
       <label className="field">With
-        <select value={who?.id ?? ''} onChange={(e) => setStaff(e.target.value)} disabled={able.length === 0}>
-          {able.length === 0 && <option value="">Nobody in today does this</option>}
-          {able.map((p) => <option key={p.id} value={p.id}>{p.name} · {clock(p.shift_start)}–{clock(Math.min(p.shift_end, 1439))}</option>)}
-        </select>
+        <Select value={who?.id ?? ''} onChange={setStaff} disabled={able.length === 0} placeholder="Nobody in today does this" label="With"
+          choices={able.map((p) => ({ value: p.id, label: p.name, hint: `${clock(p.shift_start)}–${clock(Math.min(p.shift_end, 1439))}` }))} />
       </label>
       <div className="field-row">
         <label className="field">Starts<input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>

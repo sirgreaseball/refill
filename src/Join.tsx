@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { demoDay } from './day'
 import { rpc } from './rpc.ts'
 import { readSession } from './auth.ts'
-import { Mark, clock, money } from './ui'
+import { Mark, Select, clock, money } from './ui'
 
 const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
 type Time = { staff: string; name: string; start_min: number; slot: string | null }
@@ -63,6 +63,9 @@ export default function Join({ code }: { code: string }) {
 
   // One chip per start time; the first person free then takes it unless the client picks someone.
   const starts = useMemo(() => [...new Map((times ?? []).map((t) => [t.start_min, t])).values()], [times])
+  // The day as a dial face would read it: one row per hour, the quarter hours in fixed columns, so
+  // a gap in the row is a time already taken.
+  const hours = useMemo(() => [...new Set(starts.map((t) => Math.floor(t.start_min / 60)))], [starts])
   const withWhom = pick ? (times ?? []).filter((t) => t.start_min === pick.start_min) : []
 
   const book = async () => {
@@ -133,29 +136,33 @@ export default function Join({ code }: { code: string }) {
         <form className="join" onSubmit={mode === 'wait' ? wait : (e) => { e.preventDefault(); book() }} noValidate>
           <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" maxLength={60} /></label>
           <label>Service
-            <select value={service} onChange={(e) => setService(e.target.value)}>
-              <option value="">Choose a service</option>
-              {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min{s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}</option>)}
-            </select>
+            <Select value={service} onChange={setService} placeholder="Choose a service" label="Service"
+              choices={services.map((s) => ({ value: s.id, label: s.name, hint: `${s.minutes} min${s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}` }))} />
           </label>
 
           {mode === 'book' && sv && (
             <section className="book-times" aria-label="Open times today">
               <p className="overline">{times === null ? 'Finding open times…' : none ? 'Nothing open today' : `Open today · ${starts.length} time${starts.length === 1 ? '' : 's'}`}</p>
               {starts.length > 0 && (
-                <div className="time-chips" role="group" aria-label="Pick a time">
-                  {starts.map((t) => (
-                    <button key={t.start_min} type="button" className={`time-chip ${pick?.start_min === t.start_min ? 'is-on' : ''} ${t.slot ? 'is-gap' : ''}`}
-                      aria-pressed={pick?.start_min === t.start_min} onClick={() => setPick(t)}>{clock(t.start_min)}</button>
+                <div className="slot-grid" role="group" aria-label="Pick a time">
+                  {hours.map((h) => (
+                    <div className="slot-row" key={h}>
+                      <span className="slot-h" aria-hidden="true">{String(h).padStart(2, '0')}</span>
+                      {starts.filter((t) => Math.floor(t.start_min / 60) === h).map((t) => (
+                        <button key={t.start_min} type="button" style={{ gridColumn: 2 + Math.min(3, Math.floor((t.start_min % 60) / 15)) }}
+                          className={`slot-q ${pick?.start_min === t.start_min ? 'is-on' : ''} ${t.slot ? 'is-gap' : ''}`}
+                          aria-pressed={pick?.start_min === t.start_min} aria-label={`${clock(t.start_min)}${t.slot ? ', a cancelled time back on offer' : ''}`}
+                          onClick={() => setPick(t)}>:{String(t.start_min % 60).padStart(2, '0')}</button>
+                      ))}
+                    </div>
                   ))}
                 </div>
               )}
+              {starts.some((t) => t.slot) && <p className="slot-key"><i /> A cancelled time, back on offer</p>}
               {pick && withWhom.length > 1 && (
-                <label>With
-                  <select value={pick.staff} onChange={(e) => setPick(withWhom.find((t) => t.staff === e.target.value) ?? pick)}>
-                    {withWhom.map((t) => <option key={t.staff} value={t.staff}>{t.name}</option>)}
-                  </select>
-                </label>
+                <div className="chips slot-with" role="group" aria-label="With">
+                  {withWhom.map((t) => <button key={t.staff} type="button" className={t.staff === pick.staff ? 'is-on' : ''} aria-pressed={t.staff === pick.staff} onClick={() => setPick(t)}>{t.name}</button>)}
+                </div>
               )}
               {none && <p className="quiet">Every time for a {sv.name.toLowerCase()} is taken today. Join the waitlist and {salon} can offer you a time the moment someone cancels.</p>}
             </section>
