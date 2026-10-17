@@ -137,10 +137,20 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 
 **18 Oct ~01:55 (this account):** demo script rewritten (`docs/DEMO_SCRIPT.md`) and the full demo path rehearsed on the live site; every step matched. Found and fixed (13255ed): page and theme changes went only through `startViewTransition`, so in a window that cannot paint (hidden, minimised, captured off-screen, the preview pane) the route stayed stuck until reload. Both now apply after 350-400 ms either way. Note: the race winner books their own service, so the recovered figure is that client's price (Meera ₹1,600 or Sameer ₹750).
 
+**18 Oct ~02:30 (this account): marketplace first step + account actions (migration 010, applied).**
+- `workspaces.listed` (default true; only `kind='live'` ever shows). `directory(p_q)` is public: name, type, join code, staff count, waiting count, up to 6 services; never a client's name. Search matches name, type or a service name. Owner toggles it in Owner > Team > Links (`set_listed`, owner only).
+- Clients find places in `src/Directory.tsx`: `DirectoryList` on the signed-in client home, and the public page `#/places` (linked from the sign-in page). Tapping a place opens its `#/join/<code>`.
+- Signed-in clients act from their home for any linked place: `my_entry_move` (change or cancel: opens the move link), `my_entry_leave`, `my_entry_consent`. `claim_entries(tokens)` attaches places joined on this device before signing in (`refill.places`), called on client-home mount.
+- Fixed in `src/ClientHome.tsx`: a cancelled booking said "You left this list"; a booking whose staff member is out now shows it with "Pick a new time".
+- `npm run flowtest` (`scripts/flow-test.ts`): 9 cross-role checks with keys and a client token, no accounts: join reaches owner, desk offer reaches client, booking reaches owner, staff out reaches client, client move, tasks owner to staff and back, desk cancel reaches client, consent both ways, demo never listed. All pass.
+- `npm run dbtest` now unlists its throwaway "Test Tutors" business (6 old ones unlisted by SQL).
+- **Safety rule for Claude:** Claude must not create accounts or type passwords on the hosted Supabase Auth itself. Account flows are tested by Dhruv with the test accounts in `docs/TEST_ACCOUNTS.md`; everything else is tested by script. Avoid running `npm run dbtest` yourself: its section 12 signs up a throwaway account.
+
 **Known limits (say them honestly if asked):**
 - A live book holds one day: no booking for future dates yet.
 - The live clock moves only while a desk or owner page is open.
-- Client "places" live on one device, with no accounts.
+- Staff and front desk use private links, not accounts.
+- Clients book only through offers from a waitlist; no self-service booking of an open time yet.
 - No admin console yet.
 
 **Still to do, in order:**
