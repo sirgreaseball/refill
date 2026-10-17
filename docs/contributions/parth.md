@@ -22,10 +22,10 @@
 - Found misleading wording: choosing “No messages” promises that clients can check their page for offers, but clients without affirmative consent are excluded from new offers. Withdrawing consent also revokes open offers.
 - No overlapping controls were confirmed in the inspected screenshots. The Owner Rules role table requires horizontal scrolling to reveal its Client column, a discoverability recommendation rather than a confirmed broken layout.
 - Actual browser observations and screenshots are documented separately. This was not real Android Chrome or Firefox testing, and this record does not claim those device checks passed.
-- GitHub issue creation for the consent-copy finding was attempted but rejected with HTTP 403 (`Resource not accessible by integration`); no issue URL is available yet.
+- Filed [issue #7](https://github.com/sirgreaseball/refill/issues/7) for the consent-copy mismatch, with sign-up and private-page screenshots.
 
 ## Pull request
 
 - Published branch: [parth/scenarios](https://github.com/sirgreaseball/refill/tree/parth/scenarios).
-- Pull request creation was attempted but rejected with HTTP 403 (`Resource not accessible by integration`). No pull request has been opened.
+- Pull request publication is in progress.
 - [Open the prepared pull request](https://github.com/sirgreaseball/refill/pull/new/parth/scenarios) once GitHub write access is available.
