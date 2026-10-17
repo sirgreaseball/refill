@@ -4,6 +4,11 @@
 
 **Live:** https://fillthechair.vercel.app · install it from the browser menu ("Install app" / "Add to Home Screen").
 Built for Fynd × NMIMS Hyderabad, 17–18 October 2026, case **C29 Appointment Recovery Desk**. All data is synthetic.
+Guides: [engineering](https://fillthechair.vercel.app/guide/engineering.html) · [business](https://fillthechair.vercel.app/guide/mba.html)
+
+![The desk: today's book, an open gap, who fits it and who is skipped](docs/screens/desk.png)
+
+<p><img src="docs/screens/offer.png" width="240" alt="The customer's offer on a phone"> <img src="docs/screens/booked.png" width="240" alt="Booked"></p>
 
 ---
 

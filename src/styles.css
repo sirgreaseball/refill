@@ -330,7 +330,7 @@ input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border-radius
   background-image: repeating-linear-gradient(to right, var(--hair) 0 1px, transparent 1px calc(100% / 10));
 }
 .past-veil { position: absolute; top: 0; bottom: 0; left: 0; background: var(--tint); pointer-events: none; }
-.now { position: absolute; top: -8px; bottom: -8px; width: 1.5px; margin-left: -0.75px; background: var(--ink); pointer-events: none; z-index: 3; }
+.now { position: absolute; top: -8px; bottom: -8px; width: 1.5px; margin-left: -0.75px; background: var(--ink); opacity: 0.55; pointer-events: none; z-index: 3; }
 .lane:first-child .now::before { content: ''; position: absolute; top: -3px; left: -3.25px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
 
 .blk {
