@@ -1,5 +1,6 @@
 // Shared pieces: the mark, one thin icon set, number formats, the QR code and the modal.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 const inr = new Intl.NumberFormat('en-IN')
 export const money = (n: number | null | undefined) => (n == null ? '—' : `₹${inr.format(n)}`)
@@ -79,7 +80,8 @@ export function Qr({ text, size = 176 }: { text: string; size?: number }) {
   return <div className="qr" style={{ width: size, height: size }} role="img" aria-label="QR code" dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
-/** A floating sheet. Bottom sheet on phones, centred card on wide screens. Esc and the backdrop close it. */
+/** A floating sheet. Bottom sheet on phones, centred card on wide screens. Esc and the backdrop close it.
+ *  It renders into <body> above everything, keeps Tab inside itself, and makes the page behind it inert. */
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const close = useRef(onClose)
@@ -87,12 +89,23 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   // Runs once per opening: the desk re-renders every poll, and re-running this would steal focus each time.
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null
+    const behind = [...document.body.children].filter((el) => !el.contains(ref.current) && !el.hasAttribute('inert'))
+    behind.forEach((el) => el.setAttribute('inert', ''))
     ref.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close.current()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return close.current()
+      if (e.key !== 'Tab' || !ref.current) return
+      const all = [...ref.current.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.hasAttribute('disabled'))
+      if (!all.length) return
+      const [first, last] = [all[0], all[all.length - 1]]
+      const at = document.activeElement
+      if (e.shiftKey && (at === first || at === ref.current)) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus() }
+    }
     addEventListener('keydown', onKey)
-    return () => { removeEventListener('keydown', onKey); prev?.focus() }
+    return () => { removeEventListener('keydown', onKey); behind.forEach((el) => el.removeAttribute('inert')); prev?.focus() }
   }, [])
-  return (
+  return createPortal(
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && close.current()}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
         <div className="modal-head">
@@ -101,7 +114,8 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

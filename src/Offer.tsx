@@ -7,7 +7,9 @@ import { SlotDial } from './Dial'
 import { Icon, Mark, clock, money, span } from './ui'
 
 interface OfferView {
-  state: 'OPEN' | 'CONFIRMED' | 'WAITLISTED' | 'TAKEN' | 'DECLINED' | 'NO_CONSENT' | 'BOOKED_ELSEWHERE' | 'EXPIRED' | 'NOT_FOUND'
+  state: 'OPEN' | 'CONFIRMED' | 'CANCELLED' | 'WAITLISTED' | 'TAKEN' | 'DECLINED' | 'NO_CONSENT' | 'WITHDRAWN' | 'BOOKED_ELSEWHERE' | 'EXPIRED' | 'NOT_FOUND'
+  reason?: 'STAFF_ABSENT' | 'LEFT_WAITLIST' | 'TAKEN' | 'CHANGED' | null
+  moved?: boolean
   salon: string
   expires_min: number | null
   now_min: number
@@ -65,12 +67,12 @@ export default function Offer({ id }: { id: string }) {
 
       <SlotDial segs={[{ start: v.slot.start_min, minutes: v.slot.minutes, kind: v.state === 'OPEN' ? 'open' : v.state === 'CONFIRMED' ? 'refilled' : 'lapsed' }]} now={v.now_min}
         big={clock(v.slot.start_min)} small={`${v.slot.minutes} min${v.slot.staff ? ` · ${v.slot.staff}` : ''}`}
-        label={`${when}${v.slot.staff ? ` with ${v.slot.staff}` : ''}: ${v.state === 'OPEN' ? 'open for you' : v.state === 'CONFIRMED' ? 'booked for you' : 'no longer yours'}`} />
+        label={`${when}${v.slot.staff ? ` with ${v.slot.staff}` : ''}: ${v.state === 'OPEN' ? 'open for you' : v.state === 'CONFIRMED' ? 'booked for you' : v.state === 'CANCELLED' ? 'cancelled' : 'no longer yours'}`} />
 
-      <div className="bubble">
+      {!(v.moved || v.state === 'CANCELLED') && <div className="bubble">
         <p>Hi {first}, a {v.slot.minutes}-minute {v.slot.skill} slot just opened today at <strong>{clock(v.slot.start_min)}</strong>{v.slot.staff ? <> with {v.slot.staff}</> : null}.</p>
         <p>It fits your {v.entry.service ?? 'appointment'} ({v.entry.minutes} min{v.entry.price_inr ? `, ${money(v.entry.price_inr)}` : ''}). Want it?</p>
-      </div>
+      </div>}
 
       {v.state === 'OPEN' && (
         <div className="phone-acts">
@@ -88,8 +90,8 @@ export default function Offer({ id }: { id: string }) {
       {v.state === 'CONFIRMED' && (
         <div className="verdict is-act">
           <svg className="tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-16" pathLength={100} /></svg>
-          <h1 className="phone-h">You’re booked</h1>
-          <p>{when}{v.slot.staff ? ` with ${v.slot.staff}` : ''} · booking #{v.booking}</p>
+          <h1 className="phone-h">{v.moved ? 'Your time changed' : 'You’re booked'}</h1>
+          <p>{v.moved ? 'The front desk moved your appointment. It is now ' : ''}{when}{v.slot.staff ? ` with ${v.slot.staff}` : ''}{v.booking ? ` · booking #${v.booking}` : ''}</p>
           {lastTap === 'ALREADY_CONFIRMED' && <p className="quiet">You tapped again. Still one booking.</p>}
         </div>
       )}
@@ -103,6 +105,17 @@ export default function Offer({ id }: { id: string }) {
 
       {v.state === 'DECLINED' && (
         <div className="verdict"><h1 className="phone-h">No problem</h1><p>You stay on the waitlist for the next gap that fits.</p></div>
+      )}
+
+      {v.state === 'CANCELLED' && (
+        <div className="verdict"><h1 className="phone-h">Appointment cancelled</h1><p>Your {v.entry.service ?? 'appointment'}{v.booking ? ` (booking #${v.booking})` : ''} is cancelled, so please don’t come in for it. Call {v.salon.split(',')[0]} if this looks wrong.</p></div>
+      )}
+
+      {v.state === 'WITHDRAWN' && (
+        <div className="verdict"><h1 className="phone-h">This offer was withdrawn</h1><p>{v.reason === 'STAFF_ABSENT'
+          ? `${v.slot.staff ?? 'The staff member'} can’t come in today, so this slot is not available. You keep your place on the waitlist and can still be offered the next gap that fits.`
+          : v.reason === 'LEFT_WAITLIST' ? 'You left the waitlist, so this offer is closed.'
+          : 'The salon changed this slot, so it is no longer on offer. You keep your place on the waitlist for the next gap that fits.'}</p></div>
       )}
 
       {v.state === 'NO_CONSENT' && (

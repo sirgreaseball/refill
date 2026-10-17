@@ -10,6 +10,7 @@ const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5
 export default function Join({ code }: { code: string }) {
   const services = useMemo(() => demoDay().services, [])
   const [salon, setSalon] = useState<string | null>(null)
+  const [cap, setCap] = useState<number | null>(null)
   const [missing, setMissing] = useState(false)
   const [name, setName] = useState('')
   const [service, setService] = useState('')
@@ -20,8 +21,8 @@ export default function Join({ code }: { code: string }) {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    rpc<{ ok: boolean; salon?: string }>('join_info', { p_code: code })
-      .then((r) => (r.ok ? setSalon(r.salon!) : setMissing(true)), () => setMissing(true))
+    rpc<{ ok: boolean; salon?: string; max_offers?: number }>('join_info', { p_code: code })
+      .then((r) => { if (!r.ok) return setMissing(true); setSalon(r.salon!); setCap(r.max_offers ?? null) }, () => setMissing(true))
   }, [code])
 
   const submit = async (ev: FormEvent) => {
@@ -77,7 +78,7 @@ export default function Join({ code }: { code: string }) {
           <legend>May {salon} message you when a slot opens?</legend>
           <label className={consent === true ? 'is-on' : ''}>
             <input type="radio" name="consent" checked={consent === true} onChange={() => setConsent(true)} />
-            <strong>Yes, message me</strong><small>One message per opening, at most 3 a day. Stop any time.</small>
+            <strong>Yes, message me</strong><small>One message per opening{cap ? `, at most ${cap} a day` : ''}. Stop any time.</small>
           </label>
           <label className={consent === false ? 'is-on' : ''}>
             <input type="radio" name="consent" checked={consent === false} onChange={() => setConsent(false)} />

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Component, Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { ownerLink, readDesk, useBook } from './api'
 import Offer from './Offer'
@@ -7,17 +7,43 @@ import { Glow, reduced, useSpotlight } from './motion'
 import { Icon, Mark, Modal, Qr, ToastHost, clock } from './ui'
 import { figures, type Book } from './desk/common'
 
-const Today = lazy(() => import('./desk/Today'))
-const Waitlist = lazy(() => import('./desk/Waitlist'))
-const Activity = lazy(() => import('./desk/Activity'))
-const Overview = lazy(() => import('./Owner').then((m) => ({ default: m.Overview })))
-const OwnerTeam = lazy(() => import('./Owner').then((m) => ({ default: m.Team })))
-const Rules = lazy(() => import('./Owner').then((m) => ({ default: m.Rules })))
-const Lab = lazy(() => import('./Lab'))
-const StaffView = lazy(() => import('./StaffView'))
-const Join = lazy(() => import('./Join'))
-const Me = lazy(() => import('./Me'))
-const Move = lazy(() => import('./Move'))
+// After a deploy, the previous build's route files are gone. Reload once to pick up the new build
+// instead of failing; if that also fails, the Boundary below shows a way out.
+const fresh = <T,>(f: () => Promise<T>) => () => f().then((m) => { sessionStorage.removeItem('refill.reload'); return m }, (e) => {
+  if (!sessionStorage.getItem('refill.reload')) { sessionStorage.setItem('refill.reload', '1'); location.reload() }
+  throw e
+})
+const Today = lazy(fresh(() => import('./desk/Today')))
+const Waitlist = lazy(fresh(() => import('./desk/Waitlist')))
+const Activity = lazy(fresh(() => import('./desk/Activity')))
+const Overview = lazy(fresh(() => import('./Owner').then((m) => ({ default: m.Overview }))))
+const OwnerTeam = lazy(fresh(() => import('./Owner').then((m) => ({ default: m.Team }))))
+const Rules = lazy(fresh(() => import('./Owner').then((m) => ({ default: m.Rules }))))
+const Lab = lazy(fresh(() => import('./Lab')))
+const StaffView = lazy(fresh(() => import('./StaffView')))
+const Join = lazy(fresh(() => import('./Join')))
+const Me = lazy(fresh(() => import('./Me')))
+const Move = lazy(fresh(() => import('./Move')))
+
+/** Catches a page that fails to load or render, so the rest of the app and a way out stay on screen. */
+class Boundary extends Component<{ children: ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null }
+  static getDerivedStateFromError(err: Error) { return { err } }
+  render() {
+    if (!this.state.err) return this.props.children
+    const update = /dynamically imported module|loading chunk|module script failed/i.test(this.state.err.message)
+    return (
+      <div className="loading" role="alert">
+        <Mark size={30} fill={0.3} />
+        <p className="quiet">{update ? 'A newer version of Refill is out. Reload to open it.' : 'This page hit a problem. Nothing was lost: every change is saved in the database.'}</p>
+        <div className="card-acts">
+          <button className="btn is-primary" onClick={() => location.reload()}>Reload</button>
+          <a className="btn is-quiet" href="#/" onClick={() => this.setState({ err: null })}>Home</a>
+        </div>
+      </div>
+    )
+  }
+}
 const phoneWait = <main className="phone"><p className="quiet">Opening…</p></main>
 
 function useRoute() {
@@ -50,6 +76,10 @@ function useRoute() {
  */
 export default function App() {
   const route = useRoute()
+  return <Boundary><Routes route={route} /></Boundary>
+}
+
+function Routes({ route }: { route: string }) {
   const offer = /^\/o\/([0-9a-f-]{36})$/i.exec(route)
   if (offer) return <Offer id={offer[1]} />
   const move = /^\/m\/([0-9a-f-]{36})$/i.exec(route)
@@ -92,7 +122,7 @@ function Shell({ route }: { route: string }) {
       <Glow st={st} />
       <Bar route={route} area={area} book={book} />
       {book.offline && <p className="banner" role="status">Offline. Showing the last saved state; changes resume when the connection is back.</p>}
-      {area === 'home' ? page : <main className="page"><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></main>}
+      {area === 'home' ? <Boundary key={route}>{page}</Boundary> : <main className="page"><Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary></main>}
       {st && (area === 'desk' || (area === 'owner' && st.role === 'owner')) && <Dock route={route} area={area} book={book} />}
     </div>
   )

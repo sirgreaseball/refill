@@ -2,6 +2,7 @@
 // the waitlist, record a cancellation, move a booking, or send the client a link to choose.
 // The page only proposes; the database re-checks every rule when you press the button.
 import { useRef, useState, type PointerEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { asEntry, asSlot, asStaff, moveUrl, rpc, type DbOffer, type DbSlot, type MoveOption, type State } from '../api'
 import { LABEL, candidates, explain, type Reason } from '../engine'
 import { MovePicker } from '../MovePicker'
@@ -45,7 +46,8 @@ export function SlotSheet({ st, slot, run, onClose }: { st: State; slot: DbSlot;
     else sheet.current.style.transform = ''
   }
 
-  return (
+  // Rendered into <body>: inside the page it would sit under the dock's stacking layer.
+  return createPortal(
     <>
       <div className="sheet-back" onClick={onClose} />
       <aside className="sheet" ref={sheet} role="dialog" aria-modal="true" aria-label={`${span(slot.start_min, slot.minutes)} ${slot.service ?? ''}`}>
@@ -71,7 +73,8 @@ export function SlotSheet({ st, slot, run, onClose }: { st: State; slot: DbSlot;
           {slot.status !== 'booked' && <Offers st={st} slot={slot} />}
         </div>
       </aside>
-    </>
+    </>,
+    document.body,
   )
 }
 
@@ -174,9 +177,12 @@ function OpenGap({ st, slot, run }: { st: State; slot: DbSlot; run: Run }) {
   const offeredHere = new Map(offers.map((o) => [o.entry_id, offerState(o, st)]))
   const capped = fit.eligible.filter((e) => !offeredHere.has(e.id) && sentToday(e.id) >= st.workspace.max_offers)
   const eligible = fit.eligible.filter((e) => !capped.includes(e))
-  const fresh = eligible.filter((e) => !offeredHere.has(e.id))
+  // A withdrawn offer (staff member out, appointment moved) was not the client's choice, so they
+  // come back in queue order once the gap can be offered again. Expired ones can be ticked by hand.
+  const fresh = eligible.filter((e) => !offeredHere.has(e.id) || offeredHere.get(e.id) === 'revoked')
   const chosen = picked ?? new Set(fresh.slice(0, 3).map((e) => e.id))
   const lapsed = offers.length > 0 && !offers.some((o) => offerState(o, st) === 'waiting')
+  const timedOut = offers.some((o) => offerState(o, st) === 'expired')
 
   const toggle = (id: string) => {
     const next = new Set(chosen)
@@ -200,13 +206,15 @@ function OpenGap({ st, slot, run }: { st: State; slot: DbSlot; run: Run }) {
     <>
       <section className="sec">
         <h3>Offer it to the waitlist <span className="count">{eligible.length} fit</span></h3>
-        {lapsed && <p className="note is-beat small" style={{ marginBottom: 8 }}>{fresh.length ? 'Nobody replied in time. The next people in the queue are ticked.' : 'Nobody replied in time. You can offer it again to anyone who did not answer.'}</p>}
+        {lapsed && <p className="note is-beat small" style={{ marginBottom: 8 }}>{timedOut
+          ? (fresh.length ? 'Nobody replied in time. The next people in the queue are ticked.' : 'Nobody replied in time. You can offer it again to anyone who did not answer.')
+          : `The earlier offers were withdrawn, so nobody is waiting on this gap.${fresh.length ? ' The first people in the queue are ticked again.' : ''}`}</p>}
         {eligible.length === 0 ? <p className="quiet">Nobody on the waitlist fits this gap. The reasons are below.</p> : (
           <ul className="rows">
             {eligible.map((e) => {
               const row = waiting.find((w) => w.id === e.id)!
               const offered = offeredHere.get(e.id)
-              const locked = !!offered && offered !== 'expired'
+              const locked = !!offered && offered !== 'expired' && offered !== 'revoked'
               return (
                 <li key={e.id}>
                   <label className={`pick ${locked ? 'is-offered' : ''}`}>
