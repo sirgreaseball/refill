@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import core from '../tests/core-scenarios.json'
 import { type Scenario } from './engine'
-import { evaluate, importJson, presetDocument } from './labLogic'
+import { candidateExplanation, compareResults, evaluate, importJson, presetDocument, slotExplanation, type LabSuccess } from './labLogic'
 
 const slot = { id: 'S1', start: '14:30', minutes: 60, skill: 'hair', status: 'free' }
 const entry = { id: 'W1', minutes: 60, skill: 'hair', consent: true }
 const run = (doc: unknown) => evaluate(JSON.stringify(doc))
+const success = (doc: unknown): LabSuccess => {
+  const result = run(doc)
+  if (result.kind !== 'ok') throw new Error(JSON.stringify(result))
+  return result
+}
 
 describe('Lab invalid input (#16)', () => {
   it('keeps the invalid clock reproduction in the result panel', () => {
@@ -86,5 +91,57 @@ describe('Lab context preservation (#15)', () => {
     expect(importJson(JSON.stringify({ records: doc }))).toEqual(doc)
     expect(importJson(JSON.stringify([doc]))).toEqual(doc)
     expect(source).toEqual(original)
+  })
+})
+
+describe('Lab explanations (#17)', () => {
+  const describeCandidate = (ev: LabSuccess, slotId: string, entryId: string) => candidateExplanation(
+    ev.input, ev.result, ev.input.slots.find((item) => item.id === slotId)!, ev.input.waitlist.find((item) => item.id === entryId)!,
+  )
+
+  it('describes C04 W2 as waiting, not already matched', () => {
+    const ev = success(presetDocument((core as Scenario[]).find((item) => item.id === 'C04')!))
+    expect(describeCandidate(ev, 'S1', 'W2')).toEqual({ code: 'WAITING', message: 'Fits; waiting behind W1, who takes this slot' })
+  })
+
+  it('distinguishes earlier matches from later ones', () => {
+    const ev = success({ slots: [slot, { ...slot, id: 'S2', start: '16:00' }], waitlist: [entry, { ...entry, id: 'W2' }] })
+    expect(describeCandidate(ev, 'S1', 'W2').code).toBe('WAITING')
+    expect(describeCandidate(ev, 'S2', 'W1')).toEqual({ code: 'ALREADY_MATCHED', message: 'Already matched to earlier slot S1' })
+  })
+
+  it.each(['blocked', 'booked'])('does not turn exclusions into fits when a slot becomes %s', (status) => {
+    const doc = { slots: [{ ...slot, minutes: 30 }], waitlist: [entry, { ...entry, id: 'W2', consent: false }] }
+    const before = success(doc)
+    const after = success({ ...doc, slots: [{ ...doc.slots[0], status }] })
+    expect(compareResults(before, after)).toEqual([`S1: OFFERABLE → ${status.toUpperCase()}`])
+  })
+
+  it('shows absent staff and lead-time states, rather than fitting candidates', () => {
+    const doc = { slots: [{ ...slot, staff: 'ST1' }], waitlist: [entry], staff: [{ id: 'ST1', skills: ['hair'], present: true }] }
+    const before = success(doc)
+    const absent = success({ ...doc, staff: [{ ...doc.staff[0], present: false }] })
+    const soon = success({ ...doc, now: '14:25' })
+    expect(describeCandidate(absent, 'S1', 'W1').code).toBe('STAFF_ABSENT')
+    expect(compareResults(before, absent)).toEqual(['S1: OFFERABLE → STAFF_ABSENT'])
+    expect(compareResults(before, soon)).toEqual(['S1: OFFERABLE → TOO_SOON'])
+  })
+
+  it('explains skills using the assigned stylist', () => {
+    const ev = success({ slots: [{ ...slot, staff: 'ST1' }], waitlist: [{ ...entry, skill: 'nails' }], staff: [{ id: 'ST1', name: 'Synthetic Stylist', skills: ['hair', 'skin'], present: true }] })
+    expect(describeCandidate(ev, 'S1', 'W1')).toEqual({ code: 'SKILL_MISMATCH', message: 'Wants nails; Synthetic Stylist does hair and skin' })
+  })
+
+  it('keeps consent changes explicit while a slot remains offerable', () => {
+    const before = success({ slots: [slot], waitlist: [entry] })
+    const after = success({ slots: [slot], waitlist: [{ ...entry, consent: false }] })
+    expect(compareResults(before, after)).toEqual(['S1/W1: MATCHED → NO_CONSENT'])
+  })
+
+  it.each(['constructor', 'toString', '__proto__'])('does not treat inherited dictionary properties as results for id %s', (id) => {
+    const ev = success({ slots: [{ ...slot, id, status: 'booked' }], waitlist: [{ ...entry, id }] })
+    expect(slotExplanation(ev.input.slots[0], ev.result).code).toBe('BOOKED')
+    const free = success({ slots: [{ ...slot, id }], waitlist: [{ ...entry, id }] })
+    expect(describeCandidate(free, id, id).code).toBe('MATCHED')
   })
 })

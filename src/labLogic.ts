@@ -1,4 +1,4 @@
-import { matchAll, race, toMin, validate, type Input, type InputError, type MatchResult, type RaceResult, type Scenario } from './engine'
+import { explain, matchAll, race, staffOf, toMin, validate, type Entry, type Input, type InputError, type MatchResult, type RaceResult, type Reason, type Scenario, type Slot } from './engine'
 
 export interface LabDocument extends Record<string, unknown> {
   slots: unknown
@@ -77,4 +77,53 @@ export function evaluate(text: string): LabEvaluation {
   } catch (error) {
     return invalid('$', error instanceof Error ? error.message : 'This input could not be evaluated.')
   }
+}
+
+type SlotState = 'OFFERABLE' | 'BLOCKED' | 'BOOKED' | 'TOO_SOON' | 'STAFF_ABSENT'
+interface Explanation { code: SlotState | Reason | 'MATCHED' | 'WAITING' | 'ALREADY_MATCHED'; message: string }
+
+/** Per-slot existence alone is not eligibility: absent/too-soon rows exist but cannot be offered. */
+export function slotExplanation(slot: Slot, result: MatchResult): Explanation {
+  if (slot.status === 'blocked') return { code: 'BLOCKED', message: 'Blocked (staff absent): never offered.' }
+  if (slot.status === 'booked') return { code: 'BOOKED', message: 'Booked: never offered.' }
+  const row = result.perSlot[slot.id]
+  if (row.tooSoon) return { code: 'TOO_SOON', message: 'Starts too soon to offer.' }
+  if (row.staffAbsent) return { code: 'STAFF_ABSENT', message: 'Staff member is out: never offered.' }
+  return { code: 'OFFERABLE', message: 'Open to offers.' }
+}
+
+export function candidateExplanation(input: Input, result: MatchResult, slot: Slot, entry: Entry): Explanation {
+  const state = slotExplanation(slot, result)
+  if (state.code !== 'OFFERABLE') return state
+  const row = result.perSlot[slot.id]
+  const reason = Object.hasOwn(row.excluded, entry.id) ? row.excluded[entry.id] : undefined
+  if (reason) return { code: reason, message: explain(reason, entry, slot, staffOf(slot, input.staff)) }
+  if (row.chosen === entry.id) return { code: 'MATCHED', message: 'First in the queue who fits' }
+  const currentIndex = input.slots.findIndex((item) => item.id === slot.id)
+  const previous = result.matches.find(([id, slotId]) => id === entry.id && input.slots.findIndex((item) => item.id === slotId) < currentIndex)
+  if (previous) return { code: 'ALREADY_MATCHED', message: `Already matched to earlier slot ${previous[1]}` }
+  return { code: 'WAITING', message: row.chosen ? `Fits; waiting behind ${row.chosen}, who takes this slot` : 'Fits; keeps their waitlist place' }
+}
+
+/** Compare candidate outcomes only while the slot can be offered in both snapshots. */
+export function compareResults(before: LabSuccess, after: LabSuccess): string[] {
+  const changes: string[] = []
+  const ids = new Set([...before.input.slots, ...after.input.slots].map((slot) => slot.id))
+  for (const id of ids) {
+    const a = before.input.slots.find((slot) => slot.id === id)
+    const b = after.input.slots.find((slot) => slot.id === id)
+    const aState = a ? slotExplanation(a, before.result).code : 'NOT_PRESENT'
+    const bState = b ? slotExplanation(b, after.result).code : 'NOT_PRESENT'
+    if (aState !== bState) changes.push(`${id}: ${aState} → ${bState}`)
+    if (!a || !b || aState !== 'OFFERABLE' || bState !== 'OFFERABLE') continue
+    const entries = new Set([...before.input.waitlist, ...after.input.waitlist].map((entry) => entry.id))
+    for (const entryId of entries) {
+      const aEntry = before.input.waitlist.find((entry) => entry.id === entryId)
+      const bEntry = after.input.waitlist.find((entry) => entry.id === entryId)
+      const aCode = aEntry ? candidateExplanation(before.input, before.result, a, aEntry).code : 'NOT_PRESENT'
+      const bCode = bEntry ? candidateExplanation(after.input, after.result, b, bEntry).code : 'NOT_PRESENT'
+      if (aCode !== bCode) changes.push(`${id}/${entryId}: ${aCode} → ${bCode}`)
+    }
+  }
+  return changes
 }
