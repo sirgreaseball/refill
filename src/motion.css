@@ -415,3 +415,30 @@
 .my-slot-main strong { font-weight: 600; }
 .my-slot-main small { font-size: 13px; color: var(--ink-2); }
 .presence-state { font-size: 28px; font-weight: 500; letter-spacing: -0.01em; }
+
+/* ---------- lab: the proof, with its score as the one loud moment */
+.checks-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; padding: 18px 0 14px; border-bottom: 1px solid var(--line); }
+.score { display: flex; align-items: flex-end; gap: 14px; }
+.score b { font: 500 clamp(52px, 7vw, 88px)/0.86 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.score b i { font-style: normal; color: var(--ink-3); }
+.score small { max-width: 26ch; padding-bottom: 6px; font-size: 13px; line-height: 1.35; color: var(--ink-2); }
+.checks-head + .rows > .check:first-child { border-top: 0; }
+.lab .rows > li.check { display: grid; grid-template-columns: 12px minmax(0, 1fr) minmax(0, 1.1fr); gap: 14px; align-items: start; padding: 14px 0; }
+.check-io { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px; color: var(--ink); }
+.check-io > span { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.check-io small { font: 500 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.check:last-child .check-io { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.dot.is-pass { box-shadow: 0 0 0 4px var(--act-soft); }
+.dot.is-fail { box-shadow: 0 0 0 4px var(--danger-soft); }
+.race-checks { grid-column: 2 / -1; list-style: none; margin: 4px 0 0; padding: 0; }
+.race-checks li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink-2); }
+.race-checks .dot { flex: none; margin-top: 5px; width: 8px; height: 8px; }
+.toggle { display: grid; gap: 3px; border: 0; text-align: left; color: var(--ink); transition: background 0.2s var(--ease), transform 0.45s var(--spring); }
+.toggle:hover:not(:disabled) { background: var(--surface-3); }
+.toggle:active:not(:disabled) { transform: scale(0.98); }
+.toggle small { font-size: 12.5px; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .lab .rows > li.check { grid-template-columns: 12px minmax(0, 1fr); }
+  .lab .rows > li.check > .check-io, .lab .rows > li.check > .race-checks { grid-column: 2; }
+  .check-io { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}

@@ -289,12 +289,16 @@ function Checks() {
 
   return (
     <section className="checks" aria-label="Checks">
+      <header className="checks-head">
+        <p className="score"><b className={rows.every((r) => r.pass) ? 'act-text' : 'risk-text'}>{rows.filter((r) => r.pass).length}<i>/{rows.length}</i></b><small>checks pass, computed now in this browser by the same engine the desk uses</small></p>
+        <p className="quiet small">The last row fires a real race at the live database.</p>
+      </header>
       <ul className="rows">
         {rows.map((r) => (
           <li key={r.label} className="check">
             <span className={`dot ${r.pass ? 'is-pass' : 'is-fail'}`} aria-label={r.pass ? 'pass' : 'fail'} />
             <span className="check-label">{r.label}</span>
-            <span className="check-io mono"><small>expected</small> {r.expected} <small>actual</small> {r.actual}</span>
+            <span className="check-io mono"><span><small>expected</small>{r.expected}</span><span><small>actual</small>{r.actual}</span></span>
           </li>
         ))}
         <li className="check">
