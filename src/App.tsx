@@ -5,6 +5,7 @@ import Offer from './Offer'
 import Home from './Home'
 import { Glow, reduced, useSpotlight } from './motion'
 import { Icon, Mark, Modal, Qr, ToastHost, clock } from './ui'
+import { readSession, signOut } from './auth.ts'
 import { figures, type Book } from './desk/common'
 
 // After a deploy, the previous build's route files are gone. Reload once to pick up the new build
@@ -26,6 +27,9 @@ const Me = lazy(fresh(() => import('./Me')))
 const Places = lazy(fresh(() => import('./Me').then((m) => ({ default: m.Places }))))
 const Move = lazy(fresh(() => import('./Move')))
 const Setup = lazy(fresh(() => import('./Setup')))
+const Auth = lazy(fresh(() => import('./SignIn')))
+const Welcome = lazy(fresh(() => import('./SignIn').then((m) => ({ default: m.Welcome }))))
+const ClientHome = lazy(fresh(() => import('./ClientHome')))
 const History = lazy(fresh(() => import('./Manage').then((m) => ({ default: m.History }))))
 
 /** Catches a page that fails to load or render, so the rest of the app and a way out stay on screen. */
@@ -112,6 +116,9 @@ function Shell({ route }: { route: string }) {
 
   let page: ReactNode
   if (area === 'lab') page = <Lab />
+  else if (book.phase === 'auth') page = <Auth book={book} />
+  else if (book.phase === 'welcome') page = <Welcome book={book} />
+  else if (book.phase === 'client') page = <ClientHome book={book} />
   else if (book.phase === 'setup') page = <Setup book={book} />
   else if (area === 'home') page = <Home book={book} />
   else if (!st) page = <Loading phase={book.phase} />
@@ -128,13 +135,16 @@ function Shell({ route }: { route: string }) {
       <Glow st={st} />
       <Bar route={route} area={area} book={book} />
       {book.offline && <p className="banner" role="status">Offline. Showing the last saved state; changes resume when the connection is back.</p>}
-      {book.phase === 'setup' && area !== 'lab' ? <Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary>
+      {ENTRY.has(book.phase) && area !== 'lab' ? <Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary>
         : area === 'home' ? <Boundary key={route}>{page}</Boundary>
         : <main className="page"><Boundary key={route}><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></Boundary></main>}
       {st && (area === 'desk' || (area === 'owner' && st.role === 'owner')) && <Dock route={route} area={area} book={book} />}
     </div>
   )
 }
+
+// Account steps and the client's home render their own page, without the business shell.
+const ENTRY = new Set(['auth', 'welcome', 'client', 'setup'])
 
 function Loading({ phase }: { phase: string }) {
   return (
@@ -159,6 +169,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
   const [armed, setArmed] = useState(false)
   const [install, setInstall] = useState<InstallEvent | null>(null)
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem('refill.theme') ?? 'auto' } catch { return 'auto' } })
+  const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -204,7 +215,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
           {st && (area === 'desk' || area === 'owner') && (live
             ? <span className="clock is-live" title="Real time, India"><output>{clock(st.workspace.now_min)}</output></span>
             : <Clock now={st.workspace.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />)}
-          {book.phase !== 'setup' && <div className="menu-wrap">
+          {!ENTRY.has(book.phase) && <div className="menu-wrap">
             <button className={`role-pill ${area === 'desk' ? 'is-desk' : ''}`} onClick={() => setMenu(menu === 'roles' ? null : 'roles')} aria-expanded={menu === 'roles'} aria-haspopup="menu">
               <span className="dot" /><span className="label">{label}</span><Icon name="chevron" size={16} />
             </button>
@@ -220,6 +231,8 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
               </div>
             )}
           </div>}
+          <button className="icon-btn theme-btn" onClick={(e) => flood(e.currentTarget, () => setTheme(dark ? 'light' : 'dark'))}
+            aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'} aria-pressed={dark}><Icon name={dark ? 'sun' : 'moon'} /></button>
           <div className="menu-wrap">
             <button className="icon-btn" onClick={() => setMenu(menu === 'more' ? null : 'more')} aria-expanded={menu === 'more'} aria-label="More"><Icon name="more" /></button>
             {menu === 'more' && (
@@ -227,9 +240,10 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
                 {role === 'owner' && <button role="menuitem" onClick={() => { setQr(true); setMenu(null) }}><Icon name="phone" /> Open on my phone</button>}
                 {install && <button role="menuitem" onClick={async () => { await install.prompt(); setInstall(null); setMenu(null) }}><Icon name="install" /> Install Refill</button>}
                 {ios && <p className="menu-note">On iPhone: Share, then Add to Home Screen.</p>}
-                <button role="menuitem" onClick={() => setTheme(theme === 'auto' ? 'dark' : theme === 'dark' ? 'light' : 'auto')}>
-                  <Icon name={theme === 'dark' ? 'moon' : 'sun'} /> Theme<small>{theme}</small>
-                </button>
+                {readSession() && <>
+                  <p className="menu-note">Signed in as {readSession()!.user.email}</p>
+                  <button role="menuitem" onClick={() => { setMenu(null); signOut() }}><Icon name="arrow" /> Sign out</button>
+                </>}
                 {role === 'owner' && !live && <button role="menuitem" className={armed ? 'is-armed' : ''} onClick={async () => {
                   if (!armed) return setArmed(true)
                   await book.reset(); setMenu(null)
@@ -242,6 +256,36 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
       {qr && book.desk && <Modal title="Open on your phone" onClose={() => setQr(false)}><div className="qr-one"><Qr text={ownerLink(book.desk)} size={208} /><p className="quiet">Same day, same data. This code carries your owner key, so keep it to yourself.</p></div></Modal>}
     </header>
   )
+}
+
+// The theme floods out from the toggle as a wobbling drop, as in Threshold: the old page is a still
+// snapshot, the new one is live underneath, and a clip-path reveals it.
+function blob(cx: number, cy: number, r: number, wobble: number, t: number) {
+  const out: string[] = []
+  for (let j = 0; j < 72; j++) {
+    const a = (j / 72) * Math.PI * 2
+    const k = 1 + wobble * (0.55 * Math.sin(3 * a + 5.1 * t + 0.6) + 0.3 * Math.sin(5 * a - 7.3 * t + 2.1) + 0.15 * Math.sin(9 * a + 11.7 * t + 4.2))
+    out.push(`${(cx + Math.cos(a) * r * k).toFixed(1)}px ${(cy + Math.sin(a) * r * k).toFixed(1)}px`)
+  }
+  return `polygon(${out.join(',')})`
+}
+function flood(btn: HTMLElement, change: () => void) {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> } }
+  if (!doc.startViewTransition || reduced()) return change()
+  if (document.documentElement.classList.contains('theme-flooding')) return
+  const b = btn.getBoundingClientRect()
+  const cx = b.left + b.width / 2
+  const cy = b.top + b.height / 2
+  const far = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy)) * 1.18
+  const root = document.documentElement
+  root.classList.add('theme-flooding')
+  const vt = doc.startViewTransition(() => flushSync(change))
+  vt.ready.then(() => root.animate(Array.from({ length: 37 }, (_, i) => {
+    const t = i / 36
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    return { clipPath: blob(cx, cy, 2 + far * e, 0.14 * Math.sin(Math.PI * Math.min(1, t * 1.15)) * (1 - t), t) }
+  }), { duration: 1150, easing: 'linear', pseudoElement: '::view-transition-new(root)' })).catch(() => {})
+  vt.finished.finally(() => root.classList.remove('theme-flooding'))
 }
 
 function Clock({ now, onCommit }: { now: number; onCommit: (v: number) => void }) {

@@ -3,6 +3,7 @@
 // owner function checks the owner key.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, rpc } from './rpc.ts'
+import { AUTH_EVENT, readSession } from './auth.ts'
 import { demoDay } from './day'
 import { toHHMM, toMin, type Entry, type Slot, type Staff } from './engine'
 
@@ -138,7 +139,9 @@ export const moveUrl = (id: string) => `${location.origin}/#/m/${id}`
 export const joinLink = (code: string) => `${location.origin}/#/join/${code}`
 export const staffLinkUrl = (ws: string, staff: string, key: string) => `${location.origin}/#/s/${ws}/${staff}/${key}`
 
-export type Phase = 'connecting' | 'creating' | 'setup' | 'ready' | 'error'
+export type Phase = 'connecting' | 'creating' | 'auth' | 'welcome' | 'client' | 'setup' | 'ready' | 'error'
+/** The signed-in account: who they are and how they use Refill (null role: not chosen yet). */
+export interface Profile { id: string; email: string; name: string | null; role: 'owner' | 'client' | null }
 
 // Desk functions take p_ws and p_key; offer-level ones take only the offer id.
 const DESK_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock',
@@ -151,6 +154,8 @@ export function useBook() {
   const [phase, setPhase] = useState<Phase>('connecting')
   const [offline, setOffline] = useState(false)
   const [mode, setModeState] = useState<Mode>(readMode)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [authTick, setAuthTick] = useState(0)
   const desk = useRef<Desk | null>(null)
   const seen = useRef('')
 
@@ -169,10 +174,25 @@ export function useBook() {
     desk.current = null
     seen.current = ''
     setState(null)
+    setProfile(null)
     setPhase('connecting')
     ;(async () => {
       try {
-        const known = deskFromUrl() ?? readDesk(mode)
+        // A desk or owner link opens its workspace directly. Otherwise the demo opens its own day,
+        // and the real product goes through the account: sign in, choose a role, then the business.
+        let known = deskFromUrl() ?? (mode === 'demo' ? readDesk('demo') : null)
+        if (!known && mode === 'live') {
+          if (!readSession()) { if (alive) setPhase('auth'); return }
+          const me = await rpc<Profile | null>('get_profile', {})
+          if (!alive) return
+          setProfile(me)
+          if (!me?.role) { setPhase('welcome'); return }
+          if (me.role === 'client') { setPhase('client'); return }
+          const mine = await rpc<{ id: string; join_code: string }[]>('my_businesses', {})
+          if (!mine.length) { if (alive) setPhase('setup'); return }
+          const local = readDesk('live')
+          known = local?.id === mine[0].id ? local : { id: mine[0].id, key: '', join: mine[0].join_code }
+        }
         let s: State | null = null
         if (known) {
           desk.current = known
@@ -185,7 +205,7 @@ export function useBook() {
           if (kind !== mode) { writeMode(kind); if (alive) setModeState(kind); return }
         } else if (mode === 'live') {
           desk.current = null
-          if (alive) setPhase('setup')
+          if (alive) setPhase(readSession() ? 'setup' : 'auth')
           return
         } else {
           setPhase('creating')
@@ -202,7 +222,16 @@ export function useBook() {
       }
     })()
     return () => { alive = false }
-  }, [load, mode])
+  }, [load, mode, authTick])
+
+  // Signing in or out, or a session that can no longer be refreshed, re-routes the whole app.
+  useEffect(() => {
+    const on = () => setAuthTick((t) => t + 1)
+    addEventListener(AUTH_EVENT, on)
+    return () => removeEventListener(AUTH_EVENT, on)
+  }, [])
+  /** Look the account up again, after choosing a role. */
+  const refresh = useCallback(() => setAuthTick((t) => t + 1), [])
 
   useEffect(() => {
     if (phase !== 'ready') return
@@ -287,5 +316,5 @@ export function useBook() {
     await load()
   }, [deskKey, load])
 
-  return { state, phase, offline, mode, desk: desk.current, act, reset, deskKey, viewAs, setMode, createBusiness }
+  return { state, phase, offline, mode, profile, desk: desk.current, act, reset, deskKey, viewAs, setMode, createBusiness, refresh }
 }

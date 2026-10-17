@@ -39,7 +39,8 @@ export default function Dial({ st, onPick, center }: { st: State; onPick: (s: Db
   return (
     <svg className="dial" viewBox="0 0 400 400" role="group" aria-label={`Today's appointments, demo clock ${clock(now)}`}>
       <defs>
-        <filter id="dial-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        {/* The glow covers the whole face. Sized from a shallow arc's own box, it clipped the stroke into a flat bar. */}
+        <filter id="dial-glow" filterUnits="userSpaceOnUse" x="0" y="0" width="400" height="400"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       {hours.map((h) => {
         const [x1, y1] = pt(outer + 12, ang(h))
@@ -117,7 +118,7 @@ export function SlotDial({ segs, now, big, small, label }: { segs: Seg[]; now?: 
   return (
     <svg className="dial slotdial" viewBox="0 0 200 200" role="img" aria-label={label}>
       <defs>
-        <filter id="dial-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="dial-glow" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="200"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       {hours.map((h) => {
         const [x1, y1] = pt(r + 9, ang(h), c)
