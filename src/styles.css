@@ -605,3 +605,5 @@ input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border-radius
 @media (max-width: 899px) {
   .board .section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
+.phone-acts .hold { text-align: center; }
+.undo { justify-self: start; }

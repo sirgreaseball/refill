@@ -6,8 +6,10 @@ import { rpc } from './api'
 import { Icon, Mark, clock, money, span } from './ui'
 
 interface OfferView {
-  state: 'OPEN' | 'CONFIRMED' | 'WAITLISTED' | 'TAKEN' | 'DECLINED' | 'NO_CONSENT' | 'BOOKED_ELSEWHERE' | 'NOT_FOUND'
+  state: 'OPEN' | 'CONFIRMED' | 'WAITLISTED' | 'TAKEN' | 'DECLINED' | 'NO_CONSENT' | 'BOOKED_ELSEWHERE' | 'EXPIRED' | 'NOT_FOUND'
   salon: string
+  expires_min: number | null
+  now_min: number
   slot: { start_min: number; minutes: number; skill: string; staff: string | null }
   entry: { name: string; service: string | null; minutes: number; price_inr: number | null; consent_at: string | null; consent_source: string | null }
   booking: number | null
@@ -70,7 +72,12 @@ export default function Offer({ id }: { id: string }) {
           <button className="btn is-primary is-big" disabled={busy} onClick={() => act('accept_offer')}>Book {clock(v.slot.start_min)}</button>
           <button className="btn" disabled={busy} onClick={() => act('decline_offer')}>Not today</button>
           <button className="link" disabled={busy} onClick={() => act('stop_messages')}>Stop messages from {v.salon.split(',')[0]}</button>
+          {v.expires_min != null && <p className="quiet small hold">Held for you until {clock(v.expires_min)}. After that it goes to the next person.</p>}
         </div>
+      )}
+
+      {v.state === 'EXPIRED' && (
+        <div className="verdict"><h1 className="phone-h">This offer has expired</h1><p>It was held for you until {v.expires_min != null ? clock(v.expires_min) : 'a set time'}. You keep your place on the waitlist for the next gap that fits.</p></div>
       )}
 
       {v.state === 'CONFIRMED' && (

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.0 · 17 Oct 2026 · engineering hardening (not a business-team change)
+
+- Offers hold for 15 demo-minutes, then lapse (`OFFER_EXPIRED`), are logged, and the next people in the queue are suggested; a lapsed offer cannot be booked.
+- At most 3 offers per customer per day (`FREQUENCY_CAP`).
+- Undo a mistaken cancellation while the gap is still empty.
+- Rate limits per IP, per demo day and per offer; payload, id and text limits; capacity cap and 3-day retention; table privileges revoked from the public key; append-only evidence log; CSV formula-injection guard.
+- `npm run dbtest`: 10 live database checks.
+
 ## v1.0.0 · `v1-mba-handover` · 17 Oct 2026
 
 The version the MBA team inherits.

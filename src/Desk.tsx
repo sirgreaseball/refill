@@ -20,10 +20,13 @@ const REASON_TEXT: Record<string, string> = {
   ALREADY_BOOKED: 'already booked elsewhere',
   SLOT_UNAVAILABLE: 'slot no longer available',
   UNKNOWN_ENTRY: 'not on the waitlist',
+  FREQUENCY_CAP: 'already messaged the most times allowed today',
+  OFFER_EXPIRED: 'the offer had expired',
+  NO_REPLY: 'no reply within the hold window',
 }
 
 type Book = ReturnType<typeof useBook>
-type Live = 'waiting' | 'taken' | 'no-consent' | 'booked' | 'lost' | 'declined' | 'revoked'
+type Live = 'waiting' | 'taken' | 'no-consent' | 'booked' | 'lost' | 'declined' | 'revoked' | 'expired'
 
 /** What an offer means right now, from the customer's side. */
 function offerState(o: DbOffer, st: State): Live {
@@ -31,6 +34,7 @@ function offerState(o: DbOffer, st: State): Live {
   if (o.status === 'waitlisted') return 'lost'
   if (o.status === 'declined') return 'declined'
   if (o.status === 'revoked') return 'revoked'
+  if (o.status === 'expired' || (o.expires_min != null && st.workspace.now_min >= o.expires_min)) return 'expired'
   const e = st.waitlist.find((x) => x.id === o.entry_id)
   const s = st.slots.find((x) => x.id === o.slot_id)
   if (e?.consent !== true) return 'no-consent'
@@ -39,7 +43,7 @@ function offerState(o: DbOffer, st: State): Live {
 }
 const LIVE_TEXT: Record<Live, string> = {
   waiting: 'Waiting for reply', taken: 'Slot taken', 'no-consent': 'Consent withdrawn', booked: 'Booked',
-  lost: 'Lost the race, kept place', declined: 'Declined', revoked: 'Revoked',
+  lost: 'Lost the race, kept place', declined: 'Declined', revoked: 'Revoked', expired: 'Expired, no reply',
 }
 
 function sentence(ev: DbEvent, st: State): string {
@@ -51,7 +55,9 @@ function sentence(ev: DbEvent, st: State): string {
   switch (ev.kind) {
     case 'DAY_LOADED': return ev.code === 'RESET' ? 'Demo day reset to its start' : `Day loaded: ${d.slots} appointments, ${d.waitlist} on the waitlist`
     case 'CANCELLED': return `${d.customer ?? 'A customer'} cancelled ${at}: ${ev.code === 'LATE' ? `late, ${lead(Number(d.notice_min))} notice` : ev.code === 'PAST' ? 'after it started' : `${lead(Number(d.notice_min))} notice`}`
-    case 'OFFER_SENT': return `Offer sent to ${who} for ${at}`
+    case 'OFFER_SENT': return `Offer sent to ${who} for ${at}${d.expires_min != null ? `, holds until ${clock(Number(d.expires_min))}` : ''}`
+    case 'OFFER_EXPIRED': return `${who} did not reply by ${clock(Number(d.expires_min))}: offer for ${at} expired`
+    case 'CANCEL_UNDONE': return `Cancellation undone: ${d.customer} is back at ${at}${Number(d.revoked_offers) ? `, ${d.revoked_offers} open offer${Number(d.revoked_offers) > 1 ? 's' : ''} revoked` : ''}`
     case 'OFFER_SKIPPED': return `${who} not offered ${at}: ${REASON_TEXT[ev.code ?? ''] ?? ev.code}`
     case 'BOOKED': return `${who} booked ${at}, booking #${ev.booking_id}, ${money(Number(d.price_inr))} recovered`
     case 'WAITLIST_RETAINED': return `${who} tapped a moment late: lost to #${d.lost_to}, keeps queue place ${d.place}`
@@ -279,11 +285,24 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
   const open = slot.status === 'free'
   const tooSoon = open && slot.start_min < now + st.workspace.min_lead_min
 
-  const { eligible, excluded } = candidates(asSlot(slot), waiting.map(asEntry))
-  const alreadyOffered = new Set(offers.filter((o) => o.status === 'sent').map((o) => o.entry_id))
-  const fresh = eligible.filter((e) => !alreadyOffered.has(e.id))
+  // The database's rules (src/engine.ts), plus the daily message cap it also enforces.
+  const fit = candidates(asSlot(slot), waiting.map(asEntry))
+  const sentToday = (id: string) => st.offers.filter((o) => o.entry_id === id).length
+  const offeredHere = new Map(offers.map((o) => [o.entry_id, offerState(o, st)]))
+  const capped = fit.eligible.filter((e) => !offeredHere.has(e.id) && sentToday(e.id) >= st.workspace.max_offers)
+  const eligible = fit.eligible.filter((e) => !capped.includes(e))
+  const excluded = fit.excluded
+  const fresh = eligible.filter((e) => !offeredHere.has(e.id))
   const chosen = picked ?? new Set(fresh.slice(0, 3).map((e) => e.id))
   const liveOffers = offers.filter((o) => offerState(o, st) === 'waiting')
+  const lapsed = offers.length > 0 && liveOffers.length === 0 && open
+
+  const undo = async () => {
+    setBusy(true)
+    await run<{ ok: boolean; revoked_offers: number; code?: string }>('restore_slot', { p_slot: slot.id }, (r) =>
+      r.ok ? `Undone: ${slot.cancelled_customer} is back${r.revoked_offers ? `, ${r.revoked_offers} open offer${r.revoked_offers > 1 ? 's' : ''} revoked` : ''}.` : `Nothing to undo: ${r.code}`)
+    setBusy(false)
+  }
 
   const toggle = (id: string) => {
     const next = new Set(chosen)
@@ -339,6 +358,12 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
         </div>
       )}
 
+      {open && slot.cancelled_customer && !booking && (
+        <div className="rec-block">
+          <button className="btn is-quiet undo" onClick={undo} disabled={busy}><Icon name="reset" /> Undo cancellation ({slot.cancelled_customer})</button>
+        </div>
+      )}
+
       {open && tooSoon && <p className="quiet rec-block">It starts in {lead(slot.start_min - now)}. Nobody can get here in time, so no offers go out.</p>}
 
       {open && !tooSoon && (
@@ -346,32 +371,42 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
           <div className="rec-block">
             <h3 className="list-head">Fits this gap <span className="count">{eligible.length}</span></h3>
             {eligible.length === 0 && <p className="quiet">Nobody on the waitlist fits. The rules below say why.</p>}
+            {lapsed && <p className="beat-text small">{fresh.length ? 'No reply in time. The next people in the queue are ticked.' : 'Nobody replied in time. You can offer it again to anyone who did not answer.'}</p>}
             <ul className="rows">
               {eligible.map((e) => {
                 const row = waiting.find((w) => w.id === e.id)!
-                const offered = alreadyOffered.has(e.id)
+                const offered = offeredHere.get(e.id)
+                const locked = !!offered && offered !== 'expired' // no reply yet or a final answer: not offered twice
                 return (
                   <li key={e.id}>
-                    <label className={`pick ${offered ? 'is-offered' : ''}`}>
-                      <input type="checkbox" checked={offered || chosen.has(e.id)} disabled={offered} onChange={() => toggle(e.id)} />
+                    <label className={`pick ${locked ? 'is-offered' : ''}`}>
+                      <input type="checkbox" checked={locked ? offered === 'waiting' : chosen.has(e.id)} disabled={locked} onChange={() => toggle(e.id)} />
                       <span className="pick-main">
                         <strong>{e.name}</strong>
                         <small>{e.service} · {e.minutes} min · consent: {row.consent_source ?? 'recorded'}</small>
                       </span>
-                      <span className="pick-side mono">{offered ? 'offered' : `#${row.pos}`}</span>
+                      <span className="pick-side mono">{offered ? (offered === 'waiting' ? 'offered' : offered) : `#${row.pos}`}</span>
                     </label>
                   </li>
                 )
               })}
             </ul>
             <button className="btn is-primary" onClick={send} disabled={busy || chosen.size === 0}>
-              Send {chosen.size || ''} offer{chosen.size === 1 ? '' : 's'}
+              {chosen.size ? `Send ${chosen.size} offer${chosen.size === 1 ? '' : 's'}` : 'Pick someone to offer'}
             </button>
+            <p className="quiet small">Each offer holds for {st.workspace.hold_min} minutes. Nobody is messaged more than {st.workspace.max_offers} times a day.</p>
           </div>
 
           <div className="rec-block">
-            <h3 className="list-head">Skipped by the rules <span className="count">{excluded.length}</span></h3>
+            <h3 className="list-head">Skipped by the rules <span className="count">{excluded.length + capped.length}</span></h3>
             <ul className="rows">
+              {capped.map((entry) => (
+                <li key={entry.id} className="skip">
+                  <span className="skip-name">{entry.name}</span>
+                  <span className="code">FREQUENCY_CAP</span>
+                  <span className="skip-why">Messaged {sentToday(entry.id)} times today already</span>
+                </li>
+              ))}
               {excluded.map(({ entry, reason }) => (
                 <li key={entry.id} className="skip">
                   <span className="skip-name">{entry.name}</span>
@@ -395,7 +430,7 @@ function Recovery({ st, slot, now, run, onClose, onPick, waiting }: {
               return (
                 <li key={o.id} className={`offer is-${s}`}>
                   <span className="offer-name">{e?.name}</span>
-                  <span className="offer-state">{LIVE_TEXT[s]}{b ? ` #${b.id}` : ''}</span>
+                  <span className="offer-state">{LIVE_TEXT[s]}{b ? ` #${b.id}` : ''}{s === 'waiting' && o.expires_min != null ? ` · reply by ${clock(o.expires_min)}` : ''}</span>
                   {s === 'waiting' && (
                     <span className="offer-acts">
                       <button className="icon-btn" onClick={() => setQr(o)} aria-label={`Show ${e?.name}'s offer as a QR code`}><Icon name="phone" /></button>
@@ -570,7 +605,7 @@ function AddEntry({ run, onDone }: {
 const FILTERS: [string, (e: DbEvent) => boolean][] = [
   ['All', () => true],
   ['Offers', (e) => e.kind.startsWith('OFFER')],
-  ['Bookings', (e) => ['BOOKED', 'WAITLIST_RETAINED', 'ACCEPT_REPEATED', 'ACCEPT_REJECTED', 'CANCELLED'].includes(e.kind)],
+  ['Bookings', (e) => ['BOOKED', 'WAITLIST_RETAINED', 'ACCEPT_REPEATED', 'ACCEPT_REJECTED', 'CANCELLED', 'CANCEL_UNDONE'].includes(e.kind)],
   ['Consent', (e) => e.kind.startsWith('CONSENT') || e.code === 'NO_CONSENT'],
 ]
 
@@ -583,7 +618,8 @@ function Log({ st }: { st: State }) {
   const exportJson = () => download(`refill-evidence-${st.workspace.id.slice(0, 8)}.json`,
     JSON.stringify({ exported_at: new Date().toISOString(), synthetic: true, ...st, events: [...st.events].reverse() }, null, 2))
   const exportCsv = () => {
-    const q = (v: unknown) => `"${String(v ?? '').replaceAll('"', '""')}"`
+    // A cell starting with = + - @ would run as a formula in Excel or Sheets; prefix it so it stays text.
+    const q = (v: unknown) => `"${String(v ?? '').replace(/^[=+\-@\t\r]/, "'$&").replaceAll('"', '""')}"`
     const lines = [['id', 'at', 'kind', 'code', 'slot', 'entry', 'booking', 'sentence'].join(',')]
     for (const e of [...st.events].reverse()) lines.push([e.id, e.at, e.kind, e.code, e.slot_id, e.entry_id, e.booking_id, sentence(e, st)].map(q).join(','))
     download(`refill-evidence-${st.workspace.id.slice(0, 8)}.csv`, lines.join('\n'), 'text/csv')

@@ -3,7 +3,21 @@
 // scripts/race-test.ts, so it imports with explicit .ts extensions for Node.
 import { SUPABASE_KEY, SUPABASE_URL } from './config.ts'
 
-export class ApiError extends Error {}
+/** `code` is the database's own code (RATE_LIMITED, TOO_LARGE...); `message` is the sentence to show. */
+export class ApiError extends Error {
+  code: string | null
+  constructor(message: string, code: string | null = null) {
+    super(message)
+    this.code = code
+  }
+}
+
+// Limits the database enforces (supabase/migrations/002), said plainly.
+const FRIENDLY: Record<string, string> = {
+  RATE_LIMITED: 'Too many requests from this network. Wait a minute and try again.',
+  CAPACITY: 'The demo is full right now. Try again in a little while.',
+  TOO_LARGE: 'That is more data than one demo day holds.',
+}
 
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   let res: Response
@@ -17,6 +31,6 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
     throw new ApiError('No connection to the database.')
   }
   const body = await res.json().catch(() => null)
-  if (!res.ok) throw new ApiError(body?.message ?? `${fn} failed (${res.status})`)
+  if (!res.ok) throw new ApiError(FRIENDLY[body?.message] ?? body?.message ?? `${fn} failed (${res.status})`, body?.message ?? null)
   return body as T
 }

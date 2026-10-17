@@ -41,6 +41,9 @@ The organiser fixture (`data/fixture/C29.fixture.json`, kept byte for byte) repr
 - **Staff absence:** v1 can block a slot (`blocked` is never offered). Staff-aware matching is the change our business team negotiates (see "Versions").
 - **Bad input:** a duplicate id, a missing field or an invalid value stops the run with `DUPLICATE_ID`, `MISSING_FIELD` or `INVALID_VALUE`. A bad file never produces a half-right answer.
 - **Repeated tap:** accepting the same offer twice returns `ALREADY_CONFIRMED` and the same booking.
+- **No reply:** every offer holds for 15 demo-minutes (never past the slot's start). After that it lapses, is logged as `OFFER_EXPIRED`, and the next people in the queue are suggested. Accepting a lapsed offer is refused.
+- **Nobody is nagged:** at most 3 offers per customer per day (`FREQUENCY_CAP`), enforced by the database.
+- **Mistakes:** a cancellation pressed by mistake can be undone while nobody has booked the gap; open offers for it are revoked.
 
 ## Run it
 
@@ -51,6 +54,7 @@ npm install
 npm run dev        # http://localhost:5173, talks to the shared demo database
 npm test           # rules engine, organiser fixture, every scenario file, demo data
 npm run race       # 8 simultaneous taps at the live database, 3 runs
+npm run dbtest     # what the public key can and cannot do, limits, holds, caps, undo
 npm run build      # production build into dist/
 ```
 
@@ -71,6 +75,22 @@ browser (React, Vite)                              Supabase Postgres
 - **No double booking.** `accept_offer` takes row locks in one fixed order (offer, then slot, then waitlist entry), so simultaneous taps queue instead of deadlocking. The first finds the slot free; the rest find it booked and keep their queue place. A partial unique index (`bookings_one_per_slot`) is the last line of defence.
 - **Every visitor gets their own workspace** (a uuid in the URL), so judges never collide. Share the link to open the same day on a phone.
 - **Installable** (manifest + service worker). The shell opens offline; bookings are always live.
+
+## Security and abuse limits
+
+Every rule below lives in the database, so it holds even if someone skips the page and calls the API directly. `npm run dbtest` checks each one against the live database.
+
+| Threat | What stops it |
+|---|---|
+| Reading or writing tables with the public key | Row level security with no policies **and** table privileges revoked from `anon`; the key can only call 13 functions |
+| Calling internal functions | `load_day`, `log_event`, `enforce_rate`, `cleanup`, `expire_offers` are not executable by the public key |
+| Flooding the database | Per-IP and global limits: 120 new demo days per IP per 10 minutes, 1,500 overall; 240 writes per demo day per minute; 600 taps per IP per minute; 30 taps per offer per minute |
+| Oversized or hostile input | Max 300 slots / 300 waitlist entries / 50 offers per call; ids `[A-Za-z0-9_-]{1,32}`; names up to 60 characters, no control characters |
+| Storage exhaustion | At most 20,000 demo days; days older than 3 days are deleted |
+| Tampering with the evidence | The events table rejects every UPDATE |
+| Spreadsheet formula injection | CSV export prefixes cells that start with `= + - @` |
+| Script injection | React escapes all text; strict Content-Security-Policy in `vercel.json` |
+| Volumetric DDoS | The site is static on Vercel's edge network, which absorbs network-level floods; the database sits behind Supabase's gateway, and the limits above cap what any one client can make it do |
 
 ## Data
 
@@ -95,4 +115,4 @@ Each person's record is in `docs/contributions/`. AI assistants working in this 
 
 ## Known limits
 
-No owner login (anyone with a workspace link can act on that demo day). Messages are simulated on the offer page; nothing is sent by WhatsApp or SMS. The desk refreshes by polling every 1.2 seconds rather than a live socket. Synthetic data proves the rules, not demand. Full list: `docs/KNOWN_LIMITS.md`.
+No owner login: anyone with a workspace link can act on that demo day (the link is an unguessable 122-bit id). Messages are simulated on the offer page; nothing is sent by WhatsApp or SMS. The desk refreshes by polling every 1.2 seconds rather than a live socket. Synthetic data proves the rules, not demand. Full list: `docs/KNOWN_LIMITS.md`.

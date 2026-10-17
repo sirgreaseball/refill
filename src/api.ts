@@ -5,18 +5,19 @@ import { rpc } from './rpc.ts'
 import { demoDay } from './day'
 import { toHHMM, toMin, type Entry, type Slot } from './engine'
 
-export interface Workspace { id: string; salon: string; now_min: number; late_cutoff_min: number; min_lead_min: number }
+export interface Workspace { id: string; salon: string; now_min: number; late_cutoff_min: number; min_lead_min: number; hold_min: number; max_offers: number }
 export interface DbStaff { id: string; name: string; skills: string[]; present: boolean }
 export interface DbSlot {
   id: string; start_min: number; minutes: number; skill: string; status: 'free' | 'booked' | 'blocked'
   staff_id: string | null; customer: string | null; service: string | null; price_inr: number | null; refilled: boolean
+  cancelled_customer: string | null
 }
 export interface DbEntry {
   id: string; pos: number; name: string; minutes: number; skill: string; consent: boolean | null
   consent_at: string | null; consent_source: string | null; service: string | null; price_inr: number | null
   free_from: number | null; free_until: number | null; status: 'waiting' | 'booked' | 'removed'
 }
-export interface DbOffer { id: string; slot_id: string; entry_id: string; status: 'sent' | 'accepted' | 'waitlisted' | 'declined' | 'revoked'; created_at: string }
+export interface DbOffer { id: string; slot_id: string; entry_id: string; status: 'sent' | 'accepted' | 'waitlisted' | 'declined' | 'revoked' | 'expired'; created_at: string; expires_min: number | null }
 export interface DbBooking { id: number; slot_id: string; entry_id: string; offer_id: string | null; status: 'confirmed' | 'cancelled'; created_at: string }
 export interface DbEvent { id: number; at: string; kind: string; code: string | null; slot_id: string | null; entry_id: string | null; booking_id: number | null; detail: Record<string, unknown> }
 export interface State { workspace: Workspace; staff: DbStaff[]; slots: DbSlot[]; waitlist: DbEntry[]; offers: DbOffer[]; bookings: DbBooking[]; events: DbEvent[] }
@@ -61,7 +62,7 @@ function putInUrl(id: string) {
 export type Phase = 'connecting' | 'creating' | 'ready' | 'error'
 
 // Functions that act on a whole workspace; offer-level ones (accept, decline, stop) take only the offer id.
-const WS_FUNCS = new Set(['cancel_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock'])
+const WS_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock'])
 
 /** Today's book: finds or creates this viewer's workspace, then keeps it fresh. */
 export function useBook() {
