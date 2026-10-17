@@ -2,7 +2,7 @@
 
 You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
 
-Last updated: 18 Oct 2026, ~01:10 IST. v4 revamp in progress (section 5, item 0). Done: chronograph theme (Satoshi + Clash Display, lime/amber/coral, grain), Day Dial on Home and on Front desk Today (`src/Dial.tsx`), magnetic primary buttons, one clock on phones. #7 fixed; PR #8 merged; `npm test` = 51 passing. Next: restyle Owner pages and client/staff phone pages to the new type scale (Clash Display headlines already apply via h1/.phone-h), verify light theme and 375px on every page, refresh MBA explainer screenshots if used, then splash page later (separate route).
+Last updated: 18 Oct 2026, ~01:10 IST. v4 revamp in progress (section 5, item 0). Done: chronograph theme (Satoshi + Clash Display, lime/amber/coral, grain), Day Dial on Home and on Front desk Today (`src/Dial.tsx`), magnetic primary buttons, one clock on phones. #7 fixed; PRs #5 (Vedanth: DEMO_SCRIPT, KNOWN_LIMITS, SETUP_CHECK), #6 (Chirag: new prices, 3 more waitlist clients, docs/SHOCKS.md) and #8 (Parth: 12 scenarios) merged; `npm test` = 51 passing. Demo prices changed (hair spa ₹1,600); the MBA explainer PDF was updated to match. Existing demo days keep old data until reset. Next: restyle Owner pages and client/staff phone pages to the new type scale (Clash Display headlines already apply via h1/.phone-h), verify light theme and 375px on every page, refresh MBA explainer screenshots if used, then splash page later (separate route).
 
 ---
 
