@@ -11,6 +11,7 @@ interface OfferView {
   reason?: 'STAFF_ABSENT' | 'LEFT_WAITLIST' | 'TAKEN' | 'CHANGED' | null
   moved?: boolean
   salon: string
+  kind?: string
   expires_min: number | null
   now_min: number
   slot: { start_min: number; minutes: number; skill: string; staff: string | null }
@@ -128,7 +129,7 @@ export default function Offer({ id }: { id: string }) {
 
       <footer className="phone-foot">
         <p>{consentLine}</p>
-        <p><Icon name="shield" size={14} /> Synthetic demo. No real message was sent.</p>
+        {v.kind !== 'live' && <p><Icon name="shield" size={14} /> Synthetic demo. No real message was sent.</p>}
       </footer>
     </main>
   )

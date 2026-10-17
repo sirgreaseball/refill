@@ -6,11 +6,20 @@ import type { DbSlot, State } from './api'
 import { kindOf } from './desk/common'
 import { clock } from './ui'
 
+// The face covers 10:00 to 20:00, widened to whole hours when the team works earlier or later.
 const DAY_START = 600
 const DAY_END = 1200
+export function dayRange(st: State): [number, number] {
+  const lo = Math.min(DAY_START, ...st.staff.map((p) => p.shift_start), ...st.slots.map((s) => s.start_min))
+  const hi = Math.max(DAY_END, ...st.staff.map((p) => p.shift_end), ...st.slots.map((s) => s.start_min + s.minutes))
+  return [Math.max(0, Math.floor(lo / 60) * 60), Math.min(1440, Math.ceil(hi / 60) * 60)]
+}
 const C = 200
 const SPAN = 300
-const ang = (m: number) => -SPAN / 2 + ((Math.min(Math.max(m, DAY_START), DAY_END) - DAY_START) / (DAY_END - DAY_START)) * SPAN
+const angle = (lo: number, hi: number) => (m: number) => -SPAN / 2 + ((Math.min(Math.max(m, lo), hi) - lo) / (hi - lo)) * SPAN
+// Hour marks, with a label every two hours, or every four on a long day.
+const marks = (lo: number, hi: number) => Array.from({ length: (hi - lo) / 60 + 1 }, (_, i) => lo + i * 60)
+const labelled = (h: number, lo: number, hi: number) => (h - lo) % (hi - lo > 720 ? 240 : 120) === 0
 const pt = (r: number, a: number, c = C) => [c + r * Math.sin((a * Math.PI) / 180), c - r * Math.cos((a * Math.PI) / 180)] as const
 function arc(r: number, a1: number, a2: number, c = C) {
   const [x1, y1] = pt(r, a1, c)
@@ -22,7 +31,9 @@ export default function Dial({ st, onPick, center }: { st: State; onPick: (s: Db
   const now = st.workspace.now_min
   const outer = 168
   const step = Math.min(26, 92 / Math.max(1, st.staff.length - 1))
-  const hours = Array.from({ length: 11 }, (_, i) => DAY_START + i * 60)
+  const [lo, hi] = dayRange(st)
+  const ang = angle(lo, hi)
+  const hours = marks(lo, hi)
   const [hx, hy] = pt(outer + 14, ang(now))
 
   return (
@@ -32,12 +43,12 @@ export default function Dial({ st, onPick, center }: { st: State; onPick: (s: Db
       </defs>
       {hours.map((h) => {
         const [x1, y1] = pt(outer + 12, ang(h))
-        const [x2, y2] = pt(outer + (h % 120 === 0 ? 20 : 16), ang(h))
+        const [x2, y2] = pt(outer + (labelled(h, lo, hi) ? 20 : 16), ang(h))
         const [tx, ty] = pt(outer + 30, ang(h))
         return (
           <g key={h} className="dial-hour">
             <line x1={x1} y1={y1} x2={x2} y2={y2} />
-            {h % 120 === 0 && <text x={tx} y={ty} dy="0.35em" textAnchor="middle">{clock(h).slice(0, 2)}</text>}
+            {labelled(h, lo, hi) && <text x={tx} y={ty} dy="0.35em" textAnchor="middle">{clock(h % 1440).slice(0, 2)}</text>}
           </g>
         )
       })}
@@ -98,8 +109,11 @@ type Seg = { start: number; minutes: number; kind: 'open' | 'refilled' | 'booked
 export function SlotDial({ segs, now, big, small, label }: { segs: Seg[]; now?: number; big: string; small: string; label: string }) {
   const c = 100
   const r = 76
-  const hours = Array.from({ length: 11 }, (_, i) => DAY_START + i * 60)
-  const showNow = now != null && now >= DAY_START && now <= DAY_END
+  const lo = Math.max(0, Math.floor(Math.min(DAY_START, ...segs.map((g) => g.start)) / 60) * 60)
+  const hi = Math.min(1440, Math.ceil(Math.max(DAY_END, ...segs.map((g) => g.start + g.minutes)) / 60) * 60)
+  const ang = angle(lo, hi)
+  const hours = marks(lo, hi)
+  const showNow = now != null && now >= lo && now <= hi
   return (
     <svg className="dial slotdial" viewBox="0 0 200 200" role="img" aria-label={label}>
       <defs>
@@ -107,12 +121,12 @@ export function SlotDial({ segs, now, big, small, label }: { segs: Seg[]; now?: 
       </defs>
       {hours.map((h) => {
         const [x1, y1] = pt(r + 9, ang(h), c)
-        const [x2, y2] = pt(r + (h % 120 === 0 ? 14 : 12), ang(h), c)
+        const [x2, y2] = pt(r + (labelled(h, lo, hi) ? 14 : 12), ang(h), c)
         const [tx, ty] = pt(r + 22, ang(h), c)
         return (
           <g key={h} className="dial-hour">
             <line x1={x1} y1={y1} x2={x2} y2={y2} />
-            {h % 120 === 0 && <text x={tx} y={ty} dy="0.35em" textAnchor="middle">{clock(h).slice(0, 2)}</text>}
+            {labelled(h, lo, hi) && <text x={tx} y={ty} dy="0.35em" textAnchor="middle">{clock(h % 1440).slice(0, 2)}</text>}
           </g>
         )
       })}

@@ -9,8 +9,13 @@ import { toHHMM, toMin, type Entry, type Slot, type Staff } from './engine'
 export interface Workspace {
   id: string; salon: string; now_min: number; late_cutoff_min: number; min_lead_min: number
   hold_min: number; max_offers: number; join_code: string | null
+  /** 'demo': the sample day on a demo clock. 'live': a real business on the real clock. Absent before migration 007. */
+  kind?: Mode; business_type?: string | null; day?: string | null
 }
 export interface DbStaff { id: string; name: string; skills: string[]; present: boolean; shift_start: number; shift_end: number }
+export interface DbService { id: string; name: string; minutes: number; skill: string; price_inr: number | null }
+export interface DbTask { id: number; staff_id: string; text: string; done: boolean; created_at: string }
+export interface DbHistory { id: number; day: string; start_min: number; minutes: number; service: string | null; staff_name: string | null; customer: string | null; status: 'booked' | 'unfilled' | 'held'; price_inr: number | null; refilled: boolean }
 export interface DbSlot {
   id: string; start_min: number; minutes: number; skill: string; status: 'free' | 'booked' | 'blocked'
   staff_id: string | null; customer: string | null; service: string | null; price_inr: number | null; refilled: boolean
@@ -28,8 +33,13 @@ export interface DbMove { id: string; slot_id: string; customer: string; reason:
 export type Role = 'owner' | 'desk'
 export interface State {
   role: Role; workspace: Workspace; staff: DbStaff[]; slots: DbSlot[]; waitlist: DbEntry[]; offers: DbOffer[]
-  bookings: DbBooking[]; moves: DbMove[]; events: DbEvent[]
+  bookings: DbBooking[]; moves: DbMove[]; events: DbEvent[]; services?: DbService[]; tasks?: DbTask[]
 }
+
+/** The business's own services; a demo day has none, so it uses the sample salon list. */
+export const servicesOf = (st: State | null): DbService[] => (st?.services?.length ? st.services : demoDay().services)
+/** A service's skill: what a staff member must be able to do. Derived from its name for new businesses. */
+export const skillOf = (name: string) => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'general'
 /** A time an appointment could move to, as the database lists it (move_options in migration 005). */
 export interface MoveOption { staff: string; name: string; start_min: number; gap: string | null; same_time: boolean }
 
@@ -62,17 +72,30 @@ export function dayPayload() {
 
 // ---------------------------------------------------------------- the owner's key
 
-/** This browser's keys for one demo day. `key` is what it was opened with; `deskKey` is the front-desk key, if the owner made one. */
+/** This browser's keys for one workspace. `key` is what it was opened with; `deskKey` is the front-desk key, if the owner made one. */
 export interface Desk { id: string; key: string; join: string | null; deskKey?: string }
-const KEY = 'refill.desk'
+/** Live is the real business; demo is the sample day. Each keeps its own keys, so they never mix. */
+export type Mode = 'live' | 'demo'
+const STORE: Record<Mode, string> = { live: 'refill.business', demo: 'refill.desk' }
+const MODE = 'refill.mode'
 
-export function readDesk(): Desk | null {
+export function readMode(): Mode {
   try {
-    const d = JSON.parse(localStorage.getItem(KEY) ?? 'null')
+    const m = localStorage.getItem(MODE)
+    if (m === 'live' || m === 'demo') return m
+    // Browsers that used Refill before live businesses existed hold a demo day: keep them in it.
+    return localStorage.getItem(STORE.demo) ? 'demo' : 'live'
+  } catch { return 'live' }
+}
+const writeMode = (m: Mode) => { try { localStorage.setItem(MODE, m) } catch { /* private mode: this tab still works */ } }
+
+export function readDesk(mode: Mode = readMode()): Desk | null {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE[mode]) ?? 'null')
     return d && typeof d.id === 'string' && typeof d.key === 'string' ? d : null
   } catch { return null }
 }
-const writeDesk = (d: Desk) => { try { localStorage.setItem(KEY, JSON.stringify(d)) } catch { /* private mode: this tab still works */ } }
+const writeDesk = (d: Desk, mode: Mode) => { try { localStorage.setItem(STORE[mode], JSON.stringify(d)) } catch { /* private mode: this tab still works */ } }
 
 /** A desk link carries ?w= (which day), ?k= (a key) and, for the front desk, ?r=desk. The key never stays in the address bar. */
 function deskFromUrl(): Desk | null {
@@ -86,7 +109,7 @@ function deskFromUrl(): Desk | null {
     history.replaceState(history.state, '', url)
   }
   if (!id || !key) return null
-  const mine = readDesk()
+  const mine = readDesk('live')?.id === id ? readDesk('live') : readDesk('demo')
   if (asDesk) {
     setViewAs('desk')
     return mine?.id === id ? { ...mine, deskKey: key } : { id, key, join: null }
@@ -115,17 +138,19 @@ export const moveUrl = (id: string) => `${location.origin}/#/m/${id}`
 export const joinLink = (code: string) => `${location.origin}/#/join/${code}`
 export const staffLinkUrl = (ws: string, staff: string, key: string) => `${location.origin}/#/s/${ws}/${staff}/${key}`
 
-export type Phase = 'connecting' | 'creating' | 'ready' | 'error'
+export type Phase = 'connecting' | 'creating' | 'setup' | 'ready' | 'error'
 
 // Desk functions take p_ws and p_key; offer-level ones take only the offer id.
 const DESK_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock',
-  'staff_link', 'set_staff_presence', 'reassign_slot', 'get_move_options', 'move_booking', 'move_link', 'desk_link', 'set_policy'])
+  'staff_link', 'set_staff_presence', 'reassign_slot', 'get_move_options', 'move_booking', 'move_link', 'desk_link', 'set_policy',
+  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment'])
 
-/** Today's book: finds this owner's demo day (or makes a fresh one), then keeps it fresh. */
+/** Today's book. Live: this browser's business, or the setup form if it has none. Demo: the sample day, made on first visit. */
 export function useBook() {
   const [state, setState] = useState<State | null>(null)
   const [phase, setPhase] = useState<Phase>('connecting')
   const [offline, setOffline] = useState(false)
+  const [mode, setModeState] = useState<Mode>(readMode)
   const desk = useRef<Desk | null>(null)
   const seen = useRef('')
 
@@ -141,22 +166,35 @@ export function useBook() {
 
   useEffect(() => {
     let alive = true
+    desk.current = null
+    seen.current = ''
+    setState(null)
+    setPhase('connecting')
     ;(async () => {
       try {
-        const known = deskFromUrl() ?? readDesk()
-        let ok = false
+        const known = deskFromUrl() ?? readDesk(mode)
+        let s: State | null = null
         if (known) {
           desk.current = known
-          try { ok = !!(await load()) } catch (e) { if (!(e instanceof ApiError && e.code === 'FORBIDDEN')) throw e }
+          try { s = await load() } catch (e) { if (!(e instanceof ApiError && e.code === 'FORBIDDEN')) throw e }
         }
-        if (!ok) {
+        if (s) {
+          // A link may open the other kind of workspace: file it under its own kind.
+          const kind: Mode = s.workspace.kind ?? 'demo'
+          writeDesk({ ...desk.current!, join: desk.current!.join ?? s.workspace.join_code ?? null }, kind)
+          if (kind !== mode) { writeMode(kind); if (alive) setModeState(kind); return }
+        } else if (mode === 'live') {
+          desk.current = null
+          if (alive) setPhase('setup')
+          return
+        } else {
           setPhase('creating')
           const made = await rpc<{ id: string; owner_key: string; join_code: string }>('create_workspace', { p_day: dayPayload() })
           desk.current = { id: made.id, key: made.owner_key, join: made.join_code }
+          writeDesk(desk.current, 'demo')
           await load()
         }
         if (!alive) return
-        writeDesk({ ...desk.current!, join: desk.current!.join ?? null })
         putInUrl(desk.current!.id)
         setPhase('ready')
       } catch {
@@ -164,7 +202,7 @@ export function useBook() {
       }
     })()
     return () => { alive = false }
-  }, [load])
+  }, [load, mode])
 
   useEffect(() => {
     if (phase !== 'ready') return
@@ -177,6 +215,44 @@ export function useBook() {
     document.addEventListener('visibilitychange', onVis)
     return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVis) }
   }, [phase, load])
+
+  // A live book runs on the real clock: set it now and every minute, which also closes a past day into history.
+  const live = phase === 'ready' && state?.workspace.kind === 'live'
+  useEffect(() => {
+    if (!live) return
+    const sync = async () => {
+      const d = desk.current
+      if (!d || document.hidden) return
+      try { await rpc('sync_clock', { p_ws: d.id, p_key: keyFor(d) }); await load() } catch { /* the next minute retries */ }
+    }
+    sync()
+    const t = setInterval(sync, 60_000)
+    return () => clearInterval(t)
+  }, [live, load])
+
+  /** Switch between the live business and the demo. Nothing is lost: each keeps its own workspace. */
+  const setMode = useCallback((m: Mode) => {
+    writeMode(m)
+    setViewAs('owner')
+    const url = new URL(location.href)
+    url.searchParams.delete('w')
+    history.replaceState(history.state, '', url)
+    setModeState(m)
+  }, [])
+
+  /** Make this browser's live business. Returns the database's refusal code, or null when it worked. */
+  const createBusiness = useCallback(async (biz: Record<string, unknown>) => {
+    const made = await rpc<{ ok: boolean; code?: string; id: string; owner_key: string; join_code: string }>('create_business', { p_biz: biz })
+    if (!made.ok) return made.code ?? 'INVALID_VALUE'
+    const d = { id: made.id, key: made.owner_key, join: made.join_code }
+    writeDesk(d, 'live')
+    writeMode('live')
+    desk.current = d
+    await load()
+    putInUrl(d.id)
+    setPhase('ready')
+    return null
+  }, [load])
 
   /** Run a database function, then refresh at once so the page never shows a stale state. */
   const act = useCallback(async <T,>(fn: string, args: Record<string, unknown> = {}) => {
@@ -200,7 +276,7 @@ export function useBook() {
     if (d.deskKey && !fresh) return d.deskKey
     const k = await rpc<string>('desk_link', { p_ws: d.id, p_key: d.key })
     desk.current = { ...d, deskKey: k }
-    writeDesk(desk.current)
+    writeDesk(desk.current, readMode())
     return k
   }, [])
 
@@ -211,5 +287,5 @@ export function useBook() {
     await load()
   }, [deskKey, load])
 
-  return { state, phase, offline, desk: desk.current, act, reset, deskKey, viewAs }
+  return { state, phase, offline, mode, desk: desk.current, act, reset, deskKey, viewAs, setMode, createBusiness }
 }

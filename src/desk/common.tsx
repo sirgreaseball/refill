@@ -122,6 +122,15 @@ export function sentence(ev: DbEvent, st: State): string {
     case 'MOVE_LINK_SENT': return `${d.customer} sent a link to ${ev.code === 'STAFF_ABSENT' ? 'pick a new time (staff member out)' : 'move or cancel'} ${at}`
     case 'POLICY_CHANGED': return `Owner changed the rules: offers hold ${d.hold_min} min, at most ${d.max_offers} messages a day, late = under ${lead(Number(d.late_cutoff_min))}`
     case 'DESK_LINK_MADE': return 'Owner made a new front-desk link; the old one stopped working'
+    case 'BUSINESS_CREATED': return `Business opened with ${plural(Number(d.staff), 'team member')} and ${plural(Number(d.services), 'service')}`
+    case 'DAY_CLOSED': return `Yesterday closed into history: ${plural(Number(d.appointments), 'appointment')}`
+    case 'APPOINTMENT_ADDED': return `${d.customer} booked at ${clock(Number(d.start_min))} with ${d.name}, ${d.minutes} min`
+    case 'OPEN_TIME_ADDED': return `Open time added at ${clock(Number(d.start_min))} with ${d.name}, ${d.minutes} min`
+    case 'STAFF_ADDED': return `${d.name} joined the team`
+    case 'STAFF_CHANGED': return `${d.name}'s hours or services changed`
+    case 'STAFF_REMOVED': return `${d.name} left the team${revoked}`
+    case 'SERVICE_SAVED': return `Service saved: ${d.name}`
+    case 'SERVICE_REMOVED': return 'A service was removed'
     default: return ev.kind
   }
 }

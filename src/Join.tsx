@@ -8,9 +8,12 @@ import { Mark, money } from './ui'
 const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
 
 export default function Join({ code }: { code: string }) {
-  const services = useMemo(() => demoDay().services, [])
+  const sample = useMemo(() => demoDay().services, [])
+  const [own, setOwn] = useState<typeof sample>([])
+  const services = own.length ? own : sample
   const [salon, setSalon] = useState<string | null>(null)
   const [cap, setCap] = useState<number | null>(null)
+  const [demo, setDemo] = useState(false)
   const [missing, setMissing] = useState(false)
   const [name, setName] = useState('')
   const [service, setService] = useState('')
@@ -21,8 +24,8 @@ export default function Join({ code }: { code: string }) {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    rpc<{ ok: boolean; salon?: string; max_offers?: number }>('join_info', { p_code: code })
-      .then((r) => { if (!r.ok) return setMissing(true); setSalon(r.salon!); setCap(r.max_offers ?? null) }, () => setMissing(true))
+    rpc<{ ok: boolean; salon?: string; max_offers?: number; kind?: string; services?: typeof sample }>('join_info', { p_code: code })
+      .then((r) => { if (!r.ok) return setMissing(true); setSalon(r.salon!); setCap(r.max_offers ?? null); setOwn(r.services ?? []); setDemo(r.kind !== 'live') }, () => setMissing(true))
   }, [code])
 
   const submit = async (ev: FormEvent) => {
@@ -66,7 +69,7 @@ export default function Join({ code }: { code: string }) {
         <label>Service
           <select value={service} onChange={(e) => setService(e.target.value)}>
             <option value="">Choose a service</option>
-            {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min · {money(s.price_inr)}</option>)}
+            {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min{s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}</option>)}
           </select>
         </label>
         <div className="add-times">
@@ -90,7 +93,7 @@ export default function Join({ code }: { code: string }) {
         <button className="btn is-primary is-big" type="submit" disabled={busy}>Join the waitlist</button>
         <p className="quiet small">We record when and how you answered. You can change it or leave from your page.</p>
       </form>
-      <footer className="phone-foot"><p>Synthetic demo. No real message is ever sent.</p></footer>
+      {demo && <footer className="phone-foot"><p>Synthetic demo. No real message is ever sent.</p></footer>}
     </main>
   )
 }

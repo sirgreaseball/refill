@@ -1,8 +1,7 @@
 // The waitlist: who is waiting, in order, and whether each person said yes to messages.
 // Nobody without a yes is ever offered anything; the database checks it again at booking.
-import { useMemo, useState, type FormEvent } from 'react'
-import type { DbEntry } from '../api'
-import { demoDay } from '../day'
+import { useState, type FormEvent } from 'react'
+import { servicesOf, type DbEntry } from '../api'
 import { Icon, Modal, clock, money } from '../ui'
 import { Num } from '../motion'
 import { plural, useRun, type Book, type Run } from './common'
@@ -80,7 +79,7 @@ export default function Waitlist({ book }: { book: Book }) {
         </section>
       )}
 
-      {adding && <Modal title="Add to the waitlist" onClose={() => setAdding(false)}><AddEntry run={run} onDone={() => setAdding(false)} /></Modal>}
+      {adding && <Modal title="Add to the waitlist" onClose={() => setAdding(false)}><AddEntry run={run} services={servicesOf(st)} onDone={() => setAdding(false)} /></Modal>}
     </div>
   )
 }
@@ -99,8 +98,7 @@ function Window({ e }: { e: DbEntry }) {
   )
 }
 
-function AddEntry({ run, onDone }: { run: Run; onDone: () => void }) {
-  const services = useMemo(() => demoDay().services, [])
+function AddEntry({ run, services, onDone }: { run: Run; services: ReturnType<typeof servicesOf>; onDone: () => void }) {
   const [name, setName] = useState('')
   const [service, setService] = useState(services[0]?.id ?? '')
   const [consent, setConsent] = useState<'yes' | 'no' | 'unknown'>('unknown')
@@ -131,7 +129,7 @@ function AddEntry({ run, onDone }: { run: Run; onDone: () => void }) {
       <label className="field">Name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" maxLength={60} /></label>
       <label className="field">Service
         <select value={service} onChange={(e) => setService(e.target.value)}>
-          {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min · {money(s.price_inr)}</option>)}
+          {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min{s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}</option>)}
         </select>
       </label>
       <fieldset className="seg"><legend>May we message them when a slot opens?</legend>
