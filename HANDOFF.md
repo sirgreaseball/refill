@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **START HERE.** State at 18 Oct 2026, ~01:40 IST (checks re-run: tests 51/51, build green, dbtest 28/28; demo script rewritten). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
+> **START HERE.** State at 18 Oct 2026, ~01:40 IST (checks re-run: tests 51/51, build green, dbtest 28/28; demo script rewritten and rehearsed on live; fix 13255ed: route and theme changes no longer stall in a window that cannot paint). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
 
@@ -134,6 +134,8 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 - Rows (queue, agenda, people, links, waitlist, history, role choices) get the pointer spotlight (`GLOW` in `src/motion.tsx`).
 - Glass is only on what floats: bar, dock, sheets, menus, toasts.
 - Keep this when adding pages: no new panels around sections.
+
+**18 Oct ~01:55 (this account):** demo script rewritten (`docs/DEMO_SCRIPT.md`) and the full demo path rehearsed on the live site; every step matched. Found and fixed (13255ed): page and theme changes went only through `startViewTransition`, so in a window that cannot paint (hidden, minimised, captured off-screen, the preview pane) the route stayed stuck until reload. Both now apply after 350-400 ms either way. Note: the race winner books their own service, so the recovered figure is that client's price (Meera ₹1,600 or Sameer ₹750).
 
 **Known limits (say them honestly if asked):**
 - A live book holds one day: no booking for future dates yet.

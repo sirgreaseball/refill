@@ -29,6 +29,10 @@
 | **3:15–3:45** | **Proof for judges** (`#/lab`): the pass count, then **Run live race**. | "Don't take our word for it. The three case checks run live here, against the organiser's fixture. This button fires eight bookings at one slot on the live database: one booking, seven keep their place, every time." | Reliability, reproducible by judges |
 | **3:45–4:00** | Back to Home. | "51 automated tests, 28 live database checks and the race all pass. Everything is in the repository with a setup check. Refill: every cancelled appointment, filled again. Thank you." | Handoff and close |
 
+**Heads-up on the race:** whoever wins books their own service, so *Recovered today* shows that client's price: ₹1,600 if Meera (hair spa) wins, ₹750 if Sameer (manicure) wins. Say "the money for the booking that came back", not a fixed number.
+
+**Rehearsed on live, 18 Oct ~01:55:** every step above matched, word for word (late cancel toast, 11 not offered with reasons, 3 offers, one booking from the race, Arjun out with 4 clients, Manav to 16:30 with Riya, Kunal's link and move).
+
 **If something misbehaves:** carry on from the next row. The private-window demo can be reset in ten seconds (Owner → ⋯ → Reset demo day). If the network drops, the Lab's three case checks still run in the browser.
 
 ---
