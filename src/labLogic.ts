@@ -1,4 +1,4 @@
-import { matchAll, race, toMin, validate, type Input, type InputError, type MatchResult, type RaceResult } from './engine'
+import { matchAll, race, toMin, validate, type Input, type InputError, type MatchResult, type RaceResult, type Scenario } from './engine'
 
 export interface LabDocument extends Record<string, unknown> {
   slots: unknown
@@ -18,6 +18,22 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 const isText = (value: unknown): value is string => typeof value === 'string' && value.trim() !== ''
 const invalid = (at: string, message: string): LabEvaluation => ({ kind: 'invalid', error: 'INVALID_VALUE', at, message })
+
+/** Strip scenario assertions, not input fields: staff and future engine context must survive. */
+export function presetDocument(scenario: Scenario): LabDocument {
+  const doc: Record<string, unknown> = { ...structuredClone(scenario) }
+  delete doc.id
+  delete doc.title
+  delete doc.expect
+  return doc as LabDocument
+}
+
+/** Import the full input, leaving invalid shapes intact for the editor's validation panel. */
+export function importJson(text: string): unknown {
+  const parsed: unknown = JSON.parse(text)
+  const selected = Array.isArray(parsed) ? parsed[0] ?? null : parsed
+  return isObject(selected) && Object.hasOwn(selected, 'records') ? selected.records : selected
+}
 
 /** Untrusted editor input must always produce a result, including fields outside engine validation. */
 export function evaluate(text: string): LabEvaluation {

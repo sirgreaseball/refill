@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate } from './labLogic'
+import core from '../tests/core-scenarios.json'
+import { type Scenario } from './engine'
+import { evaluate, importJson, presetDocument } from './labLogic'
 
 const slot = { id: 'S1', start: '14:30', minutes: 60, skill: 'hair', status: 'free' }
 const entry = { id: 'W1', minutes: 60, skill: 'hair', consent: true }
@@ -46,5 +48,43 @@ describe('Lab invalid input (#16)', () => {
   it('accepts midnight and applies valid clock constraints', () => {
     expect(run({ slots: [slot], waitlist: [entry], now: '00:00' })).toMatchObject({ kind: 'ok', now: 0, result: { matches: [['W1', 'S1']] } })
     expect(run({ slots: [slot], waitlist: [entry], now: '14:25' })).toMatchObject({ kind: 'ok', result: { matches: [], perSlot: { S1: { tooSoon: true } } } })
+  })
+})
+
+describe('Lab context preservation (#15)', () => {
+  const scenario = (id: string) => (core as Scenario[]).find((item) => item.id === id)!
+
+  it('keeps a stylist’s additional skills in C19', () => {
+    expect(run(presetDocument(scenario('C19')))).toMatchObject({ kind: 'ok', result: { matches: [['W1', 'S1']] } })
+  })
+
+  it('keeps absent staff out of matching and races in C20/C22', () => {
+    expect(run(presetDocument(scenario('C20')))).toMatchObject({ kind: 'ok', result: { matches: [], perSlot: { S1: { staffAbsent: true } } } })
+    expect(run(presetDocument(scenario('C22')))).toMatchObject({ kind: 'ok', raced: { confirmed: null, waitlisted: ['W1', 'W2'], rejected: {} } })
+  })
+
+  it('keeps the staff list so C23 rejects an unknown stylist', () => {
+    expect(run(presetDocument(scenario('C23')))).toMatchObject({ kind: 'invalid', error: 'INVALID_VALUE' })
+  })
+
+  it('preserves both absent staff and the clock in the reported imported document', () => {
+    const doc = {
+      slots: [{ ...slot, staff: 'ST1' }], waitlist: [entry],
+      staff: [{ id: 'ST1', name: 'Synthetic Stylist', skills: ['hair', 'skin'], present: false }], now: '14:25',
+    }
+    const imported = importJson(JSON.stringify(doc))
+    expect(imported).toEqual(doc)
+    expect(run(imported)).toMatchObject({ kind: 'ok', now: 865, input: { staff: doc.staff }, result: { matches: [], perSlot: { S1: { tooSoon: true } } } })
+  })
+
+  it('preserves nested context for fixtures and scenario arrays without altering the source', () => {
+    const source = { ...scenario('C22'), now: '13:00', metadata: { note: 'Synthetic context' } }
+    const original = structuredClone(source)
+    const doc = presetDocument(source)
+    expect(doc).toMatchObject({ staff: source.staff, now: '13:00', race: source.race, metadata: source.metadata })
+    expect(doc).not.toHaveProperty('expect')
+    expect(importJson(JSON.stringify({ records: doc }))).toEqual(doc)
+    expect(importJson(JSON.stringify([doc]))).toEqual(doc)
+    expect(source).toEqual(original)
   })
 })

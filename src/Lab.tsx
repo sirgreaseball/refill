@@ -9,12 +9,12 @@ import { parseCsv } from './day'
 import { candidates, explain, matchAll, notice, race, runScenario, toHHMM, toMin, validate, type Input, type MatchResult, type Reason, type Scenario } from './engine'
 import { liveRace, type RaceReport } from './liveRace.ts'
 import { Icon, download, lead } from './ui'
-import { evaluate, type LabDocument as Doc, type LabEvaluation as Eval, type LabSuccess as Ok } from './labLogic'
+import { evaluate, importJson, presetDocument, type LabDocument as Doc, type LabEvaluation as Eval, type LabSuccess as Ok } from './labLogic'
 
 const presets: { id: string; label: string; doc: Doc }[] = [
-  { id: 'FIX', label: 'Organiser fixture C29', doc: { slots: fixture.records.slots, waitlist: fixture.records.waitlist } },
-  ...(core as Scenario[]).map((s) => ({ id: s.id, label: s.title ?? s.id, doc: { slots: s.slots, waitlist: s.waitlist, ...(s.race ? { race: s.race } : {}) } })),
-  ...(team as Scenario[]).map((s) => ({ id: s.id, label: `${s.title ?? s.id} (team)`, doc: { slots: s.slots, waitlist: s.waitlist, ...(s.race ? { race: s.race } : {}) } })),
+  { id: 'FIX', label: 'Organiser fixture C29', doc: structuredClone(fixture.records) },
+  ...(core as Scenario[]).map((s) => ({ id: s.id, label: s.title ?? s.id, doc: presetDocument(s) })),
+  ...(team as Scenario[]).map((s) => ({ id: s.id, label: `${s.title ?? s.id} (team)`, doc: presetDocument(s) })),
 ]
 
 const pretty = (d: unknown) => JSON.stringify(d, null, 2)
@@ -79,10 +79,8 @@ export default function Lab() {
     const raw = await file.text()
     if (/\.json$/i.test(file.name) || raw.trim().startsWith('{') || raw.trim().startsWith('[')) {
       try {
-        const parsed = JSON.parse(raw)
-        const doc = Array.isArray(parsed) ? parsed[0] : parsed.records ?? parsed
         setBefore(null)
-        setText(pretty({ slots: doc.slots, waitlist: doc.waitlist, ...(doc.race ? { race: doc.race } : {}) }))
+        setText(pretty(importJson(raw)))
       } catch (e) { setImportErr(`Not valid JSON: ${(e as Error).message}`) }
       return
     }
