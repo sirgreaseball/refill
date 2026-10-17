@@ -59,6 +59,7 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
         <span><strong>{day.salon}</strong><small>{preview ? 'staff view · preview' : 'staff view'}</small></span>
       </header>
 
+      <div className="phone-lead">
       <div>
         <h1 className="phone-h">{p.name}</h1>
         <p className="quiet">{p.skills.join(' · ')} · {booked} booked ahead · now {clock(day.now_min)}</p>
@@ -69,7 +70,9 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
           start: s.start_min, minutes: s.minutes, past: s.start_min + s.minutes <= day.now_min,
           kind: s.refilled ? 'refilled' : s.status === 'free' ? 'open' : s.status === 'blocked' ? 'lapsed' : p.present ? 'booked' : 'risk',
         }))} />
+      </div>
 
+      <div className="phone-body">
       <div className={`presence-card ${p.present ? 'is-in' : 'is-out'}`}>
         <p className="overline">Today</p>
         <p className="presence-state">{p.present ? 'You are in' : 'You are out'}</p>
@@ -114,6 +117,7 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
           ))}
         </ol>
       </section>
+      </div>
 
       <footer className="phone-foot">
         {preview && <p><a href="#/"><Icon name="arrow" size={14} /> Back to all views</a></p>}

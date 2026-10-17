@@ -1,22 +1,22 @@
 # Graph Report - refill  (2026-10-18)
 
 ## Corpus Check
-- 76 files · ~123,413 words
+- 86 files · ~138,363 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: (none) 5, .csv 4, .css 2)
 
 ## Summary
-- 879 nodes · 1569 edges · 59 communities (54 shown, 5 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.92)
+- 948 nodes · 1765 edges · 62 communities (56 shown, 6 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `45294cea`
+- Built from commit: `19069592`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- SlotSheet.tsx
+- common.tsx
 - Lab.tsx
 - api.ts
 - package.json
@@ -39,7 +39,7 @@
 - Rules
 - Appendix B - Canonical Sources (read these before reinventing)
 - Flagship feel
-- rpc.ts
+- auth.ts
 - Design Audit
 - 4. DESIGN ENGINEERING DIRECTIVES (Bias Correction)
 - 10. REFERENCE VOCABULARY (Pattern Names the Agent Should Know)
@@ -68,53 +68,56 @@
 - Known Limits
 - HANDOFF: read this first if you are a fresh Claude working for Dhruv
 - 7. DIAL DEFINITIONS (Technical Reference)
-- Defensive Q&A Cheat Sheet (What Judges Will Ask & How to Answer)
+- Icon
+- flow-test.ts
+- Refill: 4-minute demo script
 - 3. Concurrency Race Test (`npm run race`)
+- Test accounts and the account checklist
 - Market shocks: rehearsal script for the live app
 - Parth Kachhara — scenario tests and UI review
 - Teammate tasks (current)
 - Vedanth Raj (vedanth-raj)
 
 ## God Nodes (most connected - your core abstractions)
-1. `Icon()` - 43 edges
-2. `clock()` - 41 edges
-3. `money()` - 26 edges
-4. `react` - 21 edges
-5. `Apple Design` - 21 edges
-6. `Shell()` - 20 edges
-7. `Flagship feel` - 20 edges
-8. `compilerOptions` - 19 edges
-9. `rpc()` - 18 edges
-10. `SlotDial()` - 16 edges
+1. `Icon()` - 52 edges
+2. `clock()` - 44 edges
+3. `rpc()` - 28 edges
+4. `money()` - 27 edges
+5. `react` - 25 edges
+6. `Shell()` - 24 edges
+7. `Apple Design` - 21 edges
+8. `Flagship feel` - 20 edges
+9. `compilerOptions` - 19 edges
+10. `SlotDial()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `The three case checks` --references--> `reasonFor()`  [INFERRED]
-  README.md → src/engine.ts
 - `0.7 Now (18 Oct ~00:45): v5 shipped, Parth's bugs split, what is left` --references--> `dayRange()`  [INFERRED]
   HANDOFF.md → src/Dial.tsx
+- `0.2 What is done (all live and tested)` --references--> `SubDial()`  [INFERRED]
+  HANDOFF.md → src/Dial.tsx
+- `0.2 What is done (all live and tested)` --references--> `SlotDial()`  [INFERRED]
+  HANDOFF.md → src/Dial.tsx
+- `0.7 Now (18 Oct ~00:45): v5 shipped, Parth's bugs split, what is left` --references--> `DirectoryList()`  [INFERRED]
+  HANDOFF.md → src/Directory.tsx
 - `4. What is built (v3.0.0, all live and tested)` --references--> `useBook()`  [INFERRED]
   HANDOFF.md → src/api.ts
-- `4. What is built (v3.0.0, all live and tested)` --references--> `useRun()`  [INFERRED]
-  HANDOFF.md → src/desk/common.tsx
-- `3. How to work` --references--> `check()`  [INFERRED]
-  docs/agents/parth-lab-fixes.md → scripts/db-test.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (59 total, 5 thin omitted)
+## Communities (62 total, 6 thin omitted)
 
-### Community 0 - "SlotSheet.tsx"
-Cohesion: 0.06
-Nodes (113): 0.2 What is done (all live and tested), CORE, react, DbHistory, DbOffer, DbService, DbSlot, DbStaff (+105 more)
+### Community 0 - "common.tsx"
+Cohesion: 0.07
+Nodes (81): DbEvent, DbHistory, DbOffer, DbService, DbSlot, DbStaff, deskLinkUrl(), joinLink() (+73 more)
 
 ### Community 1 - "Lab.tsx"
 Cohesion: 0.06
-Nodes (60): RFC-4180, 2. The issues to fix, N, RUNS, buildDay(), Day, demoDay(), num() (+52 more)
+Nodes (60): RFC-4180, 2. The issues to fix, The three case checks, vitest, N, RUNS, dayPayload(), buildDay() (+52 more)
 
 ### Community 2 - "api.ts"
-Cohesion: 0.11
-Nodes (26): 0.7 Now (18 Oct ~00:45): v5 shipped, Parth's bugs split, what is left, asEntry(), asSlot(), asStaff(), dayPayload(), DbBooking, DbMove, DbTask (+18 more)
+Cohesion: 0.08
+Nodes (36): asEntry(), asSlot(), asStaff(), DbBooking, DbEntry, DbMove, DbTask, Desk (+28 more)
 
 ### Community 3 - "package.json"
 Cohesion: 0.05
@@ -130,15 +133,15 @@ Nodes (16): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib
 
 ### Community 6 - "db-test.ts"
 Cohesion: 0.03
-Nodes (71): added, after, afterCancel, afterMove, again, allOk, appt, asDesk (+63 more)
+Nodes (55): after, afterCancel, afterMove, again, allOk, anonBiz, asDesk, b1 (+47 more)
 
 ### Community 7 - "Refill"
-Cohesion: 0.15
-Nodes (12): Beyond salons, Data, Edge cases from the card, How it is built, Known limits, Refill, Run it, Security and abuse limits (+4 more)
+Cohesion: 0.17
+Nodes (11): Beyond salons, Data, Edge cases from the card, How it is built, Known limits, Refill, Run it, Security and abuse limits (+3 more)
 
 ### Community 8 - "App.tsx"
-Cohesion: 0.06
-Nodes (53): 0.3 The design language: LOCKED. Build everything inside it., 4. What is built (v3.0.0, all live and tested), react-dom, DbEntry, DbEvent, readDesk(), Activity, App() (+45 more)
+Cohesion: 0.07
+Nodes (41): 0.3 The design language: LOCKED. Build everything inside it., 0.7 Now (18 Oct ~00:45): v5 shipped, Parth's bugs split, what is left, react-dom, readMode(), App(), Area, areaOf(), Auth (+33 more)
 
 ### Community 9 - "Rules for AI agents and assistants in this repository"
 Cohesion: 0.29
@@ -180,9 +183,9 @@ Nodes (21): APPENDICES - Real Source-Backed Reference Material, Appendix A - Ins
 Cohesion: 0.10
 Nodes (20): 0. Choose the direction before you code, 10. Everyone, every device, 11. Smoothness is the premium, 12. Voice, 13. How to work (this is how the originals were made), 14. Never, 15. Starting numbers, 1. The content is the hero (+12 more)
 
-### Community 24 - "rpc.ts"
-Cohesion: 0.60
-Nodes (3): SUPABASE_KEY, SUPABASE_URL, FRIENDLY
+### Community 24 - "auth.ts"
+Cohesion: 0.13
+Nodes (26): Settings, AUTH_EVENT, bearer(), gotrue(), readSession(), SAID, save(), Session (+18 more)
 
 ### Community 25 - "Design Audit"
 Cohesion: 0.10
@@ -273,8 +276,8 @@ Cohesion: 0.40
 Nodes (5): Interruptibility advantage, Spring Animations, Spring-based mouse interactions, Spring configuration, When to use springs
 
 ### Community 47 - "Task for Parth's coding agent: fix the Lab and guide bugs (#15, #16, #17, #18, #20)"
-Cohesion: 0.29
-Nodes (6): 0. Before anything else, 1. Your lane: the only files you may create or edit, 3. How to work, 4. Done means, Task for Parth's coding agent: fix the Lab and guide bugs (#15, #16, #17, #18, #20), check()
+Cohesion: 0.33
+Nodes (5): 0. Before anything else, 1. Your lane: the only files you may create or edit, 3. How to work, 4. Done means, Task for Parth's coding agent: fix the Lab and guide bugs (#15, #16, #17, #18, #20)
 
 ### Community 48 - "Core Philosophy"
 Cohesion: 0.50
@@ -289,16 +292,24 @@ Cohesion: 0.05
 Nodes (37): 1. No Owner Authentication or Multi-Tenant Access Control, 2. Simulated Messaging via Mobile Web View (No Live SMS or WhatsApp Gateway), 3. Client Polling (1.2s Interval) Instead of Live WebSocket Subscriptions, 4. Synthetic Data Validating Rules Rather than Commercial Demand, 5. Single-Day Scheduling Horizon (24-Hour Calendar), 6. Single-Service Appointments (No Composite Service Bundles), 7. Fixed 15-Minute Offer Expiry Window, 8. Ephemeral Workspace Lifecycle (3-Day Pruning) (+29 more)
 
 ### Community 51 - "HANDOFF: read this first if you are a fresh Claude working for Dhruv"
-Cohesion: 0.12
-Nodes (15): 0.1 What this is, 0.4 Check the state first (2 minutes), 0.5 What to do next, in order, 0.6 Tools on the new account, 0. The short version, 10. First message to paste into a new Claude session, 1. Where things are (reference; section 0 wins if anything disagrees), 2. The event and the deadline (+7 more)
+Cohesion: 0.11
+Nodes (17): 0.1 What this is, 0.2 What is done (all live and tested), 0.4 Check the state first (2 minutes), 0.5 What to do next, in order, 0.6 Tools on the new account, 0. The short version, 10. First message to paste into a new Claude session, 1. Where things are (reference; section 0 wins if anything disagrees) (+9 more)
 
 ### Community 52 - "7. DIAL DEFINITIONS (Technical Reference)"
 Cohesion: 0.50
 Nodes (4): 7. DIAL DEFINITIONS (Technical Reference), DESIGN_VARIANCE (Level 1-10), MOTION_INTENSITY (Level 1-10), VISUAL_DENSITY (Level 1-10)
 
-### Community 55 - "Defensive Q&A Cheat Sheet (What Judges Will Ask & How to Answer)"
-Cohesion: 0.18
-Nodes (10): 4-Minute Minute-by-Minute Run Sheet, Defensive Q&A Cheat Sheet (What Judges Will Ask & How to Answer), Q1: "How do you mathematically guarantee that two people never get booked into the same chair?", Q2: "Why not check whether the slot is free in React before sending the booking request?", Q3: "What happens if a customer experiences network lag and taps 'Accept' multiple times?", Q4: "How does Refill handle customer consent under privacy regulations like the DPDP Act?", Q5: "Could an attacker call your Supabase database directly and alter appointments?", Q6: "Could someone else clone your repository and verify it without setup headaches?" (+2 more)
+### Community 53 - "Icon"
+Cohesion: 0.10
+Nodes (48): CORE, react, MoveOption, moveUrl(), ClientHome(), Entry, Booked(), KIND_TAG (+40 more)
+
+### Community 54 - "flow-test.ts"
+Cohesion: 0.04
+Nodes (42): allOk, bookedSlot, cancel, cancel2, day, delDemo, desk, deskDel (+34 more)
+
+### Community 55 - "Refill: 4-minute demo script"
+Cohesion: 0.40
+Nodes (4): Before you start (5 minutes before), Q&A cheat sheet, Refill: 4-minute demo script, Run sheet
 
 ### Community 56 - "3. Concurrency Race Test (`npm run race`)"
 Cohesion: 0.20
@@ -322,23 +333,23 @@ Nodes (3): Links, Responsibilities & What I Did, Vedanth Raj (vedanth-raj)
 
 ## Knowledge Gaps
 - **7 isolated node(s):** `@types/node`, `@types/qrcode`, `@types/react`, `@types/react-dom`, `oxlint` (+2 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 554 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 589 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `rpc()` connect `SlotSheet.tsx` to `rpc.ts`, `Lab.tsx`, `api.ts`, `db-test.ts`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+- **Why does `rpc()` connect `Icon` to `common.tsx`, `Lab.tsx`, `api.ts`, `db-test.ts`, `App.tsx`, `flow-test.ts`, `auth.ts`?**
+  _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **What connects `@types/node`, `@types/qrcode`, `@types/react` to the rest of the system?**
   _7 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `SlotSheet.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.056648777579010136 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `SlotSheet.tsx` to `App.tsx`, `Lab.tsx`, `api.ts`, `package.json`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+- **Should `common.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.06613891726251277 - nodes in this community are weakly interconnected._
+- **Why does `react` connect `Icon` to `common.tsx`, `Lab.tsx`, `api.ts`, `package.json`, `App.tsx`, `auth.ts`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
 - **Should `Lab.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.058018018018018015 - nodes in this community are weakly interconnected._
-- **Why does `reasonFor()` connect `Lab.tsx` to `Refill`?**
+  _Cohesion score 0.05738615327656423 - nodes in this community are weakly interconnected._
+- **Why does `Icon()` connect `Icon` to `common.tsx`, `Lab.tsx`, `api.ts`, `App.tsx`, `auth.ts`?**
   _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Should `api.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.11396011396011396 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07681365576102418 - nodes in this community are weakly interconnected._

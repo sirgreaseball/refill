@@ -36,14 +36,14 @@ export function Places() {
   return (
     <main className="phone">
       <header className="phone-top"><span className="avatar" aria-hidden="true">R</span><span><strong>Your places</strong><small>on this phone</small></span></header>
-      <div>
+      <div className="phone-lead">
         <h1 className="phone-h">{places.length ? 'Pick a place' : 'No places yet'}</h1>
         <p className="quiet">{places.length ? 'Each one keeps your place in its queue, your messages choice and your past visits.' : 'Join a waitlist from a business’s sign-up link and it appears here.'}</p>
       </div>
       {places.length > 0 && (
-        <ul className="rows">
+        <div className="phone-body"><ul className="rows">
           {places.map((p) => <li key={p.token}><a className="row place-row" href={`#/me/${p.token}`}><span className="row-main"><strong>{p.salon}</strong><small>Open my page</small></span><Icon name="arrow" size={16} /></a></li>)}
-        </ul>
+        </ul></div>
       )}
     </main>
   )
@@ -95,8 +95,9 @@ export default function Me({ token }: { token: string }) {
     <main className="phone">
       <header className="phone-top">
         <span className="avatar" aria-hidden="true">{me.salon.slice(0, 1)}</span>
-        <span><strong>{me.salon}</strong><small>your waitlist place</small></span>
+        <span><strong>{me.salon}</strong><small>{me.state === 'booked' ? 'your booking' : 'your waitlist place'}</small></span>
       </header>
+      <div className="phone-lead">
       {readPlaces().length > 1 && (
         <nav className="chips places" aria-label="Your places">
           {readPlaces().map((p) => <a key={p.token} href={`#/me/${p.token}`} className={p.token === token ? 'is-on' : ''} aria-current={p.token === token ? 'page' : undefined}>{p.salon.split(',')[0]}</a>)}
@@ -128,6 +129,9 @@ export default function Me({ token }: { token: string }) {
           <p className="quiet">For {me.service} ({me.minutes} min{me.price_inr ? `, ${money(me.price_inr)}` : ''}){me.free_from != null || me.free_until != null ? `, free ${clock(me.free_from ?? 600)}–${clock(Math.min(me.free_until ?? 1200, 1439))}` : ''}.</p>
         </div>
       )}
+      </div>
+
+      <div className="phone-body">
       {me.state === 'booked' && me.booking?.status === 'confirmed' && (
         <div className="verdict is-act">
           <h1 className="phone-h">You are booked</h1>
@@ -174,6 +178,8 @@ export default function Me({ token }: { token: string }) {
           </ul>
         </section>
       )}
+
+      </div>
 
       <footer className="phone-foot">
         {readSession() ? <p><a href="#/">Your account: all your places</a></p> : readPlaces().length > 0 && <p><a href="#/me">All your places</a></p>}

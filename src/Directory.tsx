@@ -56,11 +56,11 @@ export default function Directory() {
         <a className="brand" href="#/" aria-label="Refill home"><Mark size={14} /></a>
         <span><strong>Places on Refill</strong><small>book your next free slot</small></span>
       </header>
-      <div>
+      <div className="phone-lead">
         <h1 className="phone-h">Find a place</h1>
         <p className="quiet">Join a waiting list and get offered the next time that fits, from any of these places, in one account.</p>
       </div>
-      <DirectoryList />
+      <div className="phone-body"><DirectoryList /></div>
       <footer className="phone-foot">
         <p><Icon name="shield" size={14} /> Places see only your sign-up with them, never your other places.</p>
       </footer>

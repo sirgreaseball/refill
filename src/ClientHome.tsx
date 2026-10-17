@@ -71,6 +71,7 @@ export default function ClientHome({ book }: { book: Book }) {
         <span><strong>{name || 'Your account'}</strong><small>{book.profile?.email}</small></span>
       </header>
 
+      <div className="phone-lead">
       <div>
         <p className="overline">Your places</p>
         <h1 className="phone-h">{offers.length ? `${offers.length === 1 ? 'A time opened' : `${offers.length} times opened`} for you` : booked.length ? 'You’re booked' : entries?.length ? 'You’re on the list' : 'Join your first place'}</h1>
@@ -89,6 +90,9 @@ export default function ClientHome({ book }: { book: Book }) {
           label={`Booked at ${booked[0].salon}: ${span(booked[0].booking.start_min, booked[0].booking.minutes)}`} />
       )}
 
+      </div>
+
+      <div className="phone-body">
       {entries === null ? <p className="quiet">{offline ? 'No connection. Retrying…' : 'Opening your places…'}</p> : entries.length > 0 && (
         <ul className="rows">
           {entries.map((e) => {
@@ -147,6 +151,8 @@ export default function ClientHome({ book }: { book: Book }) {
           </ul>
         </section>
       )}
+
+      </div>
 
       <footer className="phone-foot">
         <p><button className="link" onClick={signOut}>Sign out</button></p>
