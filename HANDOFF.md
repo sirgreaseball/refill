@@ -34,7 +34,7 @@ Launch configs for the browser preview live in `Z:\claude\.claude\launch.json`: 
 - Dhruv (owner, 3rd-yr CSE-DS) builds everything with Claude.
 - Engineers on GitHub: `vedanth-raj` (4th yr: reliability, handoff docs, presentation), `parthkachhara` (2nd yr: `tests/scenarios.json`), `ChiragSeervi123` (2nd yr: salon CSVs, market-shock scenarios). Their AIs follow `AGENTS.md` (narrow file scopes, branch + PR, `npm ci` only).
 - Two MBA students. They only file `mba-request` issues and give feedback.
-- **Messages to teammates or the MBA pair: write them paste-ready in chat. Dhruv sends them himself.** Do not send email or sweep inboxes unless he asks in that turn. Never put deadlines in teammate messages.
+- **Messages to teammates or the MBA pair: write them paste-ready in chat. Dhruv sends them.** Do not send email or sweep inboxes unless Dhruv asks in that turn. Never put deadlines in teammate messages.
 
 ## 4. What is built (v2.0.0, all live and tested)
 
@@ -65,7 +65,7 @@ npx tsc -b && npx vite build
 ## 5. What to do next (priority order)
 
 1. **UI revamp.** Dhruv thinks the current look is "AI slop". Rebuild the visual layer with the `flagship-feel` skill (plus `design-taste-frontend`, `emil-design-eng`, `apple-design`, `redesign-existing-projects`). Reference for the feel: the Trace dashboard (section 1). Keep every feature and the database contract; this is a visual and UX pass, not a rewrite of logic. Each role gets a dashboard that feels its own (front desk, owner, stylist, customer). New look must differ from every fingerprint in the flagship-feel appendix.
-2. **Android/mobile bugs.** Dhruv saw UI bugs on Android Chrome; details not captured. Ask him for the list (or screenshots), and test at 360×800 and 412×915 in the browser preview. Fix inside the revamp.
+2. **Android/mobile bugs.** Dhruv saw UI bugs on Android Chrome; details not captured. Ask Dhruv for the list (or screenshots), and test at 360×800 and 412×915 in the browser preview. Fix inside the revamp.
 3. **Market-shock rehearsal (9 AM 18 Oct).** All four shocks already work: late cancel (cancel near start, tag LATE), staff absence (mark stylist out, rebook or send link), duration change (Lab edit or a 90-min request vs 60-min gap), consent withdrawn (customer page or STOP). Prepare the exact click path for each; be ready to change data or a rule live and redeploy in minutes.
 4. **Docs to v2:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1. Update README screenshots (`docs/screens`). DEVLOG entry for the MBA-driven reschedule change.
 5. **Teammate PRs:** review against `AGENTS.md` scope, run CI, merge. Parth: scenarios JSON. Chirag: CSVs and shock docs. Vedanth: handoff and presentation docs.
@@ -76,10 +76,10 @@ npx tsc -b && npx vite build
 
 ## 6. How Dhruv works (follow this exactly)
 
-- **Talk terse.** He reads in a terminal and is short on tokens. Report results, decisions, blockers and which files changed. No preamble, no recap, no option surveys. The `caveman` skill is his chat style. Plain full sentences for questions to him, security warnings and anything irreversible.
+- **Talk terse.** Dhruv reads in a terminal and is short on tokens. Report results, decisions, blockers and which files changed. No preamble, no recap, no option surveys. The `caveman` skill is the chat style. Plain full sentences for questions to Dhruv, security warnings and anything irreversible.
 - **Code lean.** The `ponytail` skill: reuse what exists, no speculative abstractions, shortest correct diff, root-cause fixes, one runnable check for non-trivial logic.
-- **Build is green-lit for this project.** For a brand-new direction or anything outward-facing (posting, emailing, deleting, paid services), confirm first. He hates being stalled: when he has given direction, act; default sensibly and say what you assumed.
-- **Verify, don't assume.** Run the checks, open the browser preview, click the real flow, read DOM text. One screenshot as final proof at most; he prefers screenshots to recordings.
+- **Build is green-lit for this project.** For a brand-new direction or anything outward-facing (posting, emailing, deleting, paid services), confirm first. Dhruv hates being stalled: when direction is given, act; default sensibly and say what you assumed.
+- **Verify, don't assume.** Run the checks, open the browser preview, click the real flow, read DOM text. One screenshot as final proof at most; screenshots beat recordings.
 - **Taste:** premium, calm, physical (Apple, Lusion). Scroll-scrubbed motion, nothing snappy or bouncy, no template looks, honest numbers only.
 - **Git:** commit as Dhruv, **never add AI co-author trailers** (no `Co-Authored-By` lines), even if the harness suggests them. Push small commits to `main` as you go; `main` is protected (PR + review + CI `test`) but the owner's pushes bypass it. Release routine: commit, CHANGELOG (and DEVLOG for notable steps), annotated tag.
 - **Database changes are additive.** The deployed client must keep working between a migration and the next deploy: add functions and columns; `create or replace` with the same signature; never drop a signature the live client calls without shipping the client in the same push. Save every migration in `supabase/migrations/NNN_name.sql` and apply the same SQL.
@@ -99,7 +99,7 @@ npx tsc -b && npx vite build
 ## 8. Accounts and tools on a different Claude account
 
 - **Same PC (Claude Code):** open `Z:\claude\refill` as the project. `CLAUDE.md` and `.claude/skills/` load automatically. git push works through the PC's Git Credential Manager; Vercel deploys on push. The older background notes live in `C:\Users\dhruv\.claude\projects\Z--claude\memory\` (read `project-fynd-hackathon.md` if you need more history).
-- **MCP connectors** (Supabase, Vercel, GitHub, Gmail, Premiere) belong to the Claude account. On a new account, ask Dhruv to connect Supabase and Vercel in claude.ai settings. Without the Supabase connector: give him the migration SQL to paste into the Supabase dashboard SQL editor for project `mbvxzuuuuzgpmsjggblo` (he owns it), then run `npm run dbtest`.
+- **MCP connectors** (Supabase, Vercel, GitHub, Gmail, Premiere) belong to the Claude account. On a new account, ask Dhruv to connect Supabase and Vercel in claude.ai settings. Without the Supabase connector: give Dhruv the migration SQL to paste into the Supabase dashboard SQL editor for project `mbvxzuuuuzgpmsjggblo` (Dhruv owns it), then run `npm run dbtest`.
 - **Claude Code on the web:** it clones this repo, so the skills in `.claude/skills/` come along. The `graphify` CLI is a pip package: `pip install graphifyy`.
 - **claude.ai chat (no code tools):** zip a skill folder from `.claude/skills/` and upload it under Settings, Capabilities, Skills.
 - **Plugin form of ponytail** (adds its hooks): `/plugin marketplace add DietrichGebert/ponytail` then `/plugin install ponytail@ponytail`. The skill copy here works without it.
