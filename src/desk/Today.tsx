@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { DbSlot, State } from '../api'
 import { Icon, clock, money, span } from '../ui'
+import Dial from '../Dial'
 import { Num } from '../motion'
 import { SlotSheet } from './SlotSheet'
 import { figures, first, kindOf, plural, staffFor, togglePresence, useRun, type Book, type Kind } from './common'
@@ -30,12 +31,16 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
         </div>
       </header>
 
-      <div className="stats">
+      <section className="group today-hero" aria-label="Today at a glance">
+        <Dial st={st} onPick={(x) => setSelected(x.id)} center={{ big: clock(now), small: queue.length ? `${queue.length} need${queue.length === 1 ? 's' : ''} you` : 'all clear' }} />
+        <div className="stats">
         <div className={`stat spot ${f.recovered ? 'is-act' : ''}`}><div className="stat-v"><Num value={f.recovered} format={money} /></div><div className="stat-l">Recovered today · {plural(f.refilled, 'gap')} refilled</div></div>
         <div className={`stat spot ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v"><Num value={f.openValue} format={money} /></div><div className="stat-l">In {plural(f.open.length, 'open gap')} you can still fill</div></div>
         <div className={`stat spot ${f.risk.length ? 'is-risk' : ''}`}><div className="stat-v"><Num value={f.risk.length} /></div><div className="stat-l">Clients whose staff member is out</div></div>
         <div className="stat spot"><div className="stat-v"><Num value={st.waitlist.filter((e) => e.status === 'waiting').length} /></div><div className="stat-l">On the waitlist</div></div>
-      </div>
+        </div>
+
+      </section>
 
       <section className="group spot" aria-label="Needs you now">
         <div className="group-head"><h2>Needs you now</h2></div>
