@@ -26,5 +26,6 @@
 
 ## Pull request
 
-- Branch: `parth/scenarios`.
-- Pull request publication is pending.
+- Published branch: [parth/scenarios](https://github.com/sirgreaseball/refill/tree/parth/scenarios).
+- Pull request creation was attempted but rejected with HTTP 403 (`Resource not accessible by integration`). No pull request has been opened.
+- [Open the prepared pull request](https://github.com/sirgreaseball/refill/pull/new/parth/scenarios) once GitHub write access is available.
