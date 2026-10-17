@@ -19,12 +19,18 @@ const FRIENDLY: Record<string, string> = {
   TOO_LARGE: 'That is more data than one demo day holds.',
 }
 
+// The signed-in account's token, when there is one (src/auth.ts sets this). Scripts never set
+// it, so they call as the public key, exactly as before accounts existed.
+let bearer: () => Promise<string | null> = async () => null
+export const setBearer = (f: () => Promise<string | null>) => { bearer = f }
+
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   let res: Response
   try {
+    const token = await bearer()
     res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
       method: 'POST',
-      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(args),
     })
   } catch {

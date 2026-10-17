@@ -4,7 +4,7 @@
 // offer hold windows, the per-customer message cap, undo, and v2: owner, stylist and
 // customer keys, stylist absence and moving appointments.
 import { SUPABASE_KEY, SUPABASE_URL } from '../src/config.ts'
-import { ApiError, rpc } from '../src/rpc.ts'
+import { ApiError, rpc, setBearer } from '../src/rpc.ts'
 
 const results: [string, boolean, string?][] = []
 const check = (label: string, ok: boolean, note?: string) => results.push([label, ok, note])
@@ -202,44 +202,66 @@ check('staff out withdraws an offer without claiming an opt-out; sign-up shows t
   withdrawn.state === 'WITHDRAWN' && withdrawn.reason === 'STAFF_ABSENT' && info.max_offers === 4,
   `${withdrawn.state}/${withdrawn.reason}, cap ${info.max_offers}`)
 
-// 12c. 007: a live business starts empty on the real clock, and its owner runs staff, services and tasks
-type Live = { ok: boolean; code?: string; id: string; owner_key: string; join_code: string }
-type LiveState = { workspace: { kind: string; now_min: number }; staff: { id: string; name: string; active: boolean }[]; services: { id: string }[]; slots: { id: string; status: string; staff_id: string }[]; tasks: { id: number; done: boolean }[] }
-const biz = await rpc<Live>('create_business', { p_biz: {
-  name: 'Test Tutors', type: 'Tuition',
-  staff: [{ name: 'Asha', skills: ['maths'], shift_start: 0, shift_end: 1440 }, { name: 'Ravi', skills: ['physics'], shift_start: 0, shift_end: 1440 }],
-  services: [{ name: 'Maths class', minutes: 60, skill: 'maths', price_inr: 500 }],
-} })
-const noStaff = await rpc<Res>('create_business', { p_biz: { name: 'Empty', staff: [] } })
-const ls = await rpc<LiveState>('get_state', { p_ws: biz.id, p_key: biz.owner_key })
-const liveClock = await fails(rpc('set_clock', { p_ws: biz.id, p_key: biz.owner_key, p_now: 600 }))
-const liveReset = await fails(rpc('reset_workspace', { p_ws: biz.id, p_key: biz.owner_key, p_day: {} }))
-const synced = await rpc<Res & { now_min: number }>('sync_clock', { p_ws: biz.id, p_key: biz.owner_key })
-check('a live business starts empty with its staff and services; no demo clock, no reset',
-  biz.ok && noStaff.code === 'INVALID_VALUE' && ls.workspace.kind === 'live' && ls.staff.length === 2 && ls.services.length === 1 && ls.slots.length === 0
-    && liveClock === 'LIVE_CLOCK' && liveReset === 'NOT_DEMO' && synced.ok,
-  `${ls.workspace.kind}, ${ls.staff.length} staff, ${liveClock}, ${liveReset}`)
-const later = Math.min(synced.now_min + 30, 1300)
-const appt = await rpc<Res & { id: string }>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST1', start_min: later, minutes: 60, customer: 'Kiran', service: 'Maths class', skill: 'maths', price_inr: 500 } })
-const clash = await rpc<Res>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST1', start_min: later + 30, minutes: 30 } })
-const past = await rpc<Res>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST2', start_min: 0, minutes: 30 } })
-const openTime = await rpc<Res & { id: string }>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST2', start_min: later, minutes: 60, skill: 'physics' } })
-check('the desk adds an appointment or open time; overlaps and past times are refused',
-  appt.ok && clash.code === 'TARGET_BUSY' && (synced.now_min < 30 || past.code === 'TOO_SOON') && openTime.ok,
-  `${appt.code ?? 'ok'}, ${clash.code}, ${past.code}, ${openTime.code ?? 'ok'}`)
-const added = await rpc<Res & { id: string }>('save_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: { name: 'Neha', skills: ['maths'], shift_start: 540, shift_end: 1020 } })
-const blockedRemove = await rpc<Res>('remove_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1' })
-const removed = await rpc<Res>('remove_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST2' })
-const deskKey = await rpc<string>('desk_link', { p_ws: biz.id, p_key: biz.owner_key })
-const deskAdd = await fails(rpc('save_staff', { p_ws: biz.id, p_key: deskKey, p_staff: { name: 'X' } }))
-const task = await rpc<Res & { id: number }>('add_task', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1', p_text: 'Print worksheets' })
-const asha = await rpc<string>('staff_link', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1' })
-const ticked = await rpc<Res>('set_task', { p_ws: biz.id, p_key: asha, p_task: task.id, p_done: true })
-const ls2 = await rpc<LiveState>('get_state', { p_ws: biz.id, p_key: biz.owner_key })
-check('owner adds and removes staff (refused while they have clients ahead), desk cannot; staff tick their own tasks',
-  added.ok && blockedRemove.code === 'HAS_BOOKINGS' && removed.ok && deskAdd === 'FORBIDDEN' && ticked.ok
-    && ls2.staff.map((p) => p.id).join() === 'ST1,ST3' && !ls2.slots.some((x) => x.staff_id === 'ST2') && ls2.tasks[0]?.done === true,
-  `${blockedRemove.code}, ${deskAdd}, staff ${ls2.staff.map((p) => p.id).join()}`)
+// 12b2. 009: a live business needs an account. The checks below run as a throwaway owner account,
+// which only works when email confirmation is off for the project (Supabase Auth settings).
+const anonBiz = await rpc<Res>('create_business', { p_biz: { name: 'No account', staff: [{ name: 'A' }] } })
+check('a business cannot be created without signing in', anonBiz.code === 'SIGN_IN', anonBiz.code)
+const authSettings = await (await raw('/auth/v1/settings')).json()
+let token: string | null = null
+if (authSettings.mailer_autoconfirm) {
+  const made = await raw('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email: `dbtest-${crypto.randomUUID().slice(0, 8)}@example.com`, password: crypto.randomUUID() }) })
+  token = (await made.json()).access_token ?? null
+}
+check('a throwaway account signs up without confirming an email', !!token, authSettings.mailer_autoconfirm ? 'no session returned' : 'turn off "Confirm email" in Supabase Auth')
+if (token) {
+  setBearer(async () => token)
+  // 12c. 007: a live business starts empty on the real clock, and its owner runs staff, services and tasks
+  type Live = { ok: boolean; code?: string; id: string; owner_key: string; join_code: string }
+  type LiveState = { workspace: { kind: string; now_min: number }; staff: { id: string; name: string; active: boolean }[]; services: { id: string }[]; slots: { id: string; status: string; staff_id: string }[]; tasks: { id: number; done: boolean }[] }
+  const biz = await rpc<Live>('create_business', { p_biz: {
+    name: 'Test Tutors', type: 'Tuition',
+    staff: [{ name: 'Asha', skills: ['maths'], shift_start: 0, shift_end: 1440 }, { name: 'Ravi', skills: ['physics'], shift_start: 0, shift_end: 1440 }],
+    services: [{ name: 'Maths class', minutes: 60, skill: 'maths', price_inr: 500 }],
+  } })
+  const noStaff = await rpc<Res>('create_business', { p_biz: { name: 'Empty', staff: [] } })
+  const ls = await rpc<LiveState>('get_state', { p_ws: biz.id, p_key: biz.owner_key })
+  const liveClock = await fails(rpc('set_clock', { p_ws: biz.id, p_key: biz.owner_key, p_now: 600 }))
+  const liveReset = await fails(rpc('reset_workspace', { p_ws: biz.id, p_key: biz.owner_key, p_day: {} }))
+  const synced = await rpc<Res & { now_min: number }>('sync_clock', { p_ws: biz.id, p_key: biz.owner_key })
+  check('a live business starts empty with its staff and services; no demo clock, no reset',
+    biz.ok && noStaff.code === 'INVALID_VALUE' && ls.workspace.kind === 'live' && ls.staff.length === 2 && ls.services.length === 1 && ls.slots.length === 0
+      && liveClock === 'LIVE_CLOCK' && liveReset === 'NOT_DEMO' && synced.ok,
+    `${ls.workspace.kind}, ${ls.staff.length} staff, ${liveClock}, ${liveReset}`)
+  const later = Math.min(synced.now_min + 30, 1300)
+  const appt = await rpc<Res & { id: string }>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST1', start_min: later, minutes: 60, customer: 'Kiran', service: 'Maths class', skill: 'maths', price_inr: 500 } })
+  const clash = await rpc<Res>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST1', start_min: later + 30, minutes: 30 } })
+  const past = await rpc<Res>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST2', start_min: 0, minutes: 30 } })
+  const openTime = await rpc<Res & { id: string }>('add_appointment', { p_ws: biz.id, p_key: biz.owner_key, p_appt: { staff: 'ST2', start_min: later, minutes: 60, skill: 'physics' } })
+  check('the desk adds an appointment or open time; overlaps and past times are refused',
+    appt.ok && clash.code === 'TARGET_BUSY' && (synced.now_min < 30 || past.code === 'TOO_SOON') && openTime.ok,
+    `${appt.code ?? 'ok'}, ${clash.code}, ${past.code}, ${openTime.code ?? 'ok'}`)
+  const added = await rpc<Res & { id: string }>('save_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: { name: 'Neha', skills: ['maths'], shift_start: 540, shift_end: 1020 } })
+  const blockedRemove = await rpc<Res>('remove_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1' })
+  const removed = await rpc<Res>('remove_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST2' })
+  const deskKey = await rpc<string>('desk_link', { p_ws: biz.id, p_key: biz.owner_key })
+  const deskAdd = await fails(rpc('save_staff', { p_ws: biz.id, p_key: deskKey, p_staff: { name: 'X' } }))
+  const task = await rpc<Res & { id: number }>('add_task', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1', p_text: 'Print worksheets' })
+  const asha = await rpc<string>('staff_link', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1' })
+  const ticked = await rpc<Res>('set_task', { p_ws: biz.id, p_key: asha, p_task: task.id, p_done: true })
+  const ls2 = await rpc<LiveState>('get_state', { p_ws: biz.id, p_key: biz.owner_key })
+  check('owner adds and removes staff (refused while they have clients ahead), desk cannot; staff tick their own tasks',
+    added.ok && blockedRemove.code === 'HAS_BOOKINGS' && removed.ok && deskAdd === 'FORBIDDEN' && ticked.ok
+      && ls2.staff.map((p) => p.id).join() === 'ST1,ST3' && !ls2.slots.some((x) => x.staff_id === 'ST2') && ls2.tasks[0]?.done === true,
+    `${blockedRemove.code}, ${deskAdd}, staff ${ls2.staff.map((p) => p.id).join()}`)
+
+  // 009: the account owns the business. It opens with no key; without the account, it does not.
+  const byAccount = await rpc<{ role: string }>('get_state', { p_ws: biz.id, p_key: '' })
+  const mine = await rpc<{ id: string }[]>('my_businesses', {})
+  setBearer(async () => null)
+  const stranger = await fails(rpc('get_state', { p_ws: biz.id, p_key: '' }))
+  check('the owner account opens its business without a key; a stranger cannot',
+    byAccount.role === 'owner' && mine.some((x) => x.id === biz.id) && stranger === 'FORBIDDEN', `${byAccount.role}, ${mine.length}, ${stranger}`)
+}
 
 // 13. rate limit: 260 writes in a burst on one demo day, 240 allowed per minute
 const burst = await make(day())
