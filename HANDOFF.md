@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **START HERE.** State at 18 Oct 2026, ~00:45 IST. v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
+> **START HERE.** State at 18 Oct 2026, ~01:40 IST (checks re-run: tests 51/51, build green, dbtest 28/28; demo script rewritten). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
 
@@ -143,7 +143,7 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 
 **Still to do, in order:**
 1. Market-shock rehearsal (0.5 item 2) on the **demo**, after these changes.
-2. `docs/DEMO_SCRIPT.md`: open with the real product (Setup), then "Try the demo" for the story.
+2. ~~`docs/DEMO_SCRIPT.md`~~ **rewritten 18 Oct ~01:40** for accounts + Try the demo + v6 UI: sign-in page, real desk, demo Home dial, Harsh late cancel (case checks 1 and 3), two phones (case check 2), Arjun out with Manav moved and Kunal's link (MBA change), Owner, Lab live race. Labels verified against source; Q&A rewritten and honest about limits.
 3. Admin console for the team (business-level data and feedback only, never client data). It needs an admin key table and a feedback table.
 4. Dates on appointments (future booking, true multi-day history). Cross-device client accounts.
 
