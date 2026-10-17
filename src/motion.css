@@ -124,10 +124,7 @@
 .team-faces a { display: grid; justify-items: center; gap: 4px; padding: 8px 2px; border-radius: 14px; text-decoration: none; text-align: center; }
 .team-faces a:hover { background: var(--hover); }
 .face { position: relative; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 18px; color: #fff;
-  background: linear-gradient(140deg, #3fd39b, #0f7a5a); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35); transition: filter 0.6s var(--ease), opacity 0.6s var(--ease); }
-.team-faces li:nth-child(2) .face { background: linear-gradient(140deg, #8a7bff, #5b4ce0); }
-.team-faces li:nth-child(3) .face { background: linear-gradient(140deg, #ffb35c, #e0841a); }
-.team-faces li:nth-child(4) .face { background: linear-gradient(140deg, #5cc8ff, #1f8fd6); }
+  background: var(--surface-3); color: var(--ink); font-family: var(--display); font-weight: 500; box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 1px var(--line); transition: filter 0.6s var(--ease), opacity 0.6s var(--ease); }
 .face i { position: absolute; right: -1px; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; background: var(--act); border: 2.5px solid var(--surface); }
 .team-faces .is-out .face { filter: grayscale(1); opacity: 0.55; }
 .team-faces .is-out .face i { background: var(--danger); }
@@ -156,11 +153,9 @@
   box-shadow: 0 10px 24px -10px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.35); transition: transform 0.5s var(--spring-bounce);
 }
 .app-ico:hover .ico { transform: translateY(-4px) scale(1.04); }
-.ico.is-desk { background: linear-gradient(150deg, #ffbe5c, #e07a10); }
-.ico.is-owner { background: linear-gradient(150deg, #3fd39b, #0f7a5a); }
-.ico.is-staff { background: linear-gradient(150deg, #8f84ff, #4f3fd8); }
-.ico.is-client { background: linear-gradient(150deg, #5cc8ff, #1677d6); }
-.ico.is-proof { background: linear-gradient(150deg, #4b4b55, #17171b); }
+/* One material for every view's icon; colour stays reserved for meaning. */
+.ico { background: linear-gradient(160deg, var(--surface-3), var(--surface-2)); color: var(--ink); box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.5), inset 0 1px 0 var(--glass-edge), inset 0 0 0 1px var(--line); }
+.app-ico:hover .ico { color: var(--act-text); }
 .ico b { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--danger); color: #fff; font: 700 12px/22px var(--sans); border: 2px solid var(--canvas); }
 
 .skeleton { min-height: 160px; background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 50%, var(--surface) 70%) 0 0 / 200% 100%; animation: shimmer 1.4s linear infinite; }
