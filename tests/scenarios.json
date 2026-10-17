@@ -1,1 +1,385 @@
-[]
+[
+  {
+    "id": "P01",
+    "title": "Organiser reference case",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      },
+      {
+        "id": "S2",
+        "start": "10:30",
+        "minutes": 60,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": true
+      },
+      {
+        "id": "W2",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": false
+      }
+    ],
+    "expect": {
+      "matches": [
+        [
+          "W1",
+          "S2"
+        ]
+      ],
+      "excluded": {
+        "S1": {
+          "W1": "DURATION_TOO_LONG",
+          "W2": "NO_CONSENT"
+        }
+      }
+    }
+  },
+  {
+    "id": "P02",
+    "title": "Request exceeds slot duration",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "matches": [],
+      "excluded": {
+        "S1": {
+          "W1": "DURATION_TOO_LONG"
+        }
+      }
+    }
+  },
+  {
+    "id": "P03",
+    "title": "Shorter request fits longer slot",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 60,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "matches": [
+        [
+          "W1",
+          "S1"
+        ]
+      ],
+      "excluded": {}
+    }
+  },
+  {
+    "id": "P04",
+    "title": "Two eligible requests race for one slot",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 60,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": true
+      },
+      {
+        "id": "W2",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "race": {
+      "slot": "S1",
+      "requests": [
+        "W1",
+        "W2"
+      ]
+    },
+    "expect": {
+      "confirmed": "W1",
+      "waitlisted": [
+        "W2"
+      ],
+      "rejected": {}
+    }
+  },
+  {
+    "id": "P05",
+    "title": "Consent false prevents matching",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": false
+      }
+    ],
+    "expect": {
+      "matches": [],
+      "excluded": {
+        "S1": {
+          "W1": "NO_CONSENT"
+        }
+      }
+    }
+  },
+  {
+    "id": "P06",
+    "title": "Consent null prevents matching",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": null
+      }
+    ],
+    "expect": {
+      "matches": [],
+      "excluded": {
+        "S1": {
+          "W1": "NO_CONSENT"
+        }
+      }
+    }
+  },
+  {
+    "id": "P07",
+    "title": "Skill mismatch takes precedence over excessive duration",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 60,
+        "skill": "nails",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "matches": [],
+      "excluded": {
+        "S1": {
+          "W1": "SKILL_MISMATCH"
+        }
+      }
+    }
+  },
+  {
+    "id": "P08",
+    "title": "Booked slot is never filled",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "booked"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "matches": [],
+      "excluded": {}
+    }
+  },
+  {
+    "id": "P09",
+    "title": "Repeated Accept creates only one booking",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "race": {
+      "slot": "S1",
+      "requests": [
+        "W1",
+        "W1"
+      ]
+    },
+    "expect": {
+      "confirmed": "W1",
+      "waitlisted": [],
+      "rejected": {}
+    }
+  },
+  {
+    "id": "P10",
+    "title": "Duplicate waitlist ID stops the run",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 60,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": true
+      },
+      {
+        "id": "W1",
+        "minutes": 60,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "error": "DUPLICATE_ID"
+    }
+  },
+  {
+    "id": "P11",
+    "title": "Missing waitlist minutes stops the run",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "error": "MISSING_FIELD"
+    }
+  },
+  {
+    "id": "P12",
+    "title": "One waitlist entry must not fill two slots",
+    "slots": [
+      {
+        "id": "S1",
+        "start": "10:00",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      },
+      {
+        "id": "S2",
+        "start": "10:30",
+        "minutes": 30,
+        "skill": "hair",
+        "status": "free"
+      }
+    ],
+    "waitlist": [
+      {
+        "id": "W1",
+        "minutes": 30,
+        "skill": "hair",
+        "consent": true
+      }
+    ],
+    "expect": {
+      "matches": [
+        [
+          "W1",
+          "S1"
+        ]
+      ],
+      "excluded": {}
+    }
+  }
+]
