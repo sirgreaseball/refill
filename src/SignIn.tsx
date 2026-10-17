@@ -10,7 +10,8 @@ import { Icon } from './ui'
 const NAME = 'refill.name'
 
 export default function Auth({ book }: { book: Book }) {
-  const [tab, setTab] = useState<'in' | 'up'>('up')
+  // Someone who made an account on this device before most likely wants to sign in.
+  const [tab, setTab] = useState<'in' | 'up'>(() => { try { return localStorage.getItem(NAME) ? 'in' : 'up' } catch { return 'up' } })
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

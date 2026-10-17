@@ -124,7 +124,9 @@ export function sentence(ev: DbEvent, st: State): string {
     case 'DESK_LINK_MADE': return 'Owner made a new front-desk link; the old one stopped working'
     case 'BUSINESS_CREATED': return `Business opened with ${plural(Number(d.staff), 'team member')} and ${plural(Number(d.services), 'service')}`
     case 'DAY_CLOSED': return `Yesterday closed into history: ${plural(Number(d.appointments), 'appointment')}`
-    case 'APPOINTMENT_ADDED': return `${d.customer} booked at ${clock(Number(d.start_min))} with ${d.name}, ${d.minutes} min`
+    case 'APPOINTMENT_ADDED': return `${d.customer} booked at ${clock(Number(d.start_min))} with ${d.name}, ${d.minutes} min${ev.entry_id ? ', from the waitlist: it is on their page' : ''}`
+    case 'SELF_BOOKED': return `${d.customer} booked ${clock(Number(d.start_min))} with ${d.name} from the booking page${ev.code === 'REFILLED' ? `, filling a cancelled time: ${money(Number(d.price_inr))} recovered` : ''}`
+    case 'BUSINESS_UPDATED': return `Business details changed: ${d.name}`
     case 'OPEN_TIME_ADDED': return `Open time added at ${clock(Number(d.start_min))} with ${d.name}, ${d.minutes} min`
     case 'STAFF_ADDED': return `${d.name} joined the team`
     case 'STAFF_CHANGED': return `${d.name}'s hours or services changed`

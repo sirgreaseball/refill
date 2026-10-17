@@ -46,15 +46,13 @@
 @keyframes rise { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
 
 /* View transitions between pages: the bar and dock stay; the page cross-fades with a little blur. */
-.bar { view-transition-name: bar; }
-.dock { view-transition-name: dock; }
 ::view-transition-old(root) { animation: vt-out 0.22s var(--ease) both; }
 ::view-transition-new(root) { animation: vt-in 0.5s var(--ease-rare) both; }
 @keyframes vt-out { to { opacity: 0; filter: blur(6px); transform: scale(0.995); } }
 @keyframes vt-in { from { opacity: 0; filter: blur(8px); transform: translateY(10px); } }
 
 /* Press feel everywhere. */
-.btn, .q-item, .roster-chip, .time-chip, .app-ico, .agenda-row, .toggle-pill { transition: transform 0.45s var(--spring), background 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.3s var(--ease); }
+.btn, .q-item, .roster-chip, .time-chip, .app-ico, .toggle-pill { transition: transform 0.45s var(--spring), background 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.3s var(--ease); }
 .btn:active:not(:disabled), .q-item:active, .roster-chip:active, .app-ico:active, .toggle-pill:active { transform: scale(0.96); transition-duration: 0.1s; }
 @media (hover: hover) and (pointer: fine) {
   .q-item:hover { transform: translateX(3px); }
@@ -502,7 +500,6 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
 }
 
 /* Theme flood: one snapshot of the whole page, revealed by the drop; no cross-fade underneath. */
-.theme-flooding .bar, .theme-flooding .dock { view-transition-name: none; }
 .theme-flooding::view-transition-old(root), .theme-flooding::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 .theme-btn .icon { transition: transform 0.6s var(--spring); }
 .theme-btn:active .icon { transform: rotate(-30deg) scale(0.92); }
@@ -583,8 +580,8 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
 .q-item { background: transparent; border-radius: 0; padding: 14px 0 14px 0; border-top: 1px solid var(--line); overflow: visible; }
 .queue > .q-item:first-child { border-top: 0; }
 .q-item:hover { background: transparent; }
-.q-item, .agenda-row, .choice, .person, .link-row, .wl-row, .hist-row, .row-btn { position: relative; isolation: isolate; }
-.q-item::after, .agenda-row::after, .choice::after, .person::after, .link-row::after, .wl-row::after, .hist-row::after, .row-btn::after {
+.q-item, .choice, .person, .link-row, .wl-row, .hist-row, .row-btn { position: relative; isolation: isolate; }
+.q-item::after, .choice::after, .person::after, .link-row::after, .wl-row::after, .hist-row::after, .row-btn::after {
   content: ''; position: absolute; inset: 2px -14px; z-index: -1; border-radius: var(--r); pointer-events: none;
   background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--act) 9%, transparent), transparent 70%);
   opacity: var(--spot, 0); transition: opacity 0.4s var(--ease);
@@ -631,3 +628,81 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
 .place-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 2px 0 4px 54px; }
 .directory { display: grid; gap: 10px; }
 .directory .link-row { text-decoration: none; color: inherit; }
+
+/* ---------- v7 (18 Oct ~03:00): phone pass, booking first, profile and settings */
+
+/* Today: the colour key sits under the heading, above whichever view of the day is showing. */
+.today-hero { grid-template-areas: 'head head' 'key key' 'view stats'; }
+.today-hero.is-calendar { grid-template-areas: 'head' 'key' 'view' 'stats'; }
+.today-legend { grid-area: key; }
+.legend .is-booked { background: color-mix(in srgb, var(--ink) 22%, transparent); }
+@media (max-width: 900px) { .today-hero { grid-template-areas: 'head' 'key' 'view' 'stats'; } }
+
+/* The calendar on a phone: the same lanes, wider than the screen, names pinned on the left. */
+@media (max-width: 760px) {
+  .board { overflow-x: auto; overscroll-behavior-x: contain; margin: 0 -16px; padding: 0 16px 6px; scrollbar-width: none; }
+  .board::-webkit-scrollbar { display: none; }
+  .board-in { min-width: 960px; }
+  .lane { grid-template-columns: 88px minmax(0, 1fr); min-height: 54px; }
+  .axis { margin-left: 88px; }
+  .lane-name { position: sticky; left: 0; z-index: 5; margin-left: -16px; padding-left: 16px; background: var(--surface); box-shadow: 8px 0 12px -10px rgb(0 0 0 / 0.5); }
+  .lane-name small { display: none; }
+  .blk .blk-time { display: block; }
+  .blk.is-short .blk-time { display: none; }
+}
+
+/* The dial: each person's working hours are the brighter band; their name runs along the ring. */
+.dial-shift { fill: none; stroke: color-mix(in srgb, var(--ink) 9%, var(--surface-3)); stroke-width: 15; stroke-linecap: round; pointer-events: none; }
+.dial-ring.is-out .dial-shift { stroke: color-mix(in srgb, var(--danger) 22%, var(--surface-3)); }
+.dial-name { font: 600 10.5px var(--sans); letter-spacing: 0.01em; }
+
+/* Menus on a phone: full width under the bar, never off the edge of the screen. */
+@media (max-width: 760px) {
+  .bar .menu { position: fixed; top: calc(var(--bar-h) + 6px); left: 12px; right: 12px; min-width: 0; max-height: calc(100dvh - var(--bar-h) - 24px); overflow-y: auto; transform-origin: top center; }
+}
+
+/* The profile button and its menu. */
+.me-btn { width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-2); border-radius: 50%; background: var(--surface-3); color: var(--ink); font: 600 14px var(--sans); display: grid; place-items: center; }
+.me-btn[aria-expanded='true'] { border-color: var(--act); box-shadow: 0 0 0 3px var(--act-soft); }
+.menu-head { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px 10px; }
+.menu-head .avatar-sm { width: 36px; height: 36px; }
+.menu-head strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-head small { display: block; font: 500 11px var(--mono); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu .is-danger { color: var(--danger); }
+
+/* The demo clock: pick a time, step it, or follow the real time. */
+.clock-real { min-height: 30px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); font: 600 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.clock-real[aria-pressed='true'] { background: var(--act-soft); color: var(--act-text); }
+@media (max-width: 520px) { .clock.is-demo .icon-btn { display: none; } }
+
+/* Booking first: today's open times as chips, amber where a cancelled time is back. */
+.book-times { display: grid; gap: 12px; }
+.book-times .time-chips { gap: 8px; }
+.book-times .time-chip { min-height: 44px; min-width: 72px; justify-content: center; font-size: 15px; }
+.offer-now { display: grid; gap: 10px; }
+.offer-now .btn { width: 100%; }
+
+/* Settings: plain rows, one danger zone at the end. */
+.settings .rows { margin: 0; }
+.danger-zone { border-top: 1px solid color-mix(in srgb, var(--danger) 40%, transparent); }
+.danger-zone h2 { color: var(--danger); }
+.danger-zone .add { max-width: 420px; }
+
+/* Sign in on a phone: the form first, the story under it. */
+@media (max-width: 900px) {
+  .page.auth { padding-top: 16px; gap: 32px; }
+  .page.auth .auth-form { order: -1; padding-top: 0; border-top: 0; }
+  .page.auth .auth-story { padding-top: 24px; border-top: 1px solid var(--line); }
+  .auth-story h1 { font-size: clamp(30px, 8.5vw, 44px); }
+}
+.clock { position: relative; }
+.clock-time { min-height: 32px; padding: 0 6px; border: 0; background: transparent; color: var(--ink); }
+.clock-time output { font: 500 15px var(--mono); }
+.clock-time:disabled output { color: var(--act-text); }
+.clock-pick { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+.menu-theme { display: none !important; }
+@media (max-width: 520px) {
+  .bar-end:has(.me-btn) .theme-btn { display: none; }
+  .menu .menu-theme { display: flex !important; }
+  .bar .brand { margin-right: 2px; }
+}

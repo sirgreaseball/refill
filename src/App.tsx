@@ -32,6 +32,7 @@ const Auth = lazy(fresh(() => import('./SignIn')))
 const Welcome = lazy(fresh(() => import('./SignIn').then((m) => ({ default: m.Welcome }))))
 const ClientHome = lazy(fresh(() => import('./ClientHome')))
 const History = lazy(fresh(() => import('./Manage').then((m) => ({ default: m.History }))))
+const Settings = lazy(fresh(() => import('./Settings')))
 
 /** Catches a page that fails to load or render, so the rest of the app and a way out stay on screen. */
 class Boundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -93,6 +94,7 @@ function useRoute() {
  *   #/s/<ws>/<staff>/<key>             a staff member's own link
  *   #/join/<code>, #/me/<token>        a client signing up, then their own page
  *   #/o/<offer>, #/m/<move>            a client's offer, a client's link to move or cancel
+ *   #/settings                         the signed-in person's account, and the owner's business
  */
 export default function App() {
   const route = useRoute()
@@ -130,6 +132,7 @@ function Shell({ route }: { route: string }) {
 
   let page: ReactNode
   if (area === 'lab') page = <Lab />
+  else if (route === '/settings' && (book.phase === 'client' || book.phase === 'ready')) page = <Suspense fallback={<Loading phase="page" />}><Settings book={book} /></Suspense>
   else if (book.phase === 'auth') page = <Auth book={book} />
   else if (book.phase === 'welcome') page = <Welcome book={book} />
   else if (book.phase === 'client') page = <ClientHome book={book} />
@@ -183,7 +186,8 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
   const [armed, setArmed] = useState(false)
   const [install, setInstall] = useState<InstallEvent | null>(null)
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem('refill.theme') ?? 'auto' } catch { return 'auto' } })
-  const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)
+  // Refill is dark unless light is chosen, whatever the phone's own setting.
+  const dark = theme !== 'light'
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -214,6 +218,9 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
     location.hash = r === 'desk' ? '#/desk' : '#/owner'
   }
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !matchMedia('(display-mode: standalone)').matches
+  const session = readSession()
+  const who = book.profile?.name ?? session?.user.email.split('@')[0] ?? (role === 'owner' ? 'Owner' : role === 'desk' ? 'Front desk' : 'Guest')
+  const initial = who.slice(0, 1).toUpperCase()
   const label = area === 'desk' ? 'Front desk' : area === 'owner' ? 'Owner' : area === 'lab' ? 'Proof' : 'Choose a view'
 
   return (
@@ -227,7 +234,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
             ? <button className="demo-pill" onClick={() => book.setMode('demo')}>Try the demo</button>
             : <span className="demo-pill is-on"><span>Demo</span><button onClick={() => book.setMode('live')} aria-label="Leave the demo">Exit</button></span>}
           {st && (area === 'desk' || area === 'owner') && (live
-            ? <span className="clock is-live" title="Real time, India"><output>{clock(st.workspace.now_min)}</output></span>
+            ? <LiveClock />
             : <Clock now={st.workspace.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />)}
           {!ENTRY.has(book.phase) && <div className="menu-wrap">
             <button className={`role-pill ${area === 'desk' ? 'is-desk' : ''}`} onClick={() => setMenu(menu === 'roles' ? null : 'roles')} aria-expanded={menu === 'roles'} aria-haspopup="menu">
@@ -238,7 +245,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
                 <button role="menuitem" className={area === 'desk' ? 'is-on' : ''} onClick={() => go('desk')}><Icon name="desk" /> Front desk</button>
                 <button role="menuitem" className={area === 'owner' ? 'is-on' : ''} onClick={() => go('owner')} disabled={!canOwn}><Icon name="chart" /> Owner{!canOwn && <small>owner key needed</small>}</button>
                 {st?.staff.map((p) => <a key={p.id} role="menuitem" href={`#/staff/${p.id}`}><Icon name="user" /> {p.name}<small>staff view</small></a>)}
-                {st?.workspace.join_code && <a role="menuitem" href={`#/join/${st.workspace.join_code}`}><Icon name="phone" /> Client sign-up</a>}
+                {st?.workspace.join_code && <a role="menuitem" href={`#/join/${st.workspace.join_code}`}><Icon name="phone" /> Client booking page</a>}
                 <hr />
                 <a role="menuitem" href="#/lab"><Icon name="lab" /> Proof for judges</a>
                 <a role="menuitem" href="#/"><Icon name="users" /> All views</a>
@@ -247,24 +254,31 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
           </div>}
           <button className="icon-btn theme-btn" onClick={(e) => flood(e.currentTarget, () => setTheme(dark ? 'light' : 'dark'))}
             aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'} aria-pressed={dark}><Icon name={dark ? 'sun' : 'moon'} /></button>
-          <div className="menu-wrap">
-            <button className="icon-btn" onClick={() => setMenu(menu === 'more' ? null : 'more')} aria-expanded={menu === 'more'} aria-label="More"><Icon name="more" /></button>
+          {(session || st) && <div className="menu-wrap">
+            <button className="me-btn" onClick={() => setMenu(menu === 'more' ? null : 'more')} aria-expanded={menu === 'more'} aria-haspopup="menu" aria-label="Profile and settings">{initial}</button>
             {menu === 'more' && (
               <div className="menu" role="menu">
+                <div className="menu-head">
+                  <span className="avatar-sm" aria-hidden="true">{initial}</span>
+                  <span><strong>{who}</strong><small>{session?.user.email ?? (role === 'owner' ? 'owner key on this device' : role === 'desk' ? 'front-desk link' : 'not signed in')}</small></span>
+                </div>
+                <hr />
+                {(session || role === 'owner') && <a role="menuitem" href="#/settings"><Icon name="sliders" /> Settings</a>}
+                <button role="menuitem" className="menu-theme" onClick={() => { setMenu(null); setTheme(dark ? 'light' : 'dark') }}><Icon name={dark ? 'sun' : 'moon'} /> {dark ? 'Light theme' : 'Dark theme'}</button>
                 {role === 'owner' && <button role="menuitem" onClick={() => { setQr(true); setMenu(null) }}><Icon name="phone" /> Open on my phone</button>}
                 {install && <button role="menuitem" onClick={async () => { await install.prompt(); setInstall(null); setMenu(null) }}><Icon name="install" /> Install Refill</button>}
                 {ios && <p className="menu-note">On iPhone: Share, then Add to Home Screen.</p>}
-                {readSession() && <>
-                  <p className="menu-note">Signed in as {readSession()!.user.email}</p>
-                  <button role="menuitem" onClick={() => { setMenu(null); signOut() }}><Icon name="arrow" /> Sign out</button>
-                </>}
                 {role === 'owner' && !live && <button role="menuitem" className={armed ? 'is-armed' : ''} onClick={async () => {
                   if (!armed) return setArmed(true)
                   await book.reset(); setMenu(null)
                 }}><Icon name="reset" /> {armed ? 'Tap again to reset the day' : 'Reset demo day'}</button>}
+                {session && <>
+                  <hr />
+                  <button role="menuitem" onClick={() => { setMenu(null); signOut() }}><Icon name="arrow" /> Sign out</button>
+                </>}
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </div>
       {qr && book.desk && <Modal title="Open on your phone" onClose={() => setQr(false)}><div className="qr-one"><Qr text={ownerLink(book.desk)} size={208} /><p className="quiet">Same day, same data. This code carries your owner key, so keep it to yourself.</p></div></Modal>}
@@ -306,23 +320,57 @@ function flood(btn: HTMLElement, change: () => void) {
   vt.finished.finally(() => root.classList.remove('theme-flooding'))
 }
 
+/** India time now, in minutes since midnight. India has no daylight saving. */
+const istMinute = () => { const d = new Date(Date.now() + 330 * 60_000); return d.getUTCHours() * 60 + d.getUTCMinutes() }
+/** Calls back at the start of every minute, so a clock never lags the real one. */
+function onEveryMinute(f: () => void) {
+  let t: ReturnType<typeof setTimeout>
+  const next = () => { t = setTimeout(() => { f(); next() }, 60_000 - (Date.now() % 60_000) + 30) }
+  next()
+  return () => clearTimeout(t)
+}
+
+/** A live business runs on the real clock: India time, ticking on the minute. */
+function LiveClock() {
+  const [m, setM] = useState(istMinute)
+  useEffect(() => onEveryMinute(() => setM(istMinute())), [])
+  return <span className="clock is-live" title="Real time, India"><output>{clock(m)}</output></span>
+}
+
+/** The demo clock: type any time, step it by 15 minutes, or tap Now to follow the real time. */
 function Clock({ now, onCommit }: { now: number; onCommit: (v: number) => void }) {
   const [v, setV] = useState(now)
+  const [real, setReal] = useState(() => { try { return localStorage.getItem('refill.realTime') === '1' } catch { return false } })
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const editing = useRef(false)
+  const commit = useRef(onCommit)
+  const picker = useRef<HTMLInputElement>(null)
+  useEffect(() => { commit.current = onCommit })
   useEffect(() => { if (!editing.current) setV(now) }, [now])
+  useEffect(() => {
+    try { localStorage.setItem('refill.realTime', real ? '1' : '0') } catch { /* private mode */ }
+    if (!real) return
+    const follow = () => { const m = istMinute(); setV(m); commit.current(m) }
+    follow()
+    return onEveryMinute(follow)
+  }, [real])
   const change = (n: number) => {
-    const next = Math.min(1200, Math.max(600, n))
+    const next = Math.min(1439, Math.max(0, n))
     editing.current = true
     setV(next)
     if (timer.current) clearTimeout(timer.current)
-    timer.current = setTimeout(() => { onCommit(next); editing.current = false }, 350)
+    timer.current = setTimeout(() => { commit.current(next); editing.current = false }, 350)
   }
   return (
-    <div className="clock" title="Demo clock: move time forward to see offers expire and gaps pass">
-      <button className="icon-btn" onClick={() => change(v - 15)} aria-label="15 minutes earlier"><Icon name="minus" size={16} /></button>
-      <output aria-live="off">{clock(v)}</output>
-      <button className="icon-btn" onClick={() => change(v + 15)} aria-label="15 minutes later"><Icon name="plus" size={16} /></button>
+    <div className={`clock is-demo ${real ? 'is-real' : ''}`} title={real ? 'Following the real time. Tap Now to set your own.' : 'Demo clock: type a time or step it to see offers expire and gaps pass'}>
+      <button className="icon-btn" onClick={() => change(v - 15)} disabled={real} aria-label="15 minutes earlier"><Icon name="minus" size={16} /></button>
+      {/* The time reads as 24-hour on every phone; tapping it opens the phone's own time picker. */}
+      <button className="clock-time" disabled={real} aria-label={`Demo time ${clock(v)}. Tap to set your own`}
+        onClick={() => { const el = picker.current; if (!el) return; try { el.showPicker() } catch { el.focus() } }}><output>{clock(v)}</output></button>
+      <input ref={picker} className="clock-pick" type="time" tabIndex={-1} aria-hidden="true" value={clock(v)} required
+        onChange={(e) => { const [h, m] = e.target.value.split(':').map(Number); if (Number.isFinite(h) && Number.isFinite(m)) change(h * 60 + m) }} />
+      <button className="icon-btn" onClick={() => change(v + 15)} disabled={real} aria-label="15 minutes later"><Icon name="plus" size={16} /></button>
+      <button className="clock-real" aria-pressed={real} onClick={() => setReal(!real)}>Now</button>
     </div>
   )
 }

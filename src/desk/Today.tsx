@@ -1,6 +1,6 @@
 // The front desk's day: what needs you now, who is in, and the schedule. Tap anything to
-// open its sheet. On a phone the schedule becomes a list of what is still ahead.
-import { useMemo, useState, type FormEvent } from 'react'
+// open its sheet. The schedule is a calendar (one lane per person) or the Day Dial.
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { servicesOf, type DbSlot, type State } from '../api'
 import { Icon, Modal, clock, money, span } from '../ui'
 import Dial, { dayRange } from '../Dial'
@@ -14,9 +14,9 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
   const run = useRun(book)
   const [selected, setSelected] = useState<string | null>(initial ?? null)
   const [adding, setAdding] = useState(false)
-  // Dial or calendar: one view of the day at a time, remembered on this device.
-  const [view, setView] = useState<'dial' | 'calendar'>(() => { try { return localStorage.getItem('refill.dayView') === 'calendar' ? 'calendar' : 'dial' } catch { return 'dial' } })
-  const pickView = (v: 'dial' | 'calendar') => { setView(v); try { localStorage.setItem('refill.dayView', v) } catch { /* private mode */ } }
+  // Calendar or dial: one view of the day at a time, remembered on this device. Calendar first.
+  const [view, setView] = useState<'dial' | 'calendar'>(() => { try { return localStorage.getItem('refill.dayView2') === 'dial' ? 'dial' : 'calendar' } catch { return 'calendar' } })
+  const pickView = (v: 'dial' | 'calendar') => { setView(v); try { localStorage.setItem('refill.dayView2', v) } catch { /* private mode */ } }
   const now = st.workspace.now_min
   const f = useMemo(() => figures(st), [st])
   const sel = st.slots.find((s) => s.id === selected) ?? null
@@ -37,16 +37,17 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
         <div className="today-head">
           <h2>Today</h2>
           <div className="seg day-view" role="group" aria-label="Show the day as">
-            {(['dial', 'calendar'] as const).map((v) => (
+            {(['calendar', 'dial'] as const).map((v) => (
               <button key={v} className={view === v ? 'is-on' : ''} aria-pressed={view === v} onClick={() => pickView(v)}>
                 <Icon name={v === 'dial' ? 'clock' : 'calendar'} size={16} />{v === 'dial' ? 'Dial' : 'Calendar'}
               </button>
             ))}
           </div>
         </div>
+        <span className="legend today-legend"><span><i className="is-gap" />open</span><span><i className="is-fill" />refilled</span><span><i className="is-risk" />needs moving</span><span><i className="is-booked" />booked</span></span>
         {view === 'dial'
           ? <Dial st={st} onPick={(x) => setSelected(x.id)} center={{ big: clock(now), small: queue.length ? `${queue.length} need${queue.length === 1 ? 's' : ''} you` : 'all clear' }} />
-          : <div className="day-cal"><Board st={st} selected={selected} onPick={setSelected} /><Agenda st={st} selected={selected} onPick={setSelected} /></div>}
+          : <div className="day-cal"><Board st={st} selected={selected} onPick={setSelected} /></div>}
         <div className="stats">
         <div className={`stat spot ${f.recovered ? 'is-act' : ''}`}><div className="stat-v"><Num value={f.recovered} format={money} /></div><div className="stat-l">Recovered today · {plural(f.refilled, 'gap')} refilled</div></div>
         <div className={`stat spot ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v"><Num value={f.openValue} format={money} /></div><div className="stat-l">In {plural(f.open.length, 'open gap')} you can still fill</div></div>
@@ -111,8 +112,16 @@ function Board({ st, selected, onPick }: { st: State; selected: string | null; o
   const [DAY_START, DAY_END] = dayRange(st)
   const pct = (min: number) => `${((min - DAY_START) / (DAY_END - DAY_START)) * 100}%`
   const hours = Array.from({ length: (DAY_END - DAY_START) / 60 + 1 }, (_, i) => DAY_START + i * 60).filter((_, i, all) => all.length <= 13 || i % 2 === 0)
+  // On a phone the calendar is wider than the screen: open it at the current time.
+  const scroller = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = scroller.current
+    if (!el || el.scrollWidth <= el.clientWidth) return
+    const f = (Math.min(Math.max(now, DAY_START), DAY_END) - DAY_START) / (DAY_END - DAY_START)
+    el.scrollLeft = Math.max(0, f * (el.scrollWidth - 112) - 40)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className="board">
+    <div className="board" ref={scroller}>
       <div className="board-in">
         <div className="axis" aria-hidden="true">{hours.map((h) => <span key={h} style={{ left: pct(h) }}>{clock(h % 1440)}</span>)}</div>
         {st.staff.map((p) => (
@@ -141,32 +150,6 @@ function Board({ st, selected, onPick }: { st: State; selected: string | null; o
   )
 }
 
-function Agenda({ st, selected, onPick }: { st: State; selected: string | null; onPick: (id: string) => void }) {
-  const now = st.workspace.now_min
-  const ahead = st.slots.filter((s) => s.start_min + s.minutes > now)
-  return (
-    <ol className="agenda" aria-label="Appointments still ahead">
-      {ahead.map((s) => {
-        const k = kindOf(st, s)
-        const who = staffFor(st, s)?.name
-        return (
-          <li key={s.id}>
-            <button className={`agenda-row is-${k} ${s.id === selected ? 'is-sel' : ''}`} onClick={() => onPick(s.id)} aria-label={label(st, s, k)}>
-              <span className="agenda-time">{clock(s.start_min)}</span>
-              <span className="agenda-main">
-                <strong>{k === 'open' ? 'Open gap' : k === 'lapsed' ? 'Open, too late' : k === 'blocked' ? `Held: ${who} out` : k === 'risk' ? `${s.customer}: needs moving` : s.customer}</strong>
-                <small>{s.service} · {s.minutes} min · {who}</small>
-              </span>
-              <span>{k === 'open' ? <span className="tag is-beat">{money(s.price_inr)}</span> : k === 'refilled' ? <span className="tag is-act">Refilled</span> : k === 'risk' ? <span className="tag is-risk">Move</span> : null}</span>
-            </button>
-          </li>
-        )
-      })}
-      {ahead.length === 0 && <li className="quiet" style={{ padding: '12px 0' }}>Nothing left today.</li>}
-    </ol>
-  )
-}
-
 const NOT_ADDED: Record<string, string> = {
   TARGET_BUSY: 'They already have something at that time. Pick another time or someone else.',
   TARGET_OFF_SHIFT: 'That is outside their working hours.',
@@ -175,11 +158,16 @@ const NOT_ADDED: Record<string, string> = {
   TOO_LARGE: 'The day is full: 300 appointments is the most one day holds.',
   INVALID_VALUE: 'Check the time and length: 5 to 720 minutes.',
   NOT_FOUND: 'That staff member is no longer on the team.',
+  NOT_WAITING: 'They are no longer waiting: already booked, or they left the list.',
 }
 
-/** Book a client in, or leave the name blank to add open time the waitlist can be offered. */
+/** Book a client in (someone new, or someone already waiting, so it reaches their phone), or
+ *  leave the name blank to add open time the waitlist can be offered. */
 function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () => void }) {
   const services = servicesOf(st)
+  const waiting = st.waitlist.filter((e) => e.status === 'waiting')
+  const [entry, setEntry] = useState('')
+  const en = waiting.find((e) => e.id === entry)
   const [service, setService] = useState(services[0]?.id ?? '')
   const sv = services.find((x) => x.id === service)
   const able = st.staff.filter((p) => p.present && (!sv || p.skills.includes(sv.skill)))
@@ -197,15 +185,21 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
     const n = services.find((x) => x.id === id)
     if (n) setMinutes(String(n.minutes))
   }
+  const pickEntry = (id: string) => {
+    setEntry(id)
+    const e = waiting.find((x) => x.id === id)
+    const match = e && services.find((x) => x.name === e.service || x.skill === e.skill)
+    if (match) pickService(match.id)
+  }
   const submit = async (ev: FormEvent) => {
     ev.preventDefault()
     if (!who) return setErr('Nobody who is in today does this service.')
     const start = /^\d\d:\d\d$/.test(time) ? Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) : NaN
     if (Number.isNaN(start)) return setErr('Pick a time.')
     setErr(null)
-    const name = customer.trim()
+    const name = en ? en.name : customer.trim()
     const r = await run<{ ok: boolean; code?: string }>('add_appointment', {
-      p_appt: { staff: who.id, start_min: start, minutes: Number(minutes), customer: name || null, service: sv?.name ?? null, skill: sv?.skill ?? null, price_inr: sv?.price_inr ?? null },
+      p_appt: { staff: who.id, start_min: start, minutes: Number(minutes), customer: en ? null : name || null, entry: en?.id ?? null, service: sv?.name ?? null, skill: sv?.skill ?? null, price_inr: sv?.price_inr ?? null },
     }, (x) => (x.ok ? (name ? `${name} booked at ${time} with ${who.name}.` : `Open time added at ${time} with ${who.name}. Offer it from Today.`) : null))
     if (r && !r.ok) setErr(NOT_ADDED[r.code ?? ''] ?? `Not added: ${r.code}`)
     else if (r) onDone()
@@ -213,7 +207,15 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
 
   return (
     <form className="add" onSubmit={submit} noValidate>
-      <label className="field">Client<input value={customer} onChange={(e) => setCustomer(e.target.value)} maxLength={60} autoComplete="off" placeholder="Leave blank to add open time" /></label>
+      {waiting.length > 0 && (
+        <label className="field">Who
+          <select value={entry} onChange={(e) => pickEntry(e.target.value)}>
+            <option value="">Someone new, or open time</option>
+            {waiting.map((e) => <option key={e.id} value={e.id}>{e.name} · waiting for {e.service ?? e.skill}</option>)}
+          </select>
+        </label>
+      )}
+      {!en && <label className="field">Client<input value={customer} onChange={(e) => setCustomer(e.target.value)} maxLength={60} autoComplete="off" placeholder="Leave blank to add open time" /></label>}
       <label className="field">Service
         <select value={service} onChange={(e) => pickService(e.target.value)}>
           {services.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.minutes} min{x.price_inr != null ? ` · ${money(x.price_inr)}` : ''}</option>)}
@@ -230,7 +232,8 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
         <label className="field">Minutes<input type="number" inputMode="numeric" min={5} max={720} value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
       </div>
       {err && <p className="err" role="alert">{err}</p>}
-      <button className="btn is-primary is-big" type="submit" disabled={!who}>{customer.trim() ? 'Book it' : 'Add open time'}</button>
+      <button className="btn is-primary is-big" type="submit" disabled={!who}>{en ? `Book ${en.name.split(' ')[0]}` : customer.trim() ? 'Book it' : 'Add open time'}</button>
+      {en && <p className="quiet small">The booking goes to {en.name.split(' ')[0]}’s own page and account, and any offer still out to them is withdrawn.</p>}
     </form>
   )
 }

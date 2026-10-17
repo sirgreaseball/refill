@@ -47,7 +47,7 @@ export default function Home({ book }: { book: Book }) {
 
       <div className="bento">
         <section className="tile is-hero spot" aria-label="Today">
-          <div className="tile-head"><h2>Today</h2><span className="legend"><i className="is-gap" />open <i className="is-fill" />refilled <i className="is-risk" />needs moving</span></div>
+          <div className="tile-head"><h2>Today</h2><span className="legend"><span><i className="is-gap" />open</span><span><i className="is-fill" />refilled</span><span><i className="is-risk" />needs moving</span><span><i className="is-booked" />booked</span></span></div>
           <div className="hero-body">
           <Dial st={st} onPick={(s) => asDesk(s.id)} center={{ big: clock(now), small: queue.length ? `${queue.length} need${queue.length === 1 ? 's' : ''} you` : 'all clear' }} />
           <div className="hero-nums">

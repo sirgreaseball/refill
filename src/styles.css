@@ -173,8 +173,8 @@ strong .tag { margin-left: 8px; vertical-align: 1px; }
 /* ------------------------------------------------------------ shell: bar, dock, page */
 
 .app { min-height: 100dvh; }
-/* The glass sits on the bar itself: the bar carries a view-transition name, which stops a child
-   layer from blurring what scrolls underneath, so a ::before glass showed plain transparency. */
+/* The glass sits on the bar itself, and neither the bar nor the dock carries a view-transition
+   name: with one, phones drew the glass as plain transparency with no blur. */
 .bar {
   position: sticky; top: 0; z-index: 40; height: var(--bar-h); background: var(--glass); border-bottom: 1px solid var(--line);
   backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
@@ -384,20 +384,6 @@ button.stat:hover { background: var(--surface-2); }
 .blk.is-sel { box-shadow: 0 0 0 2px var(--canvas), 0 0 0 4px var(--act); z-index: 4; }
 .blk.is-short .blk-time { display: none; }
 
-.agenda { display: none; list-style: none; margin: 0; padding: 0; }
-.agenda-row {
-  display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%;
-  padding: 12px 4px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; color: inherit;
-}
-.agenda li:first-child .agenda-row { border-top: 0; }
-.agenda-time { font: 500 15px var(--mono); }
-.agenda-main { display: flex; flex-direction: column; min-width: 0; }
-.agenda-main strong { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.agenda-main small { font-size: 13px; color: var(--ink-2); }
-.agenda-row.is-open strong { color: var(--beat-text); }
-.agenda-row.is-risk strong { color: var(--danger); }
-.agenda-row.is-refilled strong { color: var(--act-text); }
-.agenda-row.is-blocked, .agenda-row.is-lapsed { opacity: 0.6; }
 
 /* ------------------------------------------------------------ sheet: one appointment */
 
@@ -618,8 +604,6 @@ details.more[open] summary { margin-bottom: 8px; }
   .grid-2 { grid-template-columns: minmax(0, 1fr); }
   .roles-grid { grid-template-columns: minmax(0, 1fr); }
   .role-card { padding: 16px; grid-template-columns: 40px minmax(0, 1fr) auto; }
-  .board { display: none; }
-  .agenda { display: block; }
   .sheet {
     top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0;
     padding-bottom: env(safe-area-inset-bottom); animation: sheet-up 0.42s var(--ease-drawer);

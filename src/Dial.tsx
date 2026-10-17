@@ -1,6 +1,8 @@
 // The Day Dial: the day as a watch face. 10:00 to 20:00 runs clockwise around 300 degrees,
 // one ring per staff member, each appointment an arc on its ring. Open gaps glow amber and
-// pulse, refills draw themselves in lime, red needs moving, and a hand marks the demo clock.
+// pulse, refills draw themselves in lime, red needs moving, and a hand marks the clock.
+// The brighter band on a ring is that person's working hours; their name is set along the
+// ring in the gap at the bottom, so it never runs into the arcs or off the face.
 // Every arc is a button that opens the appointment at the front desk.
 import type { DbSlot, State } from './api'
 import { kindOf } from './desk/common'
@@ -26,6 +28,16 @@ function arc(r: number, a1: number, a2: number, c = C) {
   const [x2, y2] = pt(r, a2, c)
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
 }
+// The 60-degree gap at the bottom of a ring, drawn left to right so a name set on it reads upright.
+// Returns the path and how many letters fit between the ends of the ring.
+function gap(r: number) {
+  const pad = (12 / r) * (180 / Math.PI)
+  const [x1, y1] = pt(r, 210 - pad)
+  const [x2, y2] = pt(r, 150 + pad)
+  const room = r * ((60 - 2 * pad) * Math.PI) / 180
+  return { d: `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 0 ${x2.toFixed(2)} ${y2.toFixed(2)}`, fit: Math.max(3, Math.floor(room / 6.4)) }
+}
+const fitName = (n: string, fit: number) => (n.length <= fit ? n : `${n.slice(0, fit - 1).trimEnd()}…`)
 
 export default function Dial({ st, onPick, center }: { st: State; onPick: (s: DbSlot) => void; center: { big: string; small: string } }) {
   const now = st.workspace.now_min
@@ -55,9 +67,13 @@ export default function Dial({ st, onPick, center }: { st: State; onPick: (s: Db
       })}
       {st.staff.map((p, i) => {
         const r = outer - i * step
+        const g = gap(r)
         return (
           <g key={p.id} className={`dial-ring ${p.present ? '' : 'is-out'}`}>
             <path className="dial-track" d={arc(r, -SPAN / 2, SPAN / 2)} />
+            {(p.shift_start > lo || p.shift_end < hi) && p.shift_end > p.shift_start && (
+              <path className="dial-shift" d={arc(r, ang(p.shift_start), ang(p.shift_end))} />
+            )}
             {st.slots.filter((s) => s.staff_id === p.id).map((s) => {
               const k = kindOf(st, s)
               const a1 = ang(s.start_min) + 0.9
@@ -71,7 +87,8 @@ export default function Dial({ st, onPick, center }: { st: State; onPick: (s: Db
                 </path>
               )
             })}
-            <text className="dial-name" x={pt(r, -SPAN / 2 - 4)[0] - 4} y={pt(r, -SPAN / 2 - 4)[1] + 4} textAnchor="end">{p.name}</text>
+            <path id={`dial-gap-${p.id}`} d={g.d} fill="none" stroke="none" />
+            <text className="dial-name" dominantBaseline="central"><textPath href={`#dial-gap-${p.id}`} startOffset="50%" textAnchor="middle">{fitName(p.name, g.fit)}</textPath><title>{p.name}</title></text>
           </g>
         )
       })}

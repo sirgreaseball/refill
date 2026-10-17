@@ -8,7 +8,7 @@ import { chip, sentence, type Book } from './common'
 const FILTERS: [string, (e: DbEvent) => boolean][] = [
   ['All', () => true],
   ['Offers', (e) => e.kind.startsWith('OFFER')],
-  ['Bookings', (e) => ['BOOKED', 'WAITLIST_RETAINED', 'ACCEPT_REPEATED', 'ACCEPT_REJECTED', 'CANCELLED', 'CANCEL_UNDONE', 'MOVED', 'MOVE_LINK_SENT'].includes(e.kind)],
+  ['Bookings', (e) => ['BOOKED', 'SELF_BOOKED', 'APPOINTMENT_ADDED', 'WAITLIST_RETAINED', 'ACCEPT_REPEATED', 'ACCEPT_REJECTED', 'CANCELLED', 'CANCEL_UNDONE', 'MOVED', 'MOVE_LINK_SENT'].includes(e.kind)],
   ['Team', (e) => e.kind.startsWith('STAFF') || ['REASSIGNED', 'POLICY_CHANGED', 'DESK_LINK_MADE'].includes(e.kind)],
   ['Consent', (e) => e.kind.startsWith('CONSENT') || e.code === 'NO_CONSENT' || e.kind.startsWith('WAITLIST_')],
 ]
@@ -49,7 +49,7 @@ export default function Activity({ book }: { book: Book }) {
       <section className="group">
         <ol className="rows ev">
           {shown.map((e) => {
-            const tone = e.kind === 'BOOKED' ? 'is-act' : e.kind === 'CANCELLED' ? 'is-beat' : e.kind === 'STAFF_ABSENT' || e.code === 'NO_CONSENT' ? 'is-risk' : ''
+            const tone = e.kind === 'BOOKED' || e.kind === 'SELF_BOOKED' ? 'is-act' : e.kind === 'CANCELLED' ? 'is-beat' : e.kind === 'STAFF_ABSENT' || e.code === 'NO_CONSENT' ? 'is-risk' : ''
             return (
             <li key={e.id} className={tone}>
               <span className="ev-at">{stamp(e.at)}</span>

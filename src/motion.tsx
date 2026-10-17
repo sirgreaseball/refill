@@ -47,7 +47,7 @@ export function Glow({ st }: { st: State | null }) {
 }
 
 // What the pointer lights up: anything marked .spot, and every row a person can act on.
-const GLOW = '.spot, .q-item, .agenda-row, .choice, .person, .link-row, .wl-row, .hist-row, .row-btn'
+const GLOW = '.spot, .q-item, .choice, .person, .link-row, .wl-row, .hist-row, .row-btn'
 
 /** One listener for the whole app: rows and .spot elements get a light that follows the pointer. Fine pointers only. */
 export function useSpotlight() {

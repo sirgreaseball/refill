@@ -146,7 +146,7 @@ export interface Profile { id: string; email: string; name: string | null; role:
 // Desk functions take p_ws and p_key; offer-level ones take only the offer id.
 const DESK_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock',
   'staff_link', 'set_staff_presence', 'reassign_slot', 'get_move_options', 'move_booking', 'move_link', 'desk_link', 'set_policy',
-  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment', 'set_listed'])
+  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment', 'set_listed', 'update_business', 'delete_business'])
 
 /** Today's book. Live: this browser's business, or the setup form if it has none. Demo: the sample day, made on first visit. */
 export function useBook() {
@@ -175,6 +175,7 @@ export function useBook() {
     seen.current = ''
     setState(null)
     setProfile(null)
+    setOffline(false)
     setPhase('connecting')
     ;(async () => {
       try {
