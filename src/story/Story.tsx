@@ -49,7 +49,8 @@ function Copy({ scene }: { scene: Scene }) {
     </>
     case 'gap': return <>
       <p className="st-over">01 · {F.hhmm(F.NOW)} · the gap</p>
-      <h2 className="st-h">{ln(`${F.harsh.customer} cancels the`, `${F.hhmm(F.harsh.startMin)} ${F.harsh.service?.toLowerCase()}.`)}</h2>
+      {/* The demo script's own words (docs/DEMO_SCRIPT.md, 1:00). */}
+      <h2 className="st-h">{ln(`${F.harsh.customer} cancels his`, `${F.hhmm(F.harsh.startMin)} ${F.harsh.service?.toLowerCase()}.`)}</h2>
       <p className="st-p">{F.leadMin} minutes’ notice{F.late ? ', so Refill flags it late' : ''}. {k}’s chair goes amber: an open gap, and {F.inr(F.stake)} about to walk out of the door.</p>
     </>
     case 'fits': return <>
@@ -64,6 +65,8 @@ function Copy({ scene }: { scene: Scene }) {
       <h2 className="st-h">{ln('Two phones tap at once.', 'One booking lands.')}</h2>
       <p className="st-p">{F.winner.name} and {F.keeper.name} both tap Book in the same instant. {F.winner.name} gets the chair. {F.keeper.name} keeps their place in line.</p>
       <p className="st-note">Never double-booked: the database decides, once.</p>
+      {/* supabase/migrations/001_refill.sql: accept_offer locks the slot row; the unique index is the backstop. */}
+      <p className="st-note is-quiet">accept_offer locks the slot row; the unique index bookings_one_per_slot is the backstop.</p>
     </>
     case 'out': return <>
       <p className="st-over">04 · staff out</p>
@@ -333,9 +336,11 @@ function Scrolled() {
             <div className="st-plate" aria-hidden="true" />
             <div className="st-spot" aria-hidden="true" />
             <div className="st-dial"><StoryDial label={`${F.SALON}'s sample day as a watch face: one ring per staff member, one arc per appointment.`} /></div>
-            <div className="st-copy">
+            {/* The animated copy shows one chapter at a time; screen readers get the whole story at once, below. */}
+            <div className="st-copy" aria-hidden="true">
               {CHAPTERS.map((c) => <div key={c.scene} className="st-beat" data-beat={c.scene}><Copy scene={c.scene} /></div>)}
             </div>
+            <div className="sr">{CHAPTERS.map((c) => <section key={c.scene}><Copy scene={c.scene} /><p>{EVIDENCE[c.scene]}.</p></section>)}</div>
             <p className="st-cue" aria-hidden="true"><span>Scroll</span><i /></p>
             <p className="st-read" aria-hidden="true"><span data-read /><span data-read-hover /></p>
           </div>
