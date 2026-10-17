@@ -89,6 +89,7 @@ export default function Me({ token }: { token: string }) {
   if (me.state === 'NOT_FOUND') return <main className="phone"><Mark /><h1 className="phone-h">We could not find this sign-up</h1><p className="quiet">It may be from an old demo day.</p></main>
 
   const open = me.offers.filter((o) => o.status === 'sent' && o.slot_status === 'free' && (o.expires_min == null || me.now_min < o.expires_min))
+  document.title = open.length ? `(${open.length}) A time opened · Refill` : 'Refill · appointment recovery desk'
 
   return (
     <main className="phone">
@@ -102,6 +103,15 @@ export default function Me({ token }: { token: string }) {
         </nav>
       )}
 
+      {open.length > 0 && (
+        <section className="bubble offer-now" aria-live="polite">
+          <p className="overline">Just opened</p>
+          <p><strong>{open.length === 1 ? 'A time is open for you' : `${open.length} times are open for you`}</strong></p>
+          {open.map((o) => (
+            <a key={o.id} className="btn is-primary is-big" href={`#/o/${o.id}`}>{span(o.start_min, o.minutes)} · reply by {o.expires_min != null ? clock(o.expires_min) : 'soon'}</a>
+          ))}
+        </section>
+      )}
       {me.state === 'waiting' && (
         <SlotDial segs={[{ start: Math.max(600, me.free_from ?? 600), minutes: Math.min(1200, me.free_until ?? 1200) - Math.max(600, me.free_from ?? 600), kind: 'booked' }]} now={me.now_min} big={me.free_from != null ? clock(me.free_from) : 'Any'} small={me.free_until != null ? `free until ${clock(Math.min(me.free_until, 1439))}` : me.free_from != null ? 'free from then on' : 'time today'}
           label={`Number ${me.place} in the queue`} />
@@ -129,14 +139,6 @@ export default function Me({ token }: { token: string }) {
       {me.state === 'removed' && me.booking?.status === 'cancelled' && <div className="verdict"><h1 className="phone-h">Booking cancelled</h1><p>Your {me.booking.service} at {clock(me.booking.start_min)} is cancelled. Nothing more will be sent to you.</p></div>}
       {me.state === 'removed' && me.booking?.status !== 'cancelled' && <div className="verdict"><h1 className="phone-h">You left the waitlist</h1><p>Nothing more will be sent to you.</p></div>}
 
-      {open.length > 0 && (
-        <section className="bubble">
-          <p><strong>A slot is open for you</strong></p>
-          {open.map((o) => (
-            <a key={o.id} className="btn is-primary" href={`#/o/${o.id}`}>{span(o.start_min, o.minutes)} · reply by {o.expires_min != null ? clock(o.expires_min) : 'soon'}</a>
-          ))}
-        </section>
-      )}
 
       {me.state === 'waiting' && (
         <section className={`presence-card ${me.consent ? 'is-in' : 'is-out'}`} aria-label="Messages">

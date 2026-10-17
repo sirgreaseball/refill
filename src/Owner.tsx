@@ -201,20 +201,10 @@ export function Team({ book }: { book: Book }) {
           </li>
           {code && <li className="link-row">
             <span className="link-ico"><Icon name="users" /></span>
-            <span className="row-main"><span className="overline">Clients</span><strong>Waitlist sign-up</strong><small>Put this at the counter. Clients join and choose yes or no to messages; nothing is ticked for them.</small></span>
+            <span className="row-main"><span className="overline">Clients</span><strong>Booking page</strong><small>Put this code at the counter. Clients book an open time; if nothing fits they join the waitlist, choosing yes or no to messages.</small></span>
             <span className="person-acts">
               <a className="btn is-quiet" href={`#/join/${code}`}>Open it</a>
-              <button className="btn" onClick={() => setShare({ title: 'Waitlist sign-up', url: joinLink(code), note: 'Scan to join the waitlist. Consent is an explicit choice.' })}><Icon name="phone" /> Show code</button>
-            </span>
-          </li>}
-          {st.workspace.kind === 'live' && <li className="link-row">
-            <span className="link-ico"><Icon name="list" /></span>
-            <span className="row-main"><span className="overline">Directory</span><strong>{st.workspace.listed === false ? 'Not listed' : 'Listed on Refill'}</strong><small>Listed places show up when clients search, with your services and prices. Never anyone’s name.</small></span>
-            <span className="person-acts">
-              <button className={`toggle-pill ${st.workspace.listed === false ? 'is-out' : ''}`} aria-pressed={st.workspace.listed !== false}
-                onClick={() => run<{ ok: boolean; listed: boolean }>('set_listed', { p_listed: st.workspace.listed === false }, (r) => (r.ok ? (r.listed ? 'Listed: clients can find you.' : 'Hidden from the directory. Your code still works.') : null))}>
-                {st.workspace.listed === false ? 'Hidden' : 'Listed'}
-              </button>
+              <button className="btn" onClick={() => setShare({ title: 'Booking page', url: joinLink(code), note: 'Scan to book a time today, or join the waitlist.' })}><Icon name="phone" /> Show code</button>
             </span>
           </li>}
           <li className="link-row">

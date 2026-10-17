@@ -91,6 +91,51 @@ check('client switches messages off: the desk sees it; the desk records a yes: t
 const dir = await rpc<{ code: string }[]>('directory', { p_q: 'Flow test' })
 check('a demo day is never listed in the directory', !dir.some((b) => b.code === ws.join_code))
 
+// 10. A client books an open time from the booking page; the owner sees it, the client's page says booked.
+type Times = { ok: boolean; times: { staff: string; start_min: number; slot: string | null }[] }
+const hair = { minutes: 60, skill: 'hair', service: 'Hair spa', price_inr: 1600 }
+const t1 = await rpc<Times>('open_times', { p_code: ws.join_code, p_minutes: 60, p_skill: 'hair' })
+const free = t1.times.find((t) => t.slot == null)
+const b1 = free ? await rpc<{ ok: boolean; token: string; slot: string }>('book_time', { p_code: ws.join_code, p_staff: free.staff, p_start: free.start_min, p_entry: { name: 'Neha Walkin', ...hair } }) : null
+const n1 = b1?.ok ? await rpc<Mine>('get_my_entry', { p_token: b1.token }) : null
+s = await ownerSees()
+check('client books an open time from the booking page; owner sees it; client sees booked',
+  !!b1?.ok && n1?.state === 'booked' && n1.booking?.status === 'confirmed' && s.slots.some((x) => x.id === b1.slot && x.customer === 'Neha Walkin' && x.status === 'booked'), free ? `at ${free.start_min}` : 'no time')
+
+// 11. The same time cannot be booked twice, and it leaves the list of open times.
+const b2 = free ? await rpc<{ ok: boolean; code?: string }>('book_time', { p_code: ws.join_code, p_staff: free.staff, p_start: free.start_min, p_entry: { name: 'Second Walkin', ...hair } }) : null
+const t2 = await rpc<Times>('open_times', { p_code: ws.join_code, p_minutes: 60, p_skill: 'hair' })
+check('a booked time cannot be booked again and is no longer listed', b2?.ok === false && b2.code === 'TAKEN' && !t2.times.some((t) => t.staff === free?.staff && t.start_min === free?.start_min))
+
+// 12. A gap with an offer out is not offered to walk-ins; with no offer out it is, and booking it is a refill.
+const gapSlot = (await ownerSees()).slots.find((x) => x.status === 'free')
+const j3 = await rpc<{ token: string }>('join_waitlist', { p_code: ws.join_code, p_entry: { name: 'Isha Flow', ...hair, consent: true } })
+const isha = (await ownerSees()).waitlist.find((e) => e.name === 'Isha Flow')
+let gapOk = false
+if (gapSlot && isha) {
+  await rpc('send_offers', { ...desk, p_slot: gapSlot.id, p_entries: [isha.id] })
+  const held = await rpc<Times>('open_times', { p_code: ws.join_code, p_minutes: 30, p_skill: 'hair' })
+  const tryHeld = await rpc<{ ok: boolean; code?: string }>('book_time', { p_code: ws.join_code, p_staff: gapSlot.staff_id, p_start: gapSlot.start_min, p_entry: { name: 'Gap Walkin', minutes: 30, skill: 'hair', service: 'Haircut', price_inr: 650 } })
+  gapOk = !held.times.some((t) => t.slot === gapSlot.id) && tryHeld.code === 'TAKEN'
+}
+check('a gap with an offer out is held for that client, not sold to a walk-in', gapOk, gapSlot ? gapSlot.id : 'no free gap')
+
+// 13. The desk books someone already waiting: it reaches their page and their open offer is withdrawn.
+const dayStart = (await ownerSees()).slots
+const taken = (m: number) => dayStart.some((x) => x.staff_id === 'ST2' && x.start_min < m + 60 && m < x.start_min + x.minutes)
+const at = [1080, 1110, 1140].find((m) => !taken(m)) ?? 1140
+const add = isha ? await rpc<{ ok: boolean; code?: string; id: string }>('add_appointment', { ...desk, p_appt: { staff: 'ST2', start_min: at, minutes: 60, entry: isha.id, service: 'Hair spa', skill: 'hair', price_inr: 1600 } }) : null
+const ishaSees = await rpc<Mine>('get_my_entry', { p_token: j3.token })
+check('desk books a waiting client: it is on their page, their open offer is withdrawn',
+  !!add?.ok && ishaSees.state === 'booked' && ishaSees.booking?.status === 'confirmed' && !ishaSees.offers.some((o) => o.status === 'sent'), add?.code)
+
+// 14. Settings: the owner renames the business; a demo day can never be deleted; the desk can do neither.
+const ren = await rpc<{ ok: boolean }>('update_business', { ...owner, p_biz: { name: 'Flow test renamed', type: 'Salon' } })
+const delDemo = await rpc<{ ok: boolean; code?: string }>('delete_business', { ...owner, p_confirm: 'Flow test renamed' })
+const deskDel = await rpc<{ ok: boolean }>('delete_business', { ...desk, p_confirm: 'Flow test renamed' }).then(() => 'allowed', (e) => (e as Error).message)
+check('owner renames; a demo day cannot be deleted; the desk cannot delete or rename',
+  ren.ok && (await ownerSees() as unknown as { workspace: { salon: string } }).workspace.salon === 'Flow test renamed' && delDemo.code === 'NOT_LIVE' && deskDel !== 'allowed', deskDel)
+
 for (const [label, ok, note] of results) console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${label}${note ? `  (${note})` : ''}`)
 const allOk = results.every(([, ok]) => ok)
 console.log(allOk ? `\nAll ${results.length} flow checks passed.` : '\nAt least one flow check FAILED.')
