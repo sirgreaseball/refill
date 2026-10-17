@@ -52,7 +52,7 @@ html.lenis, html.lenis body { height: auto; }
 
 /* Centred with margins, not translate: GSAP owns the dial's transform for the camera moves. */
 .st-dial { --d: min(94svh, 56vw); position: absolute; left: 67%; top: 52%; width: var(--d); height: var(--d); margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2); }
-.st-copy { position: absolute; left: var(--gutter); top: var(--hud-h); bottom: 64px; width: min(34vw, 560px); display: grid; grid-template-columns: minmax(0, 1fr); }
+.st-copy { position: absolute; left: var(--gutter); top: var(--hud-h); bottom: 64px; width: min(34vw, 640px); display: grid; grid-template-columns: minmax(0, 1fr); }
 .st-beat { grid-area: 1 / 1; align-self: center; }
 .st-beat[data-beat='hero'] { width: min(50vw, 860px); }
 

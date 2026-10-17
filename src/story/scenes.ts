@@ -87,8 +87,11 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
   mover(stage).forEach((m) => m.setAttribute('d', path(fromR)))
 
   // Hero out: the inset stage opens to full bleed as the story begins, and the dial steps in beside the copy.
+  // On phones the face sits larger while the waitlist is away, and makes room when it arrives.
   const wide = () => !matchMedia('(max-width: 899px), (max-aspect-ratio: 1/1)').matches
-  tl.fromTo($('.st-dial'), { x: () => (wide() ? innerWidth * 0.085 : 0) }, { x: 0, duration: 0.5, ease: 'power2.inOut' }, 0)
+  const full = () => (wide() ? 1 : 1.12)
+  const room = () => (wide() ? 0.9 : 1)
+  tl.fromTo($('.st-dial'), { x: () => (wide() ? innerWidth * 0.085 : 0), scale: full }, { x: 0, scale: full, duration: 0.5, ease: 'power2.inOut' }, 0)
   tl.fromTo($('.st-plate'), { clipPath: () => getComputedStyle(stage).getPropertyValue('--plate-from') || 'inset(0px round 0px)' },
     { clipPath: 'inset(0px 0px 0px 0px round 0px)', duration: 0.55, ease: 'power2.inOut' }, 0)
     .to(beat('hero'), { autoAlpha: 0, y: -40, duration: 0.4, ease: 'power2.in' }, 0.04)
@@ -109,7 +112,7 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
   // 2. Who fits: the waitlist arrives round the face; who can't be offered drops away with the reason.
   const marks = $('.sd-mark')
   // The face steps back a little to make room for the waitlist round it.
-  tl.to($('.st-dial'), { scale: 0.9, duration: 0.45 }, 1.9)
+  tl.to($('.st-dial'), { scale: room, duration: 0.45 }, 1.9)
     .to(marks, { autoAlpha: 1, scale: 1, stagger: 0.02, duration: 0.3, ease: 'power3.out' }, 1.95)
   swap('stake', 'fits', 2.0)
   beatIn('fits', 2.05)
@@ -152,7 +155,7 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
   tl.to($('.sd-mark'), { autoAlpha: 0, duration: 0.3 }, 6.25)
     .to($('[data-result]'), { opacity: 0, duration: 0.2 }, 6.25)
     .to($('[data-ring]'), { opacity: 1, duration: 0.4 }, 6.3)
-    .to($('.st-dial'), { scale: 1, duration: 0.45 }, 6.25)
+    .to($('.st-dial'), { scale: full, duration: 0.45 }, 6.25)
     .fromTo($('[data-out]'), { opacity: 0 }, { opacity: 1, duration: 0.35 }, 6.45)
     .to($(`${OUT} .sd-name:not(.is-out)`), { opacity: 0, duration: 0.25 }, 6.45)
     .fromTo($('[data-ov="danger"]'), { opacity: 0 }, { opacity: 1, stagger: 0.05, duration: 0.3 }, 6.5)
