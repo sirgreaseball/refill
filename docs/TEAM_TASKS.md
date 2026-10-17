@@ -13,4 +13,6 @@ Refill v3.1 is live: https://fillthechair.vercel.app. Rehearse the four market s
 Refill v3.1 is live: https://fillthechair.vercel.app. Write `DEMO_SCRIPT.md` for a 4-minute demo plus 3 minutes of Q&A, starting from the home screen (the day ribbon) and following the path in `HANDOFF.md` section 5. Draft short answers to: how double booking is impossible, what happens when a staff member is out, how consent is enforced, and what changed after MBA feedback (rescheduling). Also write `docs/contributions/vedanth.md`. Open a PR.
 
 ## MBA pair (feedback + business slides)
+Attach `docs/business/Refill-explained-simply.pdf` (plain-language: problem, idea, how it works, a full salon scenario, features, pitch lines, likely judge questions).
+
 The redesigned app is live: https://fillthechair.vercel.app. Each role has its own view; the home screen shows the whole day at a glance. Try Front desk and Owner and tell us anything confusing (WhatsApp, or a GitHub issue labelled `mba-request`). For the pitch, prepare the business slides: who pays, pricing, and the money a business gets back from refilled cancellations. The Owner page shows live figures you can quote.

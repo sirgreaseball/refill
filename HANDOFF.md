@@ -18,6 +18,7 @@ Last updated: 17 Oct 2026, ~23:55 IST, after v3.1 (home screen + motion layer + 
 | Case book PDF | `C:\Users\dhruv\Downloads\Use_Case_Book.pdf` (case C29, Appointment Recovery Desk) |
 | Design reference for the revamp | Trace dashboard: https://tracethis.vercel.app, repo `sirgreaseball/trace`, local `Z:\trace` (v3 "daylight glass") |
 | Skills for this project | `.claude/skills/` in this repo (auto-loaded by Claude Code here) |
+| Plain-language explainer for the MBA pitch | `docs/business/Refill-explained-simply.pdf` (source `refill-explained.html`; no technical terms; problem, idea, 5 steps, roles, Kesar Salon scenario, features, problem-solution table, pitch lines, judge Q&A). Keep it non-technical if you update it. |
 | Ops reports | `docs/ops/` (operational check PDF + HTML source; regenerate with headless Edge `--print-to-pdf` after re-running the checks) |
 | Code graph | `graphify-out/` (`graphify query "..."` before broad reads; `graphify update .` after code changes) |
 
