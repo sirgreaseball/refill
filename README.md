@@ -113,6 +113,10 @@ Every rule below lives in the database, so it holds even if someone skips the pa
 
 Each person's record is in `docs/contributions/`. AI assistants working in this repo must follow `AGENTS.md`.
 
+## Beyond salons
+
+Nothing in the rules engine or the database knows it is a salon. They know providers with skills and working hours, services with durations and prices, appointments, a waitlist with consent, and four roles. A clinic, physio, spa, tutor or car service is a different `data/<vertical>/*.csv` and a different set of words on screen; the matching, the no-double-booking guarantee, consent, moves and roles stay the same. The salon is the case we were given, so it is the one we ship.
+
 ## Known limits
 
 No owner login: anyone with a workspace link can act on that demo day (the link is an unguessable 122-bit id). Messages are simulated on the offer page; nothing is sent by WhatsApp or SMS. The desk refreshes by polling every 1.2 seconds rather than a live socket. Synthetic data proves the rules, not demand. Full list: `docs/KNOWN_LIMITS.md`.
