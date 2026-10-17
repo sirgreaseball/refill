@@ -2,7 +2,7 @@
 
 You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
 
-Last updated: 18 Oct 2026, ~00:55 IST. v4 revamp in progress (section 5, item 0). Done: chronograph theme (Satoshi + Clash Display, lime/amber/coral, grain) and the Day Dial on Home (`src/Dial.tsx`, commit c2fc35e). #7 fixed. PR #8 merged; `npm test` = 51 passing. Next: magnetic primary buttons, Day Dial (smaller) on Front desk Today, restyle owner/client/staff pages to the new type scale, verify phone 375px + light theme, then update the MBA explainer screenshots if any.
+Last updated: 18 Oct 2026, ~01:10 IST. v4 revamp in progress (section 5, item 0). Done: chronograph theme (Satoshi + Clash Display, lime/amber/coral, grain), Day Dial on Home and on Front desk Today (`src/Dial.tsx`), magnetic primary buttons, one clock on phones. #7 fixed; PR #8 merged; `npm test` = 51 passing. Next: restyle Owner pages and client/staff phone pages to the new type scale (Clash Display headlines already apply via h1/.phone-h), verify light theme and 375px on every page, refresh MBA explainer screenshots if used, then splash page later (separate route).
 
 ---
 
