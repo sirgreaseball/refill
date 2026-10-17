@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **START HERE.** State at 18 Oct 2026, ~00:15 IST. v4 redesign done on every page; Parth's bugs split into two lanes; v5 (real product + demo mode) planned in 0.7. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
+> **START HERE.** State at 18 Oct 2026, ~00:45 IST. v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
 
@@ -91,32 +91,43 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 6. **Video:** OBS recording, edited with the Premiere Pro MCP (`verify_premiere_connection` first).
 7. Refresh `docs/ops` operational check PDF before submission if Dhruv asks (re-run the checks; headless Edge `--print-to-pdf`).
 
-### 0.7 Now (18 Oct ~00:15): Parth's bugs and the v5 plan
+### 0.7 Now (18 Oct ~00:45): v5 shipped, Parth's bugs split, what is left
 
-**Parth's bug reports (#9 to #20) are split into two lanes so two agents can work at once without clashing.**
-- **Parth's agent:** #15 to #18 (Lab) and #20 (guides). Branch `parth/lab-fixes`, files listed in `AGENTS.md`, brief in `docs/agents/parth-lab-fixes.md`. Do not edit `src/Lab.tsx` or `public/guide/*` until that PR is merged.
-- **Claude (main):** #10, #12, #13 and #19 are fixed and pushed. #9, #11 and #14 have their client side shipped. The SQL is `supabase/migrations/006_offer_truth.sql`, **not applied yet**: paste it into the Supabase SQL editor (project `mbvxzuuuuzgpmsjggblo`), then run `npm run dbtest` and re-check the issue steps.
-- The front desk now shows the day as a **dial or a calendar** (toggle on the Today card, remembered per device). The separate Schedule section is gone.
+**Supabase connector is connected on this account** (server id `4dc4c961-...`, project `mbvxzuuuuzgpmsjggblo`). Apply migrations with `apply_migration`, then run `npm run dbtest`. Migrations 006, 007 and 008 are applied and saved in `supabase/migrations/`.
 
-**v5 plan: a real product with a demo mode** (Dhruv and teammates asked for it on 18 Oct). Every step must be additive: the demo path judges see stays identical.
-1. Migration 007:
-   - `workspaces.kind` ('demo' or 'live') and `business_type`. Retention deletes only demo workspaces.
-   - A `services` table per workspace (Join and Add use it; the demo falls back to the CSV).
-   - Staff create, edit and remove (refuse removal while they have future bookings; revoke their offers).
-   - A `staff_tasks` table.
-   - `add_appointment` (the desk books a client into a time).
-   - A live clock (now in IST) for live workspaces.
-2. UI:
-   - "Try the demo" in the top bar switches to a separate demo workspace (its own localStorage key). A banner reads "Demo, sample data", with an exit.
-   - A first visit with no workspace gets "Set up your business" (name, type, staff, services) instead of the seeded salon.
-   - Owner gets a staff editor, services editor and tasks.
-   - The desk gets "New appointment".
-   - Owner history: today's appointments plus the log.
-   - Client "Your places": every me-link saved on this device, with switching.
-3. Later (needs dates on slots, or accounts):
-   - Multi-day history.
-   - Cross-device client accounts.
-   - Admin console for the team: business-level data and feedback only, never client personal data.
+**Parth's bug reports (#9 to #20) run in two lanes so two agents work at once without clashing.**
+- **Parth's agent:** #15 to #18 (Lab) and #20 (guides). Branch `parth/lab-fixes`, files listed in `AGENTS.md`, brief in `docs/agents/parth-lab-fixes.md`. Do not edit `src/Lab.tsx`, `public/guide/*` or `src/labLogic*` until that PR is merged. When it lands: Dhruv merges, then `git pull --rebase`.
+- **Claude:** #9 to #14 and #19 are fixed, pushed and auto-closed. `npm run dbtest` covers #9, #11 and #14.
+
+**v5: a real product with a demo mode (live).**
+- **Two kinds of workspace.** `workspaces.kind` is 'demo' (the sample salon, demo clock, deleted after 3 days) or 'live' (made empty by its owner, kept, real clock in India time).
+  - The browser keeps each one's keys apart: `refill.desk` holds the demo, `refill.business` the live one, and `refill.mode` the current choice (`src/api.ts`: `readMode`, `setMode`, `createBusiness`).
+  - Browsers that already held a demo day stay in the demo. New visitors get live mode.
+- **Top bar.** Live mode shows "Try the demo". Demo mode shows "Demo · Exit" plus the demo clock. Reset exists only in the demo, and the database refuses it for live (`NOT_DEMO`) and refuses `set_clock` for live (`LIVE_CLOCK`).
+- **New visitor:** `src/Setup.tsx` takes the business name, type, services (name, minutes, price) and team (hours, which services). It calls `create_business`.
+- **Live clock:** the desk calls `sync_clock` on load and every minute. On a new IST date, `archive_day` moves the whole book into `history` and starts empty. Waiting clients stay.
+- **Owner (`src/Manage.tsx`):**
+  - Staff add, edit and remove (`save_staff`, `remove_staff`). Removal is refused while the person has clients ahead (`HAS_BOOKINGS`). It is a soft delete: `staff.active` is false and their link stops working.
+  - Tasks (`add_task`, `set_task`, `remove_task`). Staff tick their own tasks on their link.
+  - Services (`save_service`, `remove_service`; a demo falls back to the CSV list).
+  - History page (`#/owner/history`, 4th dock item): today, then past days from `get_history`.
+- **Desk:** "New appointment" on Today (`add_appointment`). A client name books the slot; no name adds open time for the waitlist. Overlaps, past times and off-shift times are refused.
+- **Clients:** `#/me` lists "Your places" (every me-link on this device, `refill.places`). The Me page has a switcher and "Your past visits" (`get_my_entry.history`). Sign-up lists the business's own services and its real message cap.
+- **Dial and calendar** follow the team's working hours (`dayRange` in `src/Dial.tsx`). The demo stays 10:00 to 20:00.
+- **Client pages** say "synthetic demo" only on a demo (`kind` from `join_info`, `get_my_entry`, `get_offer`, `get_move`).
+- Tested end to end in the browser on 18 Oct: setup, booking, open time, staff add/remove/refusal, tasks, services, history rollover (backdated the test business's `day` by SQL), client join, places, demo switch back. All checks pass: tests 51/51, dbtest 25/25, race 3/3. Test business `ffeb1f31-...` ("Bright Minds Tuition") is synthetic and can stay.
+
+**Known limits (say them honestly if asked):**
+- A live book holds one day: no booking for future dates yet.
+- The live clock moves only while a desk or owner page is open.
+- Client "places" live on one device, with no accounts.
+- No admin console yet.
+
+**Still to do, in order:**
+1. Market-shock rehearsal (0.5 item 2) on the **demo**, after these changes.
+2. `docs/DEMO_SCRIPT.md`: open with the real product (Setup), then "Try the demo" for the story.
+3. Admin console for the team (business-level data and feedback only, never client data). It needs an admin key table and a feedback table.
+4. Dates on appointments (future booking, true multi-day history). Cross-device client accounts.
 
 ### 0.6 Tools on the new account
 - **Same PC, Claude Code:** open `Z:\claude\refill`. `CLAUDE.md` and `.claude/skills/` load by themselves.
