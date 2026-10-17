@@ -10,7 +10,7 @@ Refill is a hackathon product (Fynd × NMIMS Hyderabad, case C29, Appointment Re
 
 1. **Only touch the files your task names.** The ownership table below lists them. Never create, edit, delete, move, rename or reformat anything else, not even whitespace.
 2. **Never touch** `src/`, `supabase/`, `scripts/`, `public/`, `index.html`, `package.json`, `package-lock.json`, `tsconfig*.json`, `vite.config.ts`, `vercel.json`, `.github/`, `AGENTS.md`, `CLAUDE.md` or `README.md`, unless your human is the repo owner (sirgreaseball).
-3. **Never install, remove or upgrade packages.** Never run database, migration or deploy commands. Never call the Supabase or Vercel APIs.
+3. **Install with `npm ci` only** (it never changes `package-lock.json`). Never `npm install`, add, remove or upgrade packages. Never run database, migration or deploy commands. Never call the Supabase or Vercel APIs.
 4. **Never push to `main`.** Never force-push, rebase or merge `main`. Work on the branch your task names and open exactly one pull request. `main` is protected; the owner reviews and merges.
 5. **If a test fails, report it. Never change application code or expected results to make it pass.** Write the failure into the pull request description.
 6. **All data is synthetic.** No real names, phone numbers or personal data.

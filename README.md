@@ -50,7 +50,7 @@ The organiser fixture (`data/fixture/C29.fixture.json`, kept byte for byte) repr
 Needs Node.js 20 or newer.
 
 ```bash
-npm install
+npm ci             # installs exactly what package-lock.json says, changes nothing
 npm run dev        # http://localhost:5173, talks to the shared demo database
 npm test           # rules engine, organiser fixture, every scenario file, demo data
 npm run race       # 8 simultaneous taps at the live database, 3 runs
