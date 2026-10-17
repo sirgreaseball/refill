@@ -3,12 +3,10 @@
 // waitlist's consent, the latest activity, and a launcher into each person's view.
 import type { DbSlot, State } from './api'
 import { first, figures, kindOf, sentence, staffFor, type Book } from './desk/common'
+import Dial from './Dial'
 import { Num } from './motion'
 import { Icon, clock, money } from './ui'
 
-const DAY_START = 600
-const DAY_END = 1200
-const pct = (m: number) => `${((Math.min(Math.max(m, DAY_START), DAY_END) - DAY_START) / (DAY_END - DAY_START)) * 100}%`
 const hour = () => new Date().getHours()
 const greet = () => (hour() < 12 ? 'Good morning' : hour() < 17 ? 'Good afternoon' : 'Good evening')
 
@@ -50,11 +48,13 @@ export default function Home({ book }: { book: Book }) {
       <div className="bento">
         <section className="tile is-hero spot" aria-label="Today">
           <div className="tile-head"><h2>Today</h2><span className="legend"><i className="is-gap" />open <i className="is-fill" />refilled <i className="is-risk" />needs moving</span></div>
-          <Ribbon st={st} onPick={(s) => asDesk(s.id)} />
+          <div className="hero-body">
+          <Dial st={st} onPick={(s) => asDesk(s.id)} center={{ big: clock(now), small: queue.length ? `${queue.length} need${queue.length === 1 ? 's' : ''} you` : 'all clear' }} />
           <div className="hero-nums">
             <div><span className="big act-text"><Num value={f.recovered} format={money} /></span><small>recovered from cancellations</small></div>
             <div><span className="big beat-text"><Num value={f.openValue} format={money} /></span><small>in {f.open.length} open gap{f.open.length === 1 ? '' : 's'} still fillable</small></div>
             <div><span className={`big ${f.risk.length ? 'risk-text' : ''}`}><Num value={f.risk.length} /></span><small>clients whose staff member is out</small></div>
+          </div>
           </div>
         </section>
 
@@ -112,33 +112,6 @@ export default function Home({ book }: { book: Book }) {
         </div>
       </section>
     </main>
-  )
-}
-
-function Ribbon({ st, onPick }: { st: State; onPick: (s: DbSlot) => void }) {
-  const now = st.workspace.now_min
-  const hours = [600, 720, 840, 960, 1080, 1200]
-  return (
-    <div className="ribbon">
-      <div className="ribbon-axis" aria-hidden="true">{hours.map((h) => <span key={h} style={{ left: pct(h) }}>{clock(h)}</span>)}</div>
-      {st.staff.map((p) => (
-        <div key={p.id} className={`ribbon-row ${p.present ? '' : 'is-out'}`}>
-          <span className="ribbon-name">{p.name}</span>
-          <div className="ribbon-track">
-            {st.slots.filter((s) => s.staff_id === p.id).map((s) => {
-              const k = kindOf(st, s)
-              return (
-                <button key={s.id} className={`rb is-${k} ${s.start_min + s.minutes <= now ? 'is-past' : ''}`}
-                  style={{ left: pct(s.start_min), width: `calc(${pct(s.start_min + s.minutes)} - ${pct(s.start_min)} - 2px)` }}
-                  onClick={() => onPick(s)} title={`${clock(s.start_min)} ${s.service ?? ''} · ${k === 'open' ? 'open gap' : s.customer ?? k}`}
-                  aria-label={`${clock(s.start_min)}, ${s.service}, ${k === 'open' ? 'open gap' : k === 'risk' ? `${s.customer} needs moving` : s.customer ?? k}`} />
-              )
-            })}
-          </div>
-        </div>
-      ))}
-      <div className="ribbon-now" style={{ left: `calc(64px + (100% - 64px) * ${(Math.min(Math.max(now, DAY_START), DAY_END) - DAY_START) / (DAY_END - DAY_START)})` }} aria-hidden="true"><span>{clock(now)}</span></div>
-    </div>
   )
 }
 
