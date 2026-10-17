@@ -25,7 +25,6 @@ const k = F.kabir.name
 const clock = (s: { startMin: number; minutes: number }) => `${F.hhmm(s.startMin)}–${F.hhmm(s.startMin + s.minutes)}`
 
 const NAMES: Record<Scene, string> = { hero: 'Refill', gap: 'The gap', fits: 'Who fits', race: 'The race', out: 'Staff out' }
-const AFTER = [['05', 'Proof', '.st-proof'], ['', 'Refill', '.st-end']] as const
 const EVIDENCE: Record<Scene, string> = {
   hero: `${F.SALON} · sample day · ${F.booked} booked · ${F.open.length} open`,
   gap: `${k} · ${clock(F.harsh)} · ${F.harsh.service} · ${F.leadMin} min notice${F.late ? ' · late' : ''}`,
@@ -214,7 +213,7 @@ function intro(root: HTMLElement) {
     .fromTo(q('.sd-track:not(.is-out), .sd-shift'), { strokeDasharray: 100, strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 2, stagger: 0.08 }, 0)
     .fromTo(q('.sd-bezel, .sd-sweep'), { opacity: 0 }, { opacity: 1, duration: 1.6 }, 0.1)
     .fromTo(arcs, { opacity: 0 }, { opacity: 1, duration: 0.9, stagger: 0.025 }, 0.4)
-    .fromTo(q('[data-hand]'), { rotation: ang(F.LO) - ang(F.NOW) }, { rotation: 0, duration: 2.2, ease: 'expo.inOut' }, 0.15)
+    .fromTo(q('[data-hand]'), { rotation: ang(F.LO) - ang(F.NOW), svgOrigin: '0 0' }, { rotation: 0, svgOrigin: '0 0', duration: 2.2, ease: 'expo.inOut' }, 0.15)
     .fromTo(q('[data-beat="hero"] .ln > span'), { yPercent: 112 }, { yPercent: 0, duration: 1.3, stagger: 0.09 }, 0.35)
     .fromTo(q('[data-beat="hero"] .st-over, [data-beat="hero"] .st-p, .st-cue > *, .st-hud > *'), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.2, stagger: 0.08 }, 0.6)
     .fromTo(q('.sd-c[data-c="time"] > *'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 1.1, stagger: 0.1 }, 0.9)
@@ -263,20 +262,22 @@ function Scrolled() {
     }
     const ctx = gsap.context(() => {
       const tl = storyTimeline(stage)
+      const story = ScrollTrigger.create({ trigger: track, start: 'top top', end: 'bottom bottom', scrub: 0.6, animation: tl, invalidateOnRefresh: true })
+      const proof = ScrollTrigger.create({ trigger: el.querySelector('.st-proof'), start: 'top 55%' })
+      const end = ScrollTrigger.create({ trigger: el.querySelector('.st-end'), start: 'top 55%' })
+      // One reading of the scroll names the chapter, so a jump anywhere always lands on the right label.
       ScrollTrigger.create({
-        trigger: track, start: 'top top', end: 'bottom bottom', scrub: 0.6, animation: tl, invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          const t = self.progress * LENGTH
+        start: 0, end: 'max', onUpdate: (self) => {
+          bar.style.transform = `scaleX(${self.progress.toFixed(4)})`
+          const y = self.scroll()
+          if (y >= end.start) { label('', ''); return }
+          if (y >= proof.start) { label('05', 'Proof'); return }
+          const t = Math.min(1, Math.max(0, (y - story.start) / Math.max(1, story.end - story.start))) * LENGTH
           show([...CHAPTERS].reverse().find((c) => t >= c.at - 0.1)?.scene ?? 'hero')
         },
       })
-      ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (self) => { bar.style.transform = `scaleX(${self.progress.toFixed(4)})` } })
       // The bar gains its surface once the story's stage has gone and the page scrolls under it.
       ScrollTrigger.create({ trigger: el.querySelector('.st-proof'), start: 'top 64px', end: 'max', toggleClass: { targets: el.querySelector('.st-hud')!, className: 'is-raised' } })
-      AFTER.forEach(([n, name, sel]) => ScrollTrigger.create({
-        trigger: el.querySelector(sel), start: 'top 55%', end: 'max',
-        onToggle: (self) => { if (self.isActive) label(n, name); else if (sel === '.st-proof') show('out'); else label('05', 'Proof') },
-      }))
       // The proof row counts up as it comes into view, scrubbed.
       el.querySelectorAll<HTMLElement>('[data-count]').forEach((n) => {
         const to = Number(n.dataset.count)

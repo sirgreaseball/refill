@@ -131,13 +131,17 @@ export default function StoryDial({ label }: { label: string }) {
               const l = labelAt(a)
               return <text key={e.id} className={`sd-result ${e === winner ? 'is-won' : ''}`} data-result={e.id} x={x + l.dx} y={y + l.dy + 12} textAnchor={l.anchor}>{t}</text>
             })}
+            {/* The loud moment: a wave of lime leaves the refilled slot. */}
+            <circle className="sd-wave" data-wave cx={hx} cy={hy} r="8" />
             <g data-ripples />
           </Layer>
 
           <div className="sd-sweep" aria-hidden="true"><svg viewBox="-280 -280 560 560"><line x1="0" y1="-186" x2="0" y2="-199" /></svg></div>
-          <Layer className="sd-hand" z={26} data-hand="">
-            <line x1={h1x} y1={h1y} x2={h2x} y2={h2y} />
-            <circle className="sd-tip" cx={tx} cy={ty} r="4" />
+          <Layer className="sd-hand" z={26}>
+            <g data-hand>
+              <line x1={h1x} y1={h1y} x2={h2x} y2={h2y} />
+              <circle className="sd-tip" cx={tx} cy={ty} r="4" />
+            </g>
           </Layer>
         </div>
 

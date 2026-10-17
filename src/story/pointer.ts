@@ -87,6 +87,8 @@ export function attachPointer(stage: HTMLElement, read: (text: string | null) =>
       drag.moved += Math.abs(d)
       gsap.set(face, { rotation: rot })
     }
+    // Over the headline's wired words, their own readout stands.
+    if ((e.target as Element).closest?.('[data-hover]')) return
     const [ux, uy] = unrotate(x, y)
     const u = under(ux, uy, Number(gsap.getProperty(firstMark, 'opacity')) > 0.5)
     const el = u?.arc ? stage.querySelector(`.sd-ring [data-arc="${u.arc}"]`) : null
