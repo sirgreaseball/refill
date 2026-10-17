@@ -379,3 +379,30 @@
   .chips[role="group"] { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .chips[role="group"] button { flex: none; }
 }
+
+/* ---------- client pages: one appointment on the day's watch face, and a calmer phone shell */
+.slotdial { max-width: 248px; margin: 4px auto 0; }
+.slotdial .dial-hour text { font-size: 7px; }
+.slotdial .dial-hour line { stroke-width: 1; }
+.slotdial .dial-track { stroke-width: 9; }
+.slotdial .dial-seg, .slotdial .dial-seg:hover { stroke-width: 9; cursor: default; }
+.slotdial .dial-seg.is-booked { stroke: var(--ink); }
+.slotdial .dial-big { font-size: 38px; }
+.slotdial .dial-small { font-size: 7.5px; }
+.slotdial-now line { stroke: var(--ink); stroke-width: 1.2; stroke-linecap: round; }
+.slotdial-now circle { fill: var(--act); }
+.dial-fig { margin: 0; display: grid; gap: 8px; justify-items: center; text-align: center; font-size: 14px; color: var(--ink-2); }
+.dial-fig .overline { margin-right: 6px; }
+.phone { gap: 22px; }
+.phone-top .avatar { font: 500 18px var(--display); }
+.phone-h { font-size: clamp(34px, 9.5vw, 46px); line-height: 0.98; letter-spacing: -0.02em; }
+.bubble { border-radius: var(--r-lg) var(--r-lg) var(--r-lg) var(--r-sm); display: grid; gap: 6px; font-size: 16px; box-shadow: inset 0 1px 0 var(--glass-edge); }
+.tick { color: var(--act-ink); }
+.tick circle { fill: none; }
+.tick path { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; animation: dial-draw 0.9s var(--ease-rare) 0.25s both; }
+@media (prefers-reduced-motion: reduce) { .tick path { animation: none; } }
+.consent-choice label { padding-right: 52px; transition: border-color 0.2s var(--ease), background 0.2s var(--ease); }
+.consent-choice label::after { content: ''; position: absolute; right: 16px; top: 16px; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line-2); transition: box-shadow 0.35s var(--spring); }
+.consent-choice label.is-on::after { box-shadow: inset 0 0 0 6px var(--act); }
+.join label { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.join .consent-choice label { font: inherit; letter-spacing: normal; text-transform: none; color: var(--ink); }
