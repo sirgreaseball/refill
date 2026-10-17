@@ -212,7 +212,7 @@ if (authSettings.mailer_autoconfirm) {
   const made = await raw('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email: `dbtest-${crypto.randomUUID().slice(0, 8)}@example.com`, password: crypto.randomUUID() }) })
   token = (await made.json()).access_token ?? null
 }
-check('a throwaway account signs up without confirming an email', !!token, authSettings.mailer_autoconfirm ? 'no session returned' : 'turn off "Confirm email" in Supabase Auth')
+check('a throwaway account signs up without confirming an email', !!token, token ? 'session returned' : authSettings.mailer_autoconfirm ? 'no session returned' : 'turn off "Confirm email" in Supabase Auth')
 if (token) {
   setBearer(async () => token)
   // 12c. 007: a live business starts empty on the real clock, and its owner runs staff, services and tasks
@@ -244,7 +244,10 @@ if (token) {
   const blockedRemove = await rpc<Res>('remove_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1' })
   const removed = await rpc<Res>('remove_staff', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST2' })
   const deskKey = await rpc<string>('desk_link', { p_ws: biz.id, p_key: biz.owner_key })
+  // The desk key alone, without the owner's account: an owner signed in stands behind any key.
+  setBearer(async () => null)
   const deskAdd = await fails(rpc('save_staff', { p_ws: biz.id, p_key: deskKey, p_staff: { name: 'X' } }))
+  setBearer(async () => token)
   const task = await rpc<Res & { id: number }>('add_task', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1', p_text: 'Print worksheets' })
   const asha = await rpc<string>('staff_link', { p_ws: biz.id, p_key: biz.owner_key, p_staff: 'ST1' })
   const ticked = await rpc<Res>('set_task', { p_ws: biz.id, p_key: asha, p_task: task.id, p_done: true })

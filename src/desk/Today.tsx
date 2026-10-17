@@ -185,7 +185,8 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
   const able = st.staff.filter((p) => p.present && (!sv || p.skills.includes(sv.skill)))
   const [staff, setStaff] = useState(able[0]?.id ?? '')
   const who = able.find((p) => p.id === staff) ?? able[0]
-  const next = Math.ceil((st.workspace.now_min + 1) / 15) * 15
+  // The first quarter hour that can still be offered to the waitlist (the owner's lead time).
+  const next = Math.ceil((st.workspace.now_min + st.workspace.min_lead_min + 1) / 15) * 15
   const [time, setTime] = useState(clock(Math.min(Math.max(next, who?.shift_start ?? next), 1425)))
   const [minutes, setMinutes] = useState(String(sv?.minutes ?? 30))
   const [customer, setCustomer] = useState('')

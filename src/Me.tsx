@@ -2,6 +2,7 @@
 // Opened with the private token from sign-up; shows nothing about anyone else.
 import { useCallback, useEffect, useState } from 'react'
 import { rpc } from './rpc.ts'
+import { readSession } from './auth.ts'
 import { SlotDial } from './Dial'
 import { Icon, Mark, clock, money, span } from './ui'
 
@@ -173,7 +174,7 @@ export default function Me({ token }: { token: string }) {
       )}
 
       <footer className="phone-foot">
-        {readPlaces().length > 0 && <p><a href="#/me">All your places</a></p>}
+        {readSession() ? <p><a href="#/">Your account: all your places</a></p> : readPlaces().length > 0 && <p><a href="#/me">All your places</a></p>}
         <p><Icon name="shield" size={14} /> Only you can open this page. Keep the link private.</p>
         {me.kind !== 'live' && <p>Synthetic demo. No real message is ever sent.</p>}
       </footer>

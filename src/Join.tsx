@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { demoDay } from './day'
 import { rpc } from './rpc.ts'
+import { readSession } from './auth.ts'
 import { Mark, money } from './ui'
 
 const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
@@ -15,7 +16,8 @@ export default function Join({ code }: { code: string }) {
   const [cap, setCap] = useState<number | null>(null)
   const [demo, setDemo] = useState(false)
   const [missing, setMissing] = useState(false)
-  const [name, setName] = useState('')
+  // A signed-in client's name is already known; anyone else types it.
+  const [name, setName] = useState(() => { try { return readSession() ? localStorage.getItem('refill.name') ?? '' : '' } catch { return '' } })
   const [service, setService] = useState('')
   const [from, setFrom] = useState('')
   const [until, setUntil] = useState('')
