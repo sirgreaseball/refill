@@ -71,7 +71,7 @@ export default function Lab() {
       d.now = toHHMM(Math.max(0, toMin(String(s.start)) - 20))
       return true
     }],
-    ['Staff absence', 'The stylist for the first open slot calls in sick: the slot is blocked', (d) => {
+    ['Staff absence', 'The staff member for the first open slot calls in sick: the slot is blocked', (d) => {
       const s = d.slots.find((x) => x.status === 'free')
       if (!s) return false
       s.status = 'blocked'

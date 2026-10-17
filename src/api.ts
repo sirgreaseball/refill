@@ -127,12 +127,15 @@ export function useBook() {
   const [phase, setPhase] = useState<Phase>('connecting')
   const [offline, setOffline] = useState(false)
   const desk = useRef<Desk | null>(null)
+  const seen = useRef('')
 
   const load = useCallback(async () => {
     const d = desk.current
     if (!d) return null
     const s = await rpc<State | null>('get_state', { p_ws: d.id, p_key: keyFor(d) })
-    if (s) setState(s)
+    // Re-render only when something changed: phones stay smooth between polls.
+    const k = s ? JSON.stringify(s) : ''
+    if (s && k !== seen.current) { seen.current = k; setState(s) }
     return s
   }, [])
 
@@ -169,7 +172,7 @@ export function useBook() {
       if (document.hidden) return
       try { await load(); setOffline(false) } catch { setOffline(true) }
     }
-    const t = setInterval(tick, 1200)
+    const t = setInterval(tick, 2000)
     const onVis = () => { if (!document.hidden) tick() }
     document.addEventListener('visibilitychange', onVis)
     return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVis) }

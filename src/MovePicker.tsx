@@ -1,5 +1,5 @@
 // The times an appointment can move to, as the database lists them: same time with another
-// stylist first, then each stylist's free times. Pick one, then confirm. Used by the desk and
+// staff member first, then each staff member's free times. Pick one, then confirm. Used by the desk and
 // by the customer's own move page, so both see exactly the same choices.
 import { useState } from 'react'
 import type { MoveOption } from './api'
@@ -27,7 +27,7 @@ export function MovePicker({ options, busy, confirm, onPick, onCancel }: {
     <div className="move-picker">
       {same.length > 0 && (
         <div className="move-group">
-          <p className="overline">Same time, another stylist</p>
+          <p className="overline">Same time, someone else</p>
           <div className="time-chips">
             {same.map((o) => (
               <button key={o.staff} className={`time-chip is-wide ${on(o) ? 'is-on' : ''}`} onClick={() => setChosen(o)} aria-pressed={on(o)}>

@@ -1,5 +1,5 @@
 // A customer's private link to move or cancel one appointment. It lists only times the
-// database confirms will work: a stylist who is in, does the service and is working then.
+// database confirms will work: a staff member who is in, does the service and is working then.
 // The link shows nothing about anyone else, and every choice is re-checked under lock.
 import { useCallback, useEffect, useState } from 'react'
 import type { MoveOption } from './api'
@@ -16,8 +16,8 @@ interface View {
 const NOT_DONE: Record<string, string> = {
   TARGET_BUSY: 'Someone took that time a moment ago. Pick another.',
   TOO_SOON: 'That time is now too close to start. Pick another.',
-  TARGET_ABSENT: 'That stylist is no longer in today. Pick another.',
-  TARGET_OFF_SHIFT: 'That stylist is not working then. Pick another.',
+  TARGET_ABSENT: 'That staff member is no longer in today. Pick another.',
+  TARGET_OFF_SHIFT: 'That staff member is not working then. Pick another.',
   ALREADY_STARTED: 'Your appointment has already started.',
   ALREADY_OVER: 'Your appointment is already over.',
 }
@@ -105,7 +105,7 @@ export default function Move({ id }: { id: string }) {
       {v.state === 'withdrawn' && (
         <div className="verdict">
           <h1 className="phone-h">Nothing to do</h1>
-          <p>The salon has already updated this appointment. Call them if anything looks wrong.</p>
+          <p>{v.salon} has already updated this appointment. Call them if anything looks wrong.</p>
         </div>
       )}
 

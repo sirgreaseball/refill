@@ -1,0 +1,121 @@
+// The waitlist: who is waiting, in order, and whether each person said yes to messages.
+// Nobody without a yes is ever offered anything; the database checks it again at booking.
+import { useMemo, useState, type FormEvent } from 'react'
+import type { DbEntry } from '../api'
+import { demoDay } from '../day'
+import { Icon, Modal, clock, money } from '../ui'
+import { plural, useRun, type Book, type Run } from './common'
+
+export default function Waitlist({ book }: { book: Book }) {
+  const st = book.state!
+  const run = useRun(book)
+  const [adding, setAdding] = useState(false)
+  const waiting = st.waitlist.filter((e) => e.status === 'waiting')
+  const booked = st.waitlist.filter((e) => e.status === 'booked')
+  const yes = waiting.filter((e) => e.consent === true).length
+
+  const setConsent = (e: DbEntry, v: boolean | null) =>
+    run<{ ok: boolean; revoked_offers: number }>('set_consent', { p_entry: e.id, p_consent: v, p_source: 'front desk' }, (r) =>
+      v === true ? `${e.name} said yes to messages.` : `${e.name} will not be messaged${r.revoked_offers ? `; ${plural(r.revoked_offers, 'open offer')} withdrawn` : ''}.`)
+
+  return (
+    <div className="stack">
+      <header className="page-head">
+        <div>
+          <p className="overline">Front desk · waitlist</p>
+          <h1>{plural(waiting.length, 'person', 'people')} waiting</h1>
+          <p>{yes} said yes to messages. The rest are never contacted until they say yes; clients can also join themselves from the sign-up code.</p>
+        </div>
+        <button className="btn is-primary" onClick={() => setAdding(true)}><Icon name="plus" /> Add someone</button>
+      </header>
+
+      <section className="group" aria-label="Waiting">
+        <ol className="rows">
+          {waiting.map((e) => (
+            <li key={e.id} className="wl-row">
+              <span className="wl-pos">{e.pos}</span>
+              <span className="wl-main">
+                <strong>{e.name}{e.source === 'self sign-up' && <span className="tag">signed up</span>}</strong>
+                <small>{e.service} · {e.minutes} min{e.free_from != null || e.free_until != null ? ` · free ${clock(e.free_from ?? 600)}–${clock(Math.min(e.free_until ?? 1200, 1439))}` : ''}</small>
+              </span>
+              <span className="consent" role="group" aria-label={`${e.name}: may we message them?`}>
+                {([[true, 'Yes', 'is-yes'], [false, 'No', 'is-no'], [null, '?', '']] as const).map(([v, t, c]) => (
+                  <button key={t} className={`${e.consent === v ? 'is-on' : ''} ${c}`} aria-pressed={e.consent === v}
+                    onClick={() => e.consent !== v && setConsent(e, v)} title={v === null ? 'Not asked yet' : v ? 'Said yes to messages' : 'Said no to messages'}>{t}</button>
+                ))}
+              </span>
+            </li>
+          ))}
+          {waiting.length === 0 && <li className="quiet" style={{ padding: '12px 0' }}>Nobody is waiting.</li>}
+        </ol>
+      </section>
+
+      {booked.length > 0 && (
+        <section className="group" aria-label="Booked from the waitlist">
+          <div className="group-head"><h2>Booked from the waitlist</h2></div>
+          <ul className="rows">
+            {booked.map((e) => (
+              <li key={e.id} className="wl-row is-booked">
+                <span className="wl-pos">{e.pos}</span>
+                <span className="wl-main"><strong>{e.name}</strong><small>{e.service} · {e.minutes} min</small></span>
+                <span className="tag is-act">Booked</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {adding && <Modal title="Add to the waitlist" onClose={() => setAdding(false)}><AddEntry run={run} onDone={() => setAdding(false)} /></Modal>}
+    </div>
+  )
+}
+
+function AddEntry({ run, onDone }: { run: Run; onDone: () => void }) {
+  const services = useMemo(() => demoDay().services, [])
+  const [name, setName] = useState('')
+  const [service, setService] = useState(services[0]?.id ?? '')
+  const [consent, setConsent] = useState<'yes' | 'no' | 'unknown'>('unknown')
+  const [from, setFrom] = useState('')
+  const [until, setUntil] = useState('')
+  const [err, setErr] = useState<string | null>(null)
+
+  const submit = async (ev: FormEvent) => {
+    ev.preventDefault()
+    const sv = services.find((s) => s.id === service)
+    if (!name.trim()) return setErr('Write the client’s name.')
+    if (!sv) return setErr('Pick a service.')
+    const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
+    const f = toM(from)
+    const u = toM(until)
+    if (f != null && u != null && u - f < sv.minutes) return setErr(`That window is shorter than a ${sv.minutes}-minute ${sv.name}.`)
+    setErr(null)
+    const r = await run<{ ok: boolean; code?: string }>('add_entry', {
+      p_entry: { name: name.trim(), minutes: sv.minutes, skill: sv.skill, service: sv.name, price_inr: sv.price_inr,
+        consent: consent === 'yes' ? true : consent === 'no' ? false : null, free_from: f, free_until: u },
+    }, (x) => (x.ok ? `${name.trim()} added to the waitlist.` : null))
+    if (r && !r.ok) setErr(`The database refused it: ${r.code}`)
+    else if (r) onDone()
+  }
+
+  return (
+    <form className="add" onSubmit={submit} noValidate>
+      <label className="field">Name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" maxLength={60} /></label>
+      <label className="field">Service
+        <select value={service} onChange={(e) => setService(e.target.value)}>
+          {services.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.minutes} min · {money(s.price_inr)}</option>)}
+        </select>
+      </label>
+      <fieldset className="seg"><legend>May we message them when a slot opens?</legend>
+        {(['yes', 'no', 'unknown'] as const).map((c) => (
+          <label key={c} className={consent === c ? 'is-on' : ''}><input type="radio" name="consent" checked={consent === c} onChange={() => setConsent(c)} />{c === 'unknown' ? 'Not asked' : c === 'yes' ? 'Yes' : 'No'}</label>
+        ))}
+      </fieldset>
+      <div className="field-row">
+        <label className="field">Free from<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="field">Until<input type="time" value={until} onChange={(e) => setUntil(e.target.value)} /></label>
+      </div>
+      {err && <p className="err" role="alert">{err}</p>}
+      <button className="btn is-primary is-big" type="submit">Add to waitlist</button>
+    </form>
+  )
+}

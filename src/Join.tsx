@@ -46,7 +46,7 @@ export default function Join({ code }: { code: string }) {
     setBusy(false)
   }
 
-  if (missing) return <main className="phone"><Mark /><h1 className="phone-h">This sign-up link is not active</h1><p className="quiet">Ask the salon for its current code.</p></main>
+  if (missing) return <main className="phone"><Mark /><h1 className="phone-h">This sign-up link is not active</h1><p className="quiet">Ask the business for its current code.</p></main>
   if (!salon) return <main className="phone"><p className="quiet">Opening the sign-up…</p></main>
 
   return (
@@ -57,7 +57,7 @@ export default function Join({ code }: { code: string }) {
       </header>
       <div>
         <h1 className="phone-h">Get the next slot that fits you</h1>
-        <p className="quiet">When someone cancels, the salon can offer you their slot if it suits your service and your time.</p>
+        <p className="quiet">When someone cancels, {salon} can offer you their slot if it suits your service and your time.</p>
       </div>
 
       <form className="join" onSubmit={submit} noValidate>
@@ -74,7 +74,7 @@ export default function Join({ code }: { code: string }) {
         </div>
 
         <fieldset className="consent-choice">
-          <legend>May the salon message you when a slot opens?</legend>
+          <legend>May {salon} message you when a slot opens?</legend>
           <label className={consent === true ? 'is-on' : ''}>
             <input type="radio" name="consent" checked={consent === true} onChange={() => setConsent(true)} />
             <strong>Yes, message me</strong><small>One message per opening, at most 3 a day. Stop any time.</small>

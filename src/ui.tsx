@@ -1,5 +1,5 @@
 // Shared pieces: the mark, one thin icon set, number formats, the QR code and the modal.
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 
 const inr = new Intl.NumberFormat('en-IN')
 export const money = (n: number | null | undefined) => (n == null ? '—' : `₹${inr.format(n)}`)
@@ -46,6 +46,16 @@ const paths: Record<string, ReactNode> = {
   shield: <path d="M12 3.5l7 3v5c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9v-5l7-3z" />,
   install: <path d="M12 4v10m0 0l-4-4m4 4l4-4M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" />,
   upload: <path d="M12 15V4m0 0L8 8m4-4l4 4M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" />,
+  calendar: <><rect x="4" y="5.5" width="16" height="14.5" rx="2.5" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></>,
+  list: <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />,
+  pulse: <path d="M3.5 12h4l2.5-6 4 12 2.5-6h4" />,
+  users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.8c1.6.6 2.7 2.2 3 4.7" /></>,
+  chart: <path d="M4.5 19.5h15M7 16.5v-5M12 16.5V7M17 16.5v-8" />,
+  sliders: <path d="M5 7h8m4 0h2M5 17h2m4 0h8M15 4.5v5M9 14.5v5" />,
+  chevron: <path d="M7 10l5 5 5-5" />,
+  user: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /></>,
+  desk: <><path d="M3.5 9.5h17M5 9.5V19M19 9.5V19M8.5 9.5v-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3" /></>,
+  scissors: <><circle cx="6.5" cy="7" r="2.5" /><circle cx="6.5" cy="17" r="2.5" /><path d="M8.6 8.4L20 17M8.6 15.6L20 7" /></>,
 }
 
 export function Icon({ name, size = 18 }: { name: keyof typeof paths | string; size?: number }) {
@@ -72,19 +82,22 @@ export function Qr({ text, size = 176 }: { text: string; size?: number }) {
 /** A floating sheet. Bottom sheet on phones, centred card on wide screens. Esc and the backdrop close it. */
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
+  const close = useRef(onClose)
+  close.current = onClose
+  // Runs once per opening: the desk re-renders every poll, and re-running this would steal focus each time.
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null
     ref.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close.current()
     addEventListener('keydown', onKey)
     return () => { removeEventListener('keydown', onKey); prev?.focus() }
-  }, [onClose])
+  }, [])
   return (
-    <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && close.current()}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}>
         <div className="modal-head">
           <h2>{title}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
+          <button className="icon-btn" onClick={() => close.current()} aria-label="Close"><Icon name="x" /></button>
         </div>
         {children}
       </div>
@@ -101,4 +114,27 @@ export function download(name: string, body: string, type = 'application/json') 
   const a = Object.assign(document.createElement('a'), { href: url, download: name })
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// ---------------------------------------------------------------- toast
+
+type Toast = (text: string, bad?: boolean) => void
+const ToastCtx = createContext<Toast>(() => {})
+export const useToast = () => useContext(ToastCtx)
+
+/** One message at a time, low on the screen, gone after a few seconds. */
+export function ToastHost({ children }: { children: ReactNode }) {
+  const [t, setT] = useState<{ text: string; bad?: boolean; n: number } | null>(null)
+  useEffect(() => {
+    if (!t) return
+    const id = setTimeout(() => setT(null), t.bad ? 6000 : 3800)
+    return () => clearTimeout(id)
+  }, [t])
+  const show = useCallback<Toast>((text, bad) => setT((p) => ({ text, bad, n: (p?.n ?? 0) + 1 })), [])
+  return (
+    <ToastCtx.Provider value={show}>
+      {children}
+      <div className={`toast ${t ? 'is-on' : ''} ${t?.bad ? 'is-bad' : ''}`} role="status" aria-live="polite">{t?.text}</div>
+    </ToastCtx.Provider>
+  )
 }

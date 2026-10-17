@@ -151,7 +151,7 @@ export function validate(raw: unknown): Validated {
     }
     for (const s of slots)
       if (s.staff && !seenStaff.has(s.staff))
-        return fail('INVALID_VALUE', `slots.${s.id}.staff`, `Slot ${s.id} names stylist "${s.staff}", who is not in staff.`)
+        return fail('INVALID_VALUE', `slots.${s.id}.staff`, `Slot ${s.id} names staff member "${s.staff}", who is not in staff.`)
   }
   return { ok: true, input: { slots, waitlist, staff } }
 }
@@ -293,7 +293,7 @@ export function explain(reason: Reason, entry: Entry, slot: Slot, staff?: Staff 
       return entry.consent === null ? 'Has not said yes to messages yet, so is never messaged' : 'Said no to messages'
     case 'SKILL_MISMATCH':
       return staff
-        ? `Wants ${entry.skill}; ${staff.name ?? 'this stylist'} does ${staff.skills.join(' and ')}`
+        ? `Wants ${entry.skill}; ${staff.name ?? 'this staff member'} does ${staff.skills.join(' and ')}`
         : `Wants ${entry.skill}; this slot was for ${slot.skill}`
     case 'DURATION_TOO_LONG':
       return `Needs ${entry.minutes} min; the gap is ${slot.minutes} min`
@@ -302,14 +302,14 @@ export function explain(reason: Reason, entry: Entry, slot: Slot, staff?: Staff 
   }
 }
 
-/** The short words a salon owner reads first; the code stays alongside for the record. */
+/** The short words a business owner reads first; the code stays alongside for the record. */
 export const LABEL: Record<string, string> = {
   NO_CONSENT: 'No permission to message',
   SKILL_MISMATCH: 'Different service',
   DURATION_TOO_LONG: 'Needs more time',
   NOT_AVAILABLE: 'Not free then',
   FREQUENCY_CAP: 'Messaged enough today',
-  STAFF_ABSENT: 'Stylist is out',
+  STAFF_ABSENT: 'Staff member is out',
 }
 
 // ---------------------------------------------------------------- scenarios

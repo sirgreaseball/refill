@@ -1,5 +1,5 @@
 // Refill service worker: the app shell works offline; live data never comes from cache.
-const SHELL = 'refill-shell-v2'
+const SHELL = 'refill-shell-v3'
 const CORE = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/icon-192.png']
 
 self.addEventListener('install', (e) => {

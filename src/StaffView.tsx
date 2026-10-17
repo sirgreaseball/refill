@@ -1,5 +1,5 @@
-// A stylist's own day, on their phone. They see their appointments (first names only)
-// and can mark themselves in or out. Nothing about other stylists or the waitlist.
+// A staff member's own day, on their phone. They see their appointments (first names only)
+// and can mark themselves in or out. Nothing about other staff or the waitlist.
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, rpc } from './rpc.ts'
 import { Icon, Mark, clock, span } from './ui'
@@ -50,7 +50,7 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
     <main className="phone">
       <header className="phone-top">
         <span className="avatar" aria-hidden="true">{p.name.slice(0, 1)}</span>
-        <span><strong>{day.salon}</strong><small>{preview ? 'stylist view · owner preview' : 'stylist view'}</small></span>
+        <span><strong>{day.salon}</strong><small>{preview ? 'staff view · preview' : 'staff view'}</small></span>
       </header>
 
       <div>
@@ -90,7 +90,7 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
       </section>
 
       <footer className="phone-foot">
-        {preview && <p><a href="#/team"><Icon name="arrow" size={14} /> Back to the team page</a></p>}
+        {preview && <p><a href="#/"><Icon name="arrow" size={14} /> Back to all views</a></p>}
         <p><Icon name="shield" size={14} /> You see only your own day. Customers appear by first name.</p>
       </footer>
     </main>
