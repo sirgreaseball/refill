@@ -2,7 +2,7 @@
 
 You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
 
-Last updated: 17 Oct 2026, ~23:55 IST, after v3.1 (home screen + motion layer + refill sweep, commit `67d8ad6`).
+Last updated: 18 Oct 2026, ~00:30 IST. In progress: v4 visual revamp (brief in section 5, item 0). #7 fixed (b73e056). PR #8 verified (51 tests pass) but NOT merged: Dhruv must click merge (auto-mode refused an admin merge).
 
 ---
 
@@ -68,6 +68,13 @@ npx tsc -b && npx vite build
 
 ## 5. What to do next (priority order)
 
+0. **v4 visual revamp (IN PROGRESS, top priority).** Dhruv: v3 still looks "basic, AI-generated"; wants an Awwwards-level, unique, premium product UI with smooth motion, a professional font and one consistent theme across every page. Full creative authority. Brief chosen (keep to it so accounts stay consistent):
+   - Concept: **the chronograph**. The day is a watch dial. Precision instrument, night-shift calm. Dark-first (light mode tuned by hand, never inverted).
+   - Type: **Satoshi** (UI and body) + **Clash Display** (headlines and big numbers), both from Fontshare (`api.fontshare.com` CSS, `cdn.fontshare.com` fonts; CSP in `vercel.json` must allow them). JetBrains Mono only for times if needed.
+   - Palette (dark): canvas #0a0a0c, surface #131316, raised #1a1a1f, ink #f4f1ea (warm white), ink-2 #a9a59c, act = electric lime #c6f24e (book, send, confirm), gap = amber #ffb547 (open slot heartbeat), risk = coral #ff5d4d. Fine film grain overlay at 3-4%. Light: paper #f4f2ed, ink #121214, act #3f6b00.
+   - Centerpiece: **Day Dial** on Home and Today: 10:00 to 20:00 around a 300-degree arc, one concentric track per staff member, appointments as arc segments, open gaps glow amber and pulse, a refill animates the arc filling lime, a sweeping now-hand; hover/tap a segment opens its sheet. SVG, no library.
+   - Motion: page transitions (already in), numbers count up (Num), staggered reveals, spring press, magnetic primary buttons on fine pointers, sheet springs. Respect reduced motion.
+   - Keep every feature, route and database call; this is visual only.
 1. **Keep raising the premium feel** (Dhruv: "basic and dull" before v3.1; wants Trace/Cascade/Apple-level motion). Next ideas, in order: scroll-linked reveals on long pages, number roll on change in the bar, haptic-like press on phones, a dedicated splash page later (separate route, Lenis + GSAP ScrollTrigger like Threshold; do NOT turn Home into a splash).
 1b. **Polish pass on the v3 UI (done once, keep going if time allows).** Revamp shipped 17 Oct ~23:15. Verified at 375, 689 and 1366 px in Chromium, dark and light, no horizontal scroll. Not yet verified on a real Android phone or Firefox: Dhruv reported layout faults there on v2. Ask for screenshots if anything still looks wrong. Remaining ideas: scroll-linked motion on Home, a second demo business (clinic CSVs under `data/clinic/`) to prove the product is not salon-only.
 2. **Docs to v3:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1 screens; README screenshots in `docs/screens` are old. Operational check PDF lives in `docs/ops/`.

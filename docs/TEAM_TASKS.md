@@ -4,6 +4,8 @@ Paste-ready. Dhruv sends these; no deadlines in the messages. Update this file w
 Live app: https://fillthechair.vercel.app
 
 ## Parth (real-phone testing + scenarios)
+Status 18 Oct 00:30: issue #7 fixed in b73e056 (consent copy). PR #8 verified, 51 tests pass; waiting for Dhruv's merge click. Next ask: thanks; please retest the client sign-up and your page on the live site after the next deploy, then test on a real Android phone in Chrome and Firefox.
+
 Refill v3.1 is live: https://fillthechair.vercel.app. Your job is real-phone testing. On an Android phone, open it in Chrome and in Firefox. From the home screen, try every view: Front desk (open an amber gap, send offers, reschedule someone, mark a staff member out, pull the sheet down to close it), Owner (Overview, Team, Rules), a staff member's view, and Client (sign up, then your own page). For anything broken, overlapping or slow, open a GitHub issue with a screenshot, the browser and the phone model. Then finish your `tests/scenarios.json` PR (`npm ci`, then `npm test`).
 
 ## Chirag (market-shock rehearsal)
