@@ -174,6 +174,8 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
     .to(coral, { opacity: 0, duration: 0.45 }, 7.12)
     .fromTo(count, { v: toMove.length }, { v: toMove.length - 1, duration: 0.3, onUpdate: () => { left.textContent = String(Math.round(count.v)) } }, 7.3)
   beatOut('out', 8.25)
+  // The story leaves the way it came: the stage closes back into its inset frame.
+  tl.to($('.st-plate'), { clipPath: () => getComputedStyle(stage).getPropertyValue('--plate-from') || 'inset(0px round 0px)', duration: 0.35, ease: 'power2.inOut' }, 8.25)
   tl.set({}, {}, LENGTH)
   return tl
 }
