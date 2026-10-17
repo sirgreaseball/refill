@@ -1,7 +1,10 @@
 import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react'
+import { flushSync } from 'react-dom'
 import { ownerLink, readDesk, useBook } from './api'
 import Offer from './Offer'
-import { Icon, Mark, Modal, Qr, ToastHost, clock, money } from './ui'
+import Home from './Home'
+import { Glow, reduced, useSpotlight } from './motion'
+import { Icon, Mark, Modal, Qr, ToastHost, clock } from './ui'
 import { figures, type Book } from './desk/common'
 
 const Today = lazy(() => import('./desk/Today'))
@@ -21,7 +24,13 @@ function useRoute() {
   const get = () => location.hash.replace(/^#/, '') || '/'
   const [route, setRoute] = useState(get)
   useEffect(() => {
-    const on = () => { setRoute(get()); scrollTo({ top: 0 }) }
+    // Pages cross-fade with a hint of blur where the browser supports view transitions; elsewhere they swap at once.
+    const on = () => {
+      const next = get()
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
+      if (doc.startViewTransition && !reduced()) doc.startViewTransition(() => { flushSync(() => setRoute(next)); scrollTo({ top: 0 }) })
+      else { setRoute(next); scrollTo({ top: 0 }) }
+    }
     addEventListener('hashchange', on)
     return () => removeEventListener('hashchange', on)
   }, [])
@@ -64,6 +73,8 @@ function Shell({ route }: { route: string }) {
   const book = useBook()
   const area = areaOf(route)
   const st = book.state
+  useSpotlight()
+  const slot = /^\/desk\/slot\/([A-Za-z0-9_-]+)$/.exec(route)?.[1]
 
   let page: ReactNode
   if (area === 'lab') page = <Lab />
@@ -71,13 +82,14 @@ function Shell({ route }: { route: string }) {
   else if (!st) page = <Loading phase={book.phase} />
   else if (route === '/desk/waitlist') page = <Waitlist book={book} />
   else if (route === '/desk/activity') page = <Activity book={book} />
-  else if (route.startsWith('/desk')) page = <Today book={book} />
+  else if (route.startsWith('/desk')) page = <Today key={slot ?? 'today'} book={book} initial={slot} />
   else if (route === '/owner/team') page = <OwnerTeam book={book} />
   else if (route === '/owner/rules') page = <Rules book={book} />
   else page = <Overview book={book} />
 
   return (
     <div className="app">
+      <Glow st={st} />
       <Bar route={route} area={area} book={book} />
       {book.offline && <p className="banner" role="status">Offline. Showing the last saved state; changes resume when the connection is back.</p>}
       {area === 'home' ? page : <main className="page"><Suspense fallback={<Loading phase="page" />}>{page}</Suspense></main>}
@@ -92,62 +104,6 @@ function Loading({ phase }: { phase: string }) {
       <Mark size={30} fill={0.3} />
       <p className="quiet">{phase === 'error' ? 'Could not reach the database. Check the connection and reload.' : phase === 'creating' ? 'Setting up a fresh demo day…' : 'Opening today…'}</p>
     </div>
-  )
-}
-
-// ---------------------------------------------------------------- home: who is using it
-
-function Home({ book }: { book: Book }) {
-  const st = book.state
-  const ready = !!st
-  const canOwn = st?.role === 'owner' || !!book.desk?.deskKey
-  const asDesk = async () => {
-    if (st?.role !== 'desk' || book.desk?.deskKey) await book.viewAs('desk')
-    location.hash = '#/desk'
-  }
-  const asOwner = async () => { await book.viewAs('owner'); location.hash = '#/owner' }
-  const f = st ? figures(st) : null
-  const todo = f ? f.risk.length + f.held.length + f.open.length : 0
-
-  return (
-    <main className="home">
-      <header className="home-head">
-        <p className="overline">Appointment recovery · {st?.workspace.salon ?? 'demo business'}</p>
-        <h1>When someone cancels, refill the slot.</h1>
-        <p>Refill offers a freed appointment to the next waiting client who fits it, only if they agreed to be messaged, and never books two people into one slot. Pick who you are to see your view.</p>
-      </header>
-
-      <div className="roles-grid">
-        <button className="role-card is-desk" onClick={asDesk} disabled={!ready}>
-          <span className="role-ico"><Icon name="desk" size={22} /></span>
-          <span><h2>Front desk</h2><p>{todo ? `${todo} thing${todo === 1 ? '' : 's'} need you now. ` : 'Runs the day. '}Cancellations, offers, reschedules, who is in.</p></span>
-          <span className="go"><Icon name="arrow" /></span>
-        </button>
-        <button className="role-card" onClick={asOwner} disabled={!ready || !canOwn}>
-          <span className="role-ico"><Icon name="chart" size={22} /></span>
-          <span><h2>Owner</h2><p>{f ? `${money(f.recovered)} recovered today. ` : ''}Numbers, team links and the rules.</p></span>
-          <span className="go"><Icon name="arrow" /></span>
-        </button>
-        <div className="role-card is-staff">
-          <span className="role-ico"><Icon name="user" size={22} /></span>
-          <span><h2>Staff member</h2><p>Their own day, first names only, and one button: I can’t come in.</p></span>
-          <span />
-          <span className="staff-picks">
-            {st ? st.staff.map((p) => <a key={p.id} className="btn" href={`#/staff/${p.id}`}>{p.name}</a>) : <span className="quiet small">Loading…</span>}
-          </span>
-        </div>
-        <a className="role-card is-client" href={st?.workspace.join_code ? `#/join/${st.workspace.join_code}` : '#/'}>
-          <span className="role-ico"><Icon name="phone" size={22} /></span>
-          <span><h2>Client</h2><p>Joins the waitlist with a clear yes or no to messages, books from an offer, moves their own booking.</p></span>
-          <span className="go"><Icon name="arrow" /></span>
-        </a>
-      </div>
-
-      <div className="home-foot">
-        <span><span className={`status-dot ${book.phase === 'error' ? 'is-bad' : ready ? '' : 'is-wait'}`} />{book.phase === 'error' ? 'Database unreachable. Reload to retry.' : ready ? `Live · demo clock ${clock(st!.workspace.now_min)} · synthetic data` : 'Connecting…'}</span>
-        <a className="link" href="#/lab">Proof for judges: the three case checks, live</a>
-      </div>
-    </main>
   )
 }
 
@@ -272,13 +228,16 @@ const DOCKS = {
   owner: [['#/owner', 'Overview', 'chart'], ['#/owner/team', 'Team', 'users'], ['#/owner/rules', 'Rules', 'sliders']],
 } as const
 
+const isDockOn = (href: string, route: string) => (href === '#/desk' ? route === '/desk' || route.startsWith('/desk/slot') : route === href.slice(1))
+
 function Dock({ route, area, book }: { route: string; area: 'desk' | 'owner'; book: Book }) {
   const f = book.state ? figures(book.state) : null
   const badge = f ? f.risk.length + f.held.length + f.open.length : 0
   return (
     <nav className="dock" aria-label={area === 'desk' ? 'Front desk' : 'Owner'}>
+      <span className="dock-ind" style={{ transform: `translateX(${Math.max(0, DOCKS[area].findIndex(([h]) => isDockOn(h, route))) * 100}%)`, width: `calc((100% - 10px) / ${DOCKS[area].length})` }} aria-hidden="true" />
       {DOCKS[area].map(([href, label, icon]) => {
-        const on = route === href.slice(1)
+        const on = isDockOn(href, route)
         return (
           <a key={href} href={href} className={on ? 'is-on' : ''} aria-current={on ? 'page' : undefined}>
             <Icon name={icon} size={20} />{label}

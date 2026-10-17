@@ -1,7 +1,7 @@
 // Everything you can do with one appointment or gap, in one sheet: offer an open gap to
 // the waitlist, record a cancellation, move a booking, or send the client a link to choose.
 // The page only proposes; the database re-checks every rule when you press the button.
-import { useState } from 'react'
+import { useRef, useState, type PointerEvent } from 'react'
 import { asEntry, asSlot, asStaff, moveUrl, rpc, type DbOffer, type DbSlot, type MoveOption, type State } from '../api'
 import { LABEL, candidates, explain, type Reason } from '../engine'
 import { MovePicker } from '../MovePicker'
@@ -20,11 +20,36 @@ export function SlotSheet({ st, slot, run, onClose }: { st: State; slot: DbSlot;
   const [tagText, tagTone] = KIND_TAG[kind]
   const past = slot.start_min + slot.minutes <= now
   const cancel = st.events.find((e) => e.kind === 'CANCELLED' && e.slot_id === slot.id)
+  const sheet = useRef<HTMLElement>(null)
+  const drag = useRef<{ y: number; t: number } | null>(null)
+  // Phones: pull the sheet down to close it. It follows the finger, resists going up, and a
+  // quick flick or a long pull dismisses; anything less springs back.
+  const down = (e: PointerEvent) => {
+    if (!matchMedia('(max-width: 760px)').matches || (e.target as HTMLElement).closest('button')) return
+    drag.current = { y: e.clientY, t: performance.now() }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const move = (e: PointerEvent) => {
+    if (!drag.current || !sheet.current) return
+    const dy = e.clientY - drag.current.y
+    sheet.current.style.transition = 'none'
+    sheet.current.style.transform = `translateY(${dy > 0 ? dy : dy / 5}px)`
+  }
+  const up = (e: PointerEvent) => {
+    if (!drag.current || !sheet.current) return
+    const dy = e.clientY - drag.current.y
+    const v = dy / Math.max(1, performance.now() - drag.current.t)
+    drag.current = null
+    sheet.current.style.transition = 'transform 0.36s var(--ease-drawer)'
+    if (dy > 110 || v > 0.6) { sheet.current.style.transform = 'translateY(105%)'; setTimeout(onClose, 260) }
+    else sheet.current.style.transform = ''
+  }
 
   return (
     <>
       <div className="sheet-back" onClick={onClose} />
-      <aside className="sheet" role="dialog" aria-modal="true" aria-label={`${span(slot.start_min, slot.minutes)} ${slot.service ?? ''}`}>
+      <aside className="sheet" ref={sheet} role="dialog" aria-modal="true" aria-label={`${span(slot.start_min, slot.minutes)} ${slot.service ?? ''}`}>
+        <div className="sheet-drag" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
         <span className="grab" aria-hidden="true" />
         <header className="sheet-head">
           <div>
@@ -34,6 +59,7 @@ export function SlotSheet({ st, slot, run, onClose }: { st: State; slot: DbSlot;
           </div>
           <button className="icon-btn" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
         </header>
+        </div>
         <div className="sheet-body">
           {slot.status === 'booked' && (past
             ? <section className="sec"><p className="quiet">This appointment is over.</p></section>

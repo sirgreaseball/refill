@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { DbSlot, State } from '../api'
 import { Icon, clock, money, span } from '../ui'
+import { Num } from '../motion'
 import { SlotSheet } from './SlotSheet'
 import { figures, first, kindOf, plural, staffFor, togglePresence, useRun, type Book, type Kind } from './common'
 
@@ -10,10 +11,10 @@ const DAY_START = 600
 const DAY_END = 1200
 const pct = (min: number) => `${((min - DAY_START) / (DAY_END - DAY_START)) * 100}%`
 
-export default function Today({ book }: { book: Book }) {
+export default function Today({ book, initial }: { book: Book; initial?: string }) {
   const st = book.state!
   const run = useRun(book)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selected, setSelected] = useState<string | null>(initial ?? null)
   const now = st.workspace.now_min
   const f = useMemo(() => figures(st), [st])
   const sel = st.slots.find((s) => s.id === selected) ?? null
@@ -30,13 +31,13 @@ export default function Today({ book }: { book: Book }) {
       </header>
 
       <div className="stats">
-        <div className={`stat ${f.recovered ? 'is-act' : ''}`}><div className="stat-v">{money(f.recovered)}</div><div className="stat-l">Recovered today · {plural(f.refilled, 'gap')} refilled</div></div>
-        <div className={`stat ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v">{money(f.openValue)}</div><div className="stat-l">In {plural(f.open.length, 'open gap')} you can still fill</div></div>
-        <div className={`stat ${f.risk.length ? 'is-risk' : ''}`}><div className="stat-v">{f.risk.length}</div><div className="stat-l">Clients whose staff member is out</div></div>
-        <div className="stat"><div className="stat-v">{st.waitlist.filter((e) => e.status === 'waiting').length}</div><div className="stat-l">On the waitlist</div></div>
+        <div className={`stat spot ${f.recovered ? 'is-act' : ''}`}><div className="stat-v"><Num value={f.recovered} format={money} /></div><div className="stat-l">Recovered today · {plural(f.refilled, 'gap')} refilled</div></div>
+        <div className={`stat spot ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v"><Num value={f.openValue} format={money} /></div><div className="stat-l">In {plural(f.open.length, 'open gap')} you can still fill</div></div>
+        <div className={`stat spot ${f.risk.length ? 'is-risk' : ''}`}><div className="stat-v"><Num value={f.risk.length} /></div><div className="stat-l">Clients whose staff member is out</div></div>
+        <div className="stat spot"><div className="stat-v"><Num value={st.waitlist.filter((e) => e.status === 'waiting').length} /></div><div className="stat-l">On the waitlist</div></div>
       </div>
 
-      <section className="group" aria-label="Needs you now">
+      <section className="group spot" aria-label="Needs you now">
         <div className="group-head"><h2>Needs you now</h2></div>
         {queue.length === 0 ? <p className="all-clear"><Icon name="check" /> Nothing waiting. New cancellations appear here.</p> : (
           <div className="queue">
@@ -45,7 +46,7 @@ export default function Today({ book }: { book: Book }) {
         )}
       </section>
 
-      <section className="group" aria-label="Who is in today">
+      <section className="group spot" aria-label="Who is in today">
         <div className="group-head"><h2>Team today</h2><p>Tap to mark someone out. Their clients are flagged; nothing moves on its own.</p></div>
         <div className="roster">
           {st.staff.map((p) => (
@@ -57,7 +58,7 @@ export default function Today({ book }: { book: Book }) {
         </div>
       </section>
 
-      <section className="group" aria-label="Schedule">
+      <section className="group spot" aria-label="Schedule">
         <div className="group-head"><h2>Schedule</h2><p className="hide-phone">Amber is an open gap, green was refilled, red needs moving.</p></div>
         <Board st={st} selected={selected} onPick={setSelected} />
         <Agenda st={st} selected={selected} onPick={setSelected} />

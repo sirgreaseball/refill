@@ -4,6 +4,7 @@
 import { useState, type FormEvent } from 'react'
 import { deskLinkUrl, joinLink, ownerLink, staffLinkUrl, type DbStaff, type State } from './api'
 import { figures, togglePresence, useRun, type Book } from './desk/common'
+import { Num } from './motion'
 import { Icon, Modal, Qr, clock, copy, lead, money } from './ui'
 
 type Can = 'yes' | 'own' | 'no'
@@ -54,13 +55,13 @@ export function Overview({ book }: { book: Book }) {
         </div>
       </header>
       <div className="stats">
-        <div className={`stat ${f.recovered ? 'is-act' : ''}`}><div className="stat-v">{money(f.recovered)}</div><div className="stat-l">Recovered from cancellations</div></div>
-        <div className={`stat ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v">{money(f.openValue)}</div><div className="stat-l">Still open, can be filled</div></div>
-        <div className="stat"><div className="stat-v">{money(n.lost)}</div><div className="stat-l">Gaps that passed unfilled</div></div>
+        <div className={`stat spot ${f.recovered ? 'is-act' : ''}`}><div className="stat-v"><Num value={f.recovered} format={money} /></div><div className="stat-l">Recovered from cancellations</div></div>
+        <div className={`stat spot ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v"><Num value={f.openValue} format={money} /></div><div className="stat-l">Still open, can be filled</div></div>
+        <div className="stat spot"><div className="stat-v"><Num value={n.lost} format={money} /></div><div className="stat-l">Gaps that passed unfilled</div></div>
         <div className="stat"><div className="stat-v">{f.refilled}/{n.cancelled}</div><div className="stat-l">Cancellations refilled · {n.late} late</div></div>
       </div>
       <div className="grid-2">
-        <section className="group">
+        <section className="group spot">
           <div className="group-head"><h2>Offers</h2><p>{n.sent ? `${n.accepted} of ${n.sent} booked` : 'None sent yet'}</p></div>
           <ul className="facts">
             <li><span>Declined</span><span className="mono">{n.declined}</span></li>
@@ -69,7 +70,7 @@ export function Overview({ book }: { book: Book }) {
             <li><span>Withdrawn (consent, staff out, moved)</span><span className="mono">{n.revoked}</span></li>
           </ul>
         </section>
-        <section className="group">
+        <section className="group spot">
           <div className="group-head"><h2>Consent</h2><p>{n.yes} may be messaged</p></div>
           <ul className="facts">
             <li><span>Said no</span><span className="mono">{n.no}</span></li>
@@ -77,7 +78,7 @@ export function Overview({ book }: { book: Book }) {
             <li><span>Offers refused for consent</span><span className="mono">{n.blockedByConsent}</span></li>
           </ul>
         </section>
-        <section className="group">
+        <section className="group spot">
           <div className="group-head"><h2>Reschedules</h2><p>{n.movedByDesk + n.movedByClient} moved, none double-booked</p></div>
           <ul className="facts">
             <li><span>By the front desk</span><span className="mono">{n.movedByDesk}</span></li>
@@ -85,7 +86,7 @@ export function Overview({ book }: { book: Book }) {
             <li><span>Links waiting for a reply</span><span className="mono">{n.linksOpen}</span></li>
           </ul>
         </section>
-        <section className="group">
+        <section className="group spot">
           <div className="group-head"><h2>Staff booked today</h2><p>Share of each shift</p></div>
           <ul className="facts">
             {util.map(({ p, pct }) => (
@@ -141,7 +142,7 @@ export function Team({ book }: { book: Book }) {
       <header className="page-head">
         <div><p className="overline">Owner · team and links</p><h1>Everyone sees only their part</h1><p>Each person gets their own link. The database checks the key behind it on every action.</p></div>
       </header>
-      <section className="group">
+      <section className="group spot">
         <div className="group-head"><h2>Staff</h2><p>Working hours keep every move inside a shift.</p></div>
         <ul className="rows">
           {st.staff.map((p) => {
@@ -161,7 +162,7 @@ export function Team({ book }: { book: Book }) {
         </ul>
       </section>
       <div className="grid-3">
-        <section className="group">
+        <section className="group spot">
           <p className="overline">Front desk</p>
           <h2 style={{ margin: '6px 0' }}>Their own login link</h2>
           <p className="quiet small">For whoever runs the counter. Runs the day; cannot change rules or make links.</p>
@@ -170,7 +171,7 @@ export function Team({ book }: { book: Book }) {
             <button className="btn is-quiet" onClick={async () => { await book.viewAs('desk'); location.hash = '#/desk' }}>Open as front desk</button>
           </div>
         </section>
-        <section className="group">
+        <section className="group spot">
           <p className="overline">Clients</p>
           <h2 style={{ margin: '6px 0' }}>Waitlist sign-up</h2>
           <p className="quiet small">Put this at the counter. Clients join and choose yes or no to messages; nothing is ticked for them.</p>
@@ -179,7 +180,7 @@ export function Team({ book }: { book: Book }) {
             <a className="btn is-quiet" href={`#/join/${code}`}>Open it</a>
           </div>}
         </section>
-        <section className="group">
+        <section className="group spot">
           <p className="overline">You</p>
           <h2 style={{ margin: '6px 0' }}>This dashboard on your phone</h2>
           <p className="quiet small">Carries your owner key. Keep it to yourself.</p>
@@ -228,7 +229,7 @@ export function Rules({ book }: { book: Book }) {
   return (
     <div className="stack">
       <header className="page-head"><div><p className="overline">Owner · rules</p><h1>The rules</h1><p>The database applies these to every offer and booking. Only the owner can change them.</p></div></header>
-      <section className="group">
+      <section className="group spot">
         <form className="policy" onSubmit={save}>
           <label className="field">Offer holds for (min)<input type="number" inputMode="numeric" min={1} max={240} value={policy.hold_min} onChange={num('hold_min')} /></label>
           <label className="field">Messages per client a day<input type="number" inputMode="numeric" min={1} max={20} value={policy.max_offers} onChange={num('max_offers')} /></label>
@@ -248,7 +249,7 @@ export function Rules({ book }: { book: Book }) {
 
 export function Access() {
   return (
-    <section className="group" aria-label="Who can do what">
+    <section className="group spot" aria-label="Who can do what">
       <div className="group-head"><h2>Who can do what</h2><p>Checked by the database on every call, not by this page.</p></div>
       <div className="table-wrap">
         <table className="roles">
