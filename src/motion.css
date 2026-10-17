@@ -406,3 +406,12 @@
 .consent-choice label.is-on::after { box-shadow: inset 0 0 0 6px var(--act); }
 .join label { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .join .consent-choice label { font: inherit; letter-spacing: normal; text-transform: none; color: var(--ink); }
+
+/* ---------- staff: their own day on one ring, then the list */
+.my-slot, .my-slot:nth-child(n) { grid-template-columns: 52px minmax(0, 1fr) auto; }
+.my-slot .mono { font-size: 15px; }
+.my-slot .tag { grid-column: auto; justify-self: end; }
+.my-slot-main { display: flex; flex-direction: column; min-width: 0; }
+.my-slot-main strong { font-weight: 600; }
+.my-slot-main small { font-size: 13px; color: var(--ink-2); }
+.presence-state { font-size: 28px; font-weight: 500; letter-spacing: -0.01em; }

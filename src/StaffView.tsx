@@ -2,6 +2,7 @@
 // and can mark themselves in or out. Nothing about other staff or the waitlist.
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, rpc } from './rpc.ts'
+import { SlotDial } from './Dial'
 import { Icon, Mark, clock, span } from './ui'
 
 interface Day {
@@ -58,6 +59,12 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
         <p className="quiet">{p.skills.join(' · ')} · {booked} booked ahead · now {clock(day.now_min)}</p>
       </div>
 
+      <SlotDial now={day.now_min} big={clock(day.now_min)} small={`${booked} booked ahead`} label={`${p.name}'s day: ${booked} booked ahead`}
+        segs={day.slots.map((s) => ({
+          start: s.start_min, minutes: s.minutes, past: s.start_min + s.minutes <= day.now_min,
+          kind: s.refilled ? 'refilled' : s.status === 'free' ? 'open' : s.status === 'blocked' ? 'lapsed' : p.present ? 'booked' : 'risk',
+        }))} />
+
       <div className={`presence-card ${p.present ? 'is-in' : 'is-out'}`}>
         <p className="overline">Today</p>
         <p className="presence-state">{p.present ? 'You are in' : 'You are out'}</p>
@@ -81,8 +88,8 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
         <ol className="rows">
           {day.slots.map((s) => (
             <li key={s.id} className={`my-slot ${s.start_min + s.minutes <= day.now_min ? 'is-past' : ''}`}>
-              <span className="mono">{span(s.start_min, s.minutes)}</span>
-              <span>{s.status === 'booked' ? `${s.customer} · ${s.service}` : s.status === 'blocked' ? 'Held (you are out)' : 'Open gap'}</span>
+              <span className="mono" title={span(s.start_min, s.minutes)}>{clock(s.start_min)}</span>
+              <span className="my-slot-main"><strong>{s.status === 'booked' ? s.customer : s.status === 'blocked' ? 'Held, you are out' : 'Open gap'}</strong><small>{s.service ? `${s.service} · ` : ''}{s.minutes} min</small></span>
               <span className={`tag ${s.refilled ? 'is-act' : s.status === 'free' ? 'is-beat' : ''}`}>{s.refilled ? 'Refilled' : s.status === 'booked' ? 'Booked' : s.status === 'free' ? 'Open' : 'Held'}</span>
             </li>
           ))}

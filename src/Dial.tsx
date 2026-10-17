@@ -93,15 +93,12 @@ export function SubDial({ pct, label, sub, out }: { pct: number; label: string; 
   )
 }
 
-/** One appointment on the day's watch face: its arc on the 10:00 to 20:00 ring, the demo clock's hand, and the time in the middle. */
-export function SlotDial({ start, minutes, now, kind, big, small, label }: {
-  start: number; minutes: number; now?: number; kind: 'open' | 'refilled' | 'booked' | 'risk' | 'lapsed'; big: string; small: string; label: string
-}) {
+/** Appointments on one ring of the day's watch face: each arc on the 10:00 to 20:00 ring, the demo clock's hand, and the time in the middle. */
+type Seg = { start: number; minutes: number; kind: 'open' | 'refilled' | 'booked' | 'risk' | 'lapsed'; past?: boolean }
+export function SlotDial({ segs, now, big, small, label }: { segs: Seg[]; now?: number; big: string; small: string; label: string }) {
   const c = 100
   const r = 76
   const hours = Array.from({ length: 11 }, (_, i) => DAY_START + i * 60)
-  const a1 = ang(start) + 0.8
-  const a2 = Math.max(a1 + 1, ang(start + minutes) - 0.8)
   const showNow = now != null && now >= DAY_START && now <= DAY_END
   return (
     <svg className="dial slotdial" viewBox="0 0 200 200" role="img" aria-label={label}>
@@ -120,7 +117,10 @@ export function SlotDial({ start, minutes, now, kind, big, small, label }: {
         )
       })}
       <path className="dial-track" d={arc(r, -SPAN / 2, SPAN / 2, c)} />
-      <path className={`dial-seg is-${kind}`} d={arc(r, a1, a2, c)} pathLength={100} />
+      {segs.map((g) => {
+        const a1 = ang(g.start) + 0.8
+        return <path key={g.start} className={`dial-seg is-${g.kind} ${g.past ? 'is-past' : ''}`} d={arc(r, a1, Math.max(a1 + 1, ang(g.start + g.minutes) - 0.8), c)} pathLength={100} />
+      })}
       {showNow && (() => {
         const [x1, y1] = pt(r - 12, ang(now), c)
         const [x2, y2] = pt(r + 12, ang(now), c)
