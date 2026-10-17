@@ -71,7 +71,7 @@ export function Overview({ book }: { book: Book }) {
             <li><i className="is-beat" />Still open, can be filled<b className="mono"><Num value={f.openValue} format={money} /></b></li>
             <li><i className="is-lost" />Passed unfilled<b className="mono"><Num value={n.lost} format={money} /></b></li>
           </ul>
-          <p className="faint">{f.refilled} of {plural(n.cancelled, 'cancellation')} refilled · {n.late} late</p>
+          <p className="faint">{f.refilled} of {plural(n.openings, 'opening')} refilled · {plural(n.cancelled, 'cancellation')} recorded today, {n.late} late</p>
         </div>
         <div className="ov-dials">
           <p className="overline">Share of each shift booked</p>
@@ -127,6 +127,9 @@ function counts(st: State) {
   const moved = ev('MOVED')
   return {
     lost: st.slots.filter((s) => s.status === 'free' && s.start_min < now && cancelled.has(s.id)).reduce((n, s) => n + (s.price_inr ?? 0), 0),
+    // Every slot that was ever open today: recorded cancellations plus gaps that opened before the day began.
+    // Refills are counted out of this, so the ratio can never pass 100%.
+    openings: new Set([...cancelled, ...st.slots.filter((s) => s.refilled || s.status === 'free').map((s) => s.id)]).size,
     cancelled: cancelled.size, late: ev('CANCELLED').filter((e) => e.code === 'LATE').length,
     sent: st.offers.length, accepted: o('accepted'), declined: o('declined'), expired: o('expired'), lostRace: o('waitlisted'), revoked: o('revoked'),
     yes: consent(true), no: consent(false), unknown: consent(null),
