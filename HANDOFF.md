@@ -1,12 +1,106 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-You are picking up a live hackathon build mid-flight. The owner (Dhruv, GitHub `sirgreaseball`) switches Claude accounts when one runs out of usage. You have no chat history; this file is the history. Read it fully, then act. Do not re-ask what is answered here.
+> **START HERE.** State at 18 Oct 2026, ~01:20 IST. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
-Last updated: 18 Oct 2026, ~01:10 IST. v4 revamp in progress (section 5, item 0). Done: chronograph theme (Satoshi + Clash Display, lime/amber/coral, grain), Day Dial on Home and on Front desk Today (`src/Dial.tsx`), magnetic primary buttons, one clock on phones. #7 fixed; PRs #5 (Vedanth: DEMO_SCRIPT, KNOWN_LIMITS, SETUP_CHECK), #6 (Chirag: new prices, 3 more waitlist clients, docs/SHOCKS.md) and #8 (Parth: 12 scenarios) merged; `npm test` = 51 passing. Demo prices changed (hair spa ₹1,600); the MBA explainer PDF was updated to match. Existing demo days keep old data until reset. Next: restyle Owner pages and client/staff phone pages to the new type scale (Clash Display headlines already apply via h1/.phone-h), verify light theme and 375px on every page, refresh MBA explainer screenshots if used, then splash page later (separate route).
+## 0. The short version
+
+### 0.1 What this is
+**Refill** is an appointment-recovery app for the Fynd × NMIMS Hyderabad hackathon, case **C29 Appointment Recovery Desk**. When a client cancels, Refill offers the freed slot to the next waiting client who fits it and said yes to messages. The first to accept gets it. It never double-books and always explains why. The demo business is a salon (Kesar Salon, Jubilee Hills), but the wording is business-neutral (staff, clients).
+
+- Live: https://fillthechair.vercel.app (every push to `main` deploys in about 1 minute).
+- Repo: https://github.com/sirgreaseball/refill (public). Local: `Z:\claude\refill`.
+- Database: Supabase project `mbvxzuuuuzgpmsjggblo`.
+- **Hard end: 12 PM, 18 Oct 2026.** A market shock lands at 9 AM. Final pitch: 4 min demo + 3 min Q&A.
+
+### 0.2 What is done (all live and tested)
+- **v1 to v2:** the rules engine, the database guarantees (one booking per slot, consent checked at booking, rate limits), four roles proven by private keys (owner, front desk, staff, client), staff absence, working hours, rescheduling (desk picks a time, or the client gets a link and picks), owner rules, and the evidence log. `npm run dbtest` gives 20/20; `npm run race` passes.
+- **v3 (17 Oct night):** information architecture rebuilt with one dashboard per role. Home is the product's own home screen, not a splash. Front desk: Today, Waitlist, Activity. Owner: Overview, Team, Rules. Every appointment action lives in one sheet. The dock is per role.
+- **v3.1:** motion layer. View transitions, ambient glow, spotlight, staggered reveals, spring press, sliding dock pill, drag-to-dismiss sheet, count-up numbers, refill sweep.
+- **v4 (in progress, 18 Oct ~01:00):** the **chronograph** design language (section 0.3). Theme tokens, fonts and grain are done. The **Day Dial** is on Home and Front desk Today. Magnetic primary buttons are done.
+- **Fixes:** issue #7 (consent copy: clients who decline messages are told they will not get offers). The Modal no longer steals focus on every poll. Polls skip unchanged state.
+- **Teammate PRs merged:**
+  - #5 Vedanth: `docs/DEMO_SCRIPT.md`, `docs/KNOWN_LIMITS.md`, `docs/SETUP_CHECK.md`.
+  - #6 Chirag: new prices (hair spa ₹1,600), 3 more waitlist clients, `docs/SHOCKS.md`.
+  - #8 Parth: 12 scenarios in `tests/scenarios.json`.
+  - `npm test` = **51 passing**.
+- **Documents:**
+  - `docs/ops/Refill-operational-check-2026-10-17.pdf` (technical status).
+  - `docs/business/Refill-explained-simply.pdf` (plain-language explainer for the MBA pitch, matches Chirag's prices).
+  - `docs/TEAM_TASKS.md` (paste-ready teammate messages; Dhruv sends them).
+
+### 0.3 The design language: LOCKED. Build everything inside it.
+Dhruv's standing instruction: **do not stray from this design language.** Do not add anything that does not fit the flow. You have full creative freedom *inside* it: make your own decisions without asking, and make it feel premium (Awwwards level, Apple-calm, never generic AI-SaaS). Whatever you build, build it from these pieces.
+
+- **Concept: the chronograph.** The day is a watch face. A precision instrument with night-shift calm. Dark-first; the light theme (`[data-theme='light']`) is tuned by hand, never inverted.
+- **Tokens** (`src/styles.css` `:root`):
+  - Surfaces: canvas `#0a0a0c`, surface `#131316`, surface-2 `#18181c`, surface-3 `#222228`.
+  - Ink: `#f4f1ea` (warm white), ink-2 `#a9a59c`, ink-3 `#6f6c66`.
+  - Lines: warm white at 8% and 14%.
+- **Colour has meaning; never use it as decoration:**
+  - `--act` lime `#c6f24e`: you can act; also means refilled.
+  - `--beat` amber `#ffb547`: an open gap (it pulses).
+  - `--danger` coral `#ff5d4d`: someone needs moving, or a staff member is out.
+- **Type: Satoshi** (UI and body) + **Clash Display** (h1, big numbers, `.stat-v`, `.phone-h`, `.lab-title`, sheet time) + JetBrains Mono (overlines, times, codes). Fontshare CSS is in `index.html`; `vercel.json` CSP allows Fontshare. No other fonts.
+- **Shape:** concentric radius 20 / 12 / 8. White-on-dark groups sit on the canvas. Glass only on things that float: the bar, the dock, sheets, menus. Film grain at about 4%. A faint inset top highlight on raised surfaces.
+- **Centerpiece:** the **Day Dial** (`src/Dial.tsx`). 10:00 to 20:00 clockwise over 300 degrees, one ring per staff member, arcs per appointment. Amber gaps pulse, lime refills draw in, coral needs moving, and a hand marks the demo clock. Every arc opens its appointment.
+- **Motion** (`src/motion.tsx`, `src/motion.css`):
+  - View transitions; the bar and dock persist.
+  - `Glow` follows the day's mood (lime clear, amber gaps, coral risk).
+  - `.spot` pointer spotlight.
+  - Staggered `rise` on `.stack`, `.bento`, `.apps`.
+  - Springs `--spring` and `--spring-bounce`; `Num` count-up; magnetic `.btn.is-primary` and `.role-pill`.
+  - Dock sliding pill; drag-to-dismiss sheet on phones; refill sweep.
+  - Everything off under reduced motion.
+- **Layout patterns to reuse:**
+  - `.page-head` (overline + Clash h1 + lede).
+  - `.stack` of `.group` cards; `.stats` / `.stat`.
+  - Home `.bento` of `.tile`; `.sheet` for item actions.
+  - `.dock` per role; `.queue` / `.q-item`; `.chips`; `.seg`; `.tag` / `.code`.
+  - `.btn` + `.is-primary` / `.is-quiet` / `.is-danger`.
+- **Never:**
+  - New accent colours, extra fonts or new radii.
+  - Tailwind, component kits or heavy animation libraries.
+  - Gradient-mesh heroes, emoji icons, three-equal-card grids or fake numbers.
+  - Turning Home into a marketing splash. A separate splash route with Lenis + GSAP scroll work may come later, only if Dhruv asks.
+- After shipping a look change, add or refresh the fingerprint line in `.claude/skills/flagship-feel/SKILL.md`'s appendix.
+
+### 0.4 Check the state first (2 minutes)
+```
+cd Z:\claude\refill
+git pull
+npm ci          # stop any running dev server first (EPERM otherwise)
+npm test        # expect 51 passing
+npx tsc -b && npx vite build
+npm run dbtest  # expect 20/20 against the live database
+```
+Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the browser preview to check at 1280 px and 375 px, in dark and light. Note: the preview pane pauses CSS animations and `requestAnimationFrame` while hidden. Take a second screenshot before deciding an animation is stuck.
+
+### 0.5 What to do next, in order
+1. **Finish v4 on every page,** in the locked language:
+   - Owner (Overview, Team, Rules), Waitlist, Activity.
+   - Client pages: `Join.tsx`, `Me.tsx`, `Offer.tsx`, `Move.tsx`.
+   - `StaffView.tsx` and `Lab.tsx`.
+
+   Most already inherit the tokens. Check each at 1280 and 375 px, dark and light. Fix crowding, raise the craft (type scale, spacing, motion), and keep every feature and database call unchanged. Commit and push per page.
+2. **Market-shock readiness (9 AM):** `docs/SHOCKS.md` has Chirag's click paths for late cancel, staff absence, duration change and consent withdrawal. Run each on the live site after the UI changes; fix anything that broke.
+3. **Demo script:** align `docs/DEMO_SCRIPT.md` (Vedanth) with the v4 UI. Start on Home with the Day Dial, mark a staff member out, reschedule, fill an amber gap, then show Owner and Proof (`#/lab`).
+4. **Docs:** `public/guide/mba.html` and `public/guide/engineering.html` still describe v1 screens. Refresh them, and the README screenshots in `docs/screens`, once the UI settles.
+5. **Teammates:** keep `docs/TEAM_TASKS.md` current. Parth is testing on a real Android phone (Chrome + Firefox) and filing issues; check new GitHub issues and fix real bugs.
+6. **Video:** OBS recording, edited with the Premiere Pro MCP (`verify_premiere_connection` first).
+7. Refresh `docs/ops` operational check PDF before submission if Dhruv asks (re-run the checks; headless Edge `--print-to-pdf`).
+
+### 0.6 Tools on the new account
+- **Same PC, Claude Code:** open `Z:\claude\refill`. `CLAUDE.md` and `.claude/skills/` load by themselves.
+  - Git push works through the PC's credential manager.
+  - `gh` CLI is logged in as `sirgreaseball`. In bash it may not be on PATH; use PowerShell `& "C:\Program Files\GitHub CLI\gh.exe"`.
+  - Vercel deploys on push; no connector needed.
+- **Supabase connector:** needed only to change the database (new migrations). Without it, give Dhruv the SQL to paste into the Supabase dashboard's SQL editor.
+- **Vercel connector:** optional, for deploy logs.
+- **Merging PRs:** auto-mode refuses admin merges without review. Ask Dhruv to click Merge, then `git pull --rebase` before pushing.
 
 ---
 
-## 1. Where things are
+## 1. Where things are (reference; section 0 wins if anything disagrees)
 
 | What | Where |
 |---|---|
