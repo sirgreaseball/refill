@@ -1,7 +1,7 @@
 // The dial's scenes. Each chapter is one still state of the dial: the reduced-motion page shows
 // the stills, and the scroll timeline holds each one while its copy is read, moving only between.
 import gsap from 'gsap'
-import { eligible, harsh, inr, keeper, manav, moveTo, offered, stake, toMove, waitlist, winner } from './facts'
+import { eligible, excluded, harsh, inr, keeper, manav, moveTo, offered, stake, toMove, waitlist, winner } from './facts'
 import { ringOf, segD } from './geo'
 
 export type Scene = 'hero' | 'gap' | 'fits' | 'race' | 'out'
@@ -40,6 +40,7 @@ export function still(root: Element, scene: Scene) {
   set(`[data-mark="${keeper.id}"] [data-lit]`, { opacity: n === 3 ? 0 : n === 2 ? 1 : 0 })
   set('[data-offer]', { strokeDashoffset: n === 2 ? 0 : 100 })
   set('[data-result]', { opacity: n === 3 ? 1 : 0 })
+  set('[data-ph-result]', { opacity: n === 3 ? 1 : 0 })
   set('[data-out], [data-ov="danger"]', { opacity: n === 4 ? 1 : 0 })
   set(`${OUT} .sd-name:not(.is-out)`, { opacity: n === 4 ? 0 : 1 })
   if (n === 4) set(`${M} .sd-seg, ${M} [data-ov="danger"]`, { opacity: 0 })
@@ -174,6 +175,40 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
     .to(coral, { opacity: 0, duration: 0.45 }, 7.12)
     .fromTo(count, { v: toMove.length }, { v: toMove.length - 1, duration: 0.3, onUpdate: () => { left.textContent = String(Math.round(count.v)) } }, 7.3)
   beatOut('out', 8.25)
+
+  // The evidence log writes itself as the story plays, newest at the bottom, a few lines in view.
+  const logs = $('[data-log]')
+  const list = stage.querySelector('.st-ledger ol')
+  const LH = parseFloat(getComputedStyle(stage).getPropertyValue('--lh')) || 19
+  const VIS = parseInt(getComputedStyle(stage).getPropertyValue('--vis')) || 5
+  const qIndex = (id: string) => waitlist.findIndex((e) => e.id === id)
+  const when = [
+    0.6,
+    ...excluded.map((x) => 2.65 + qIndex(x.entry.id) * 0.045),
+    ...offered.map((_, j) => 3.5 + j * 0.08),
+    5.3, 5.42, 6.55, 7.3, 7.45,
+  ]
+  tl.fromTo($('.st-ledger'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25 }, 0.5)
+  gsap.set(logs, { opacity: 0 })
+  // Lines feed in whole, as in a real log; the newest always sits on the bottom row and older ones
+  // rise and fade under the mask. Scroll back and they un-feed.
+  if (list) gsap.set(list, { y: (VIS - 1) * LH })
+  when.forEach((t, n) => {
+    if (!logs[n]) return
+    tl.set(logs[n], { opacity: 1 }, t)
+    if (list && n > 0) tl.set(list, { y: (VIS - 1 - n) * LH }, t)
+  })
+  tl.to($('.st-ledger'), { autoAlpha: 0, duration: 0.3 }, 8.25)
+
+  // The race on two phones: both tap Book at the instant the taps leave the dial, then each
+  // shows its own outcome as the slot refills.
+  const btns = $('[data-ph-btn]')
+  tl.fromTo($('[data-phone]'), { opacity: 0, y: 26 }, { opacity: 1, y: 0, stagger: 0.08, duration: 0.4, ease: 'power3.out' }, 4.5)
+    .to(btns, { scale: 0.92, duration: 0.05, ease: 'power2.in' }, 4.74)
+    .to(btns, { scale: 1, duration: 0.15, ease: 'power2.out' }, 4.79)
+    .fromTo($('[data-ph-tap]'), { scale: 0, opacity: 0.55 }, { scale: 5, opacity: 0, duration: 0.35, ease: 'power2.out', immediateRender: false }, 4.74)
+    .fromTo($('[data-ph-result]'), { opacity: 0 }, { opacity: 1, duration: 0.25, immediateRender: false }, 5.28)
+
   // The story leaves the way it came: the stage closes back into its inset frame.
   tl.to($('.st-plate'), { clipPath: () => getComputedStyle(stage).getPropertyValue('--plate-from') || 'inset(0px round 0px)', duration: 0.35, ease: 'power2.inOut' }, 8.25)
   tl.set({}, {}, LENGTH)

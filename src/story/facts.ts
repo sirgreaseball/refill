@@ -3,7 +3,12 @@
 // is made by the rules engine (src/engine.ts), so the story stays true if the data changes.
 import { dayPayload } from '../api'
 import { demoDay } from '../day'
+import { REASON_TEXT } from '../desk/common'
 import { candidates, notice, race, toMin, type Entry, type Reason, type Slot } from '../engine'
+import { lead } from '../ui'
+
+export const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`
+export const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
 
 const day = demoDay()
 const payload = dayPayload()
@@ -89,6 +94,24 @@ export const moveTo = must(staff.find((p) => p.present && p.id !== manav.staffId
 export const booked = slots.filter((s) => s.status === 'booked').length
 export const open = slots.filter((s) => s.status === 'free' && s.startMin >= NOW)
 
+// ---------------------------------------------------------------- the evidence log
+
+/**
+ * The story as the desk's own evidence log: the event codes and wording of sentence() in
+ * src/desk/common.tsx, with the facts above. Booking numbers are left out; the story has none.
+ */
+const at = hhmm(harsh.startMin)
+export const LOG = {
+  cancel: { code: 'CANCELLED', text: `${harsh.customer} cancelled ${at}: ${late ? 'late, ' : ''}${lead(leadMin)} notice` },
+  skipped: excluded.map((x) => ({ id: x.entry.id, code: 'OFFER_SKIPPED', text: `${x.entry.name} not offered ${at}: ${REASON_TEXT[x.reason]}` })),
+  sent: offered.map((e) => ({ id: e.id, code: 'OFFER_SENT', text: `Offer sent to ${e.name} for ${at}` })),
+  booked: { code: 'BOOKED', text: `${winner.name} booked ${at}: ${inr(recovered)} recovered` },
+  retained: { code: 'WAITLIST_RETAINED', text: `${keeper.name} tapped a moment late: keeps their queue place` },
+  absent: { code: 'STAFF_ABSENT', text: `${arjun.name} is out today: ${toMove.length} booked clients to move` },
+  moved: { code: 'MOVED', text: `${manav.customer} moved from ${hhmm(manav.startMin)} with ${arjun.name} to ${hhmm(manav.startMin)} with ${moveTo.name} (by the desk)` },
+  link: { code: 'MOVE_LINK_SENT', text: `${kunal.customer} sent a link to pick a new time (staff member out)` },
+}
+
 // ---------------------------------------------------------------- 5. proof (each names the command that produces it)
 
 export const PROOF = [
@@ -102,5 +125,3 @@ export const PROOF = [
   { n: 8, of: 1, label: 'taps at once, one booking', cmd: 'npm run race' },
 ] as const
 
-export const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`
-export const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
