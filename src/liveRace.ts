@@ -18,7 +18,7 @@ type Sent = { results: { offer: string }[] }
 
 export async function liveRace(n = 8): Promise<RaceReport> {
   const racers = Array.from({ length: n }, (_, i) => ({ id: `W${i + 1}`, name: `Racer ${i + 1}`, minutes: 60, skill: 'hair', consent: true }))
-  const ws = await rpc<string>('create_workspace', {
+  const { id: ws, owner_key: key } = await rpc<{ id: string; owner_key: string }>('create_workspace', {
     p_day: {
       salon: 'Race test', now_min: 600,
       slots: [
@@ -28,7 +28,7 @@ export async function liveRace(n = 8): Promise<RaceReport> {
       waitlist: [...racers, { id: 'WX', name: 'Replies STOP', minutes: 30, skill: 'hair', consent: true }],
     },
   })
-  const sent = await rpc<Sent>('send_offers', { p_ws: ws, p_slot: 'S1', p_entries: racers.map((r) => r.id) })
+  const sent = await rpc<Sent>('send_offers', { p_ws: ws, p_key: key, p_slot: 'S1', p_entries: racers.map((r) => r.id) })
   const offers = sent.results.map((r) => r.offer)
 
   const t0 = performance.now()
@@ -40,11 +40,11 @@ export async function liveRace(n = 8): Promise<RaceReport> {
   const booking = confirmed[0]?.booking ?? null
   const again = await rpc<Tap>('accept_offer', { p_offer: offers[outcomes.findIndex((o) => o.outcome === 'CONFIRMED')] })
 
-  const wx = await rpc<Sent>('send_offers', { p_ws: ws, p_slot: 'S2', p_entries: ['WX'] })
+  const wx = await rpc<Sent>('send_offers', { p_ws: ws, p_key: key, p_slot: 'S2', p_entries: ['WX'] })
   await rpc('stop_messages', { p_offer: wx.results[0].offer })
   const afterStop = await rpc<Tap>('accept_offer', { p_offer: wx.results[0].offer })
 
-  const state = await rpc<{ bookings: { slot_id: string; status: string }[] }>('get_state', { p_ws: ws })
+  const state = await rpc<{ bookings: { slot_id: string; status: string }[] }>('get_state', { p_ws: ws, p_key: key })
   const live = (slot: string) =>
     state.bookings.filter((b) => b.slot_id === slot && b.status === 'confirmed').length
 

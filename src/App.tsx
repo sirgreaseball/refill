@@ -1,10 +1,15 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { useBook } from './api'
+import { ownerLink, readDesk, useBook } from './api'
 import Desk from './Desk'
 import Offer from './Offer'
 import { Icon, Mark, Modal, Qr, clock, copy } from './ui'
 
 const Lab = lazy(() => import('./Lab'))
+const Team = lazy(() => import('./Team'))
+const StaffView = lazy(() => import('./StaffView'))
+const Join = lazy(() => import('./Join'))
+const Me = lazy(() => import('./Me'))
+const phoneWait = <main className="phone"><p className="quiet">Opening…</p></main>
 
 function useRoute() {
   const get = () => location.hash.replace(/^#/, '') || '/'
@@ -17,10 +22,27 @@ function useRoute() {
   return route
 }
 
+/**
+ * Routes, by role:
+ *   #/ desk, #/team, #/lab           the owner (key in this browser)
+ *   #/staff/<id>                     owner previewing a stylist's view
+ *   #/s/<ws>/<staff>/<key>           a stylist's own link
+ *   #/join/<code>, #/me/<token>      a customer signing up, then their own page
+ *   #/o/<offer>                      a customer's offer
+ */
 export default function App() {
   const route = useRoute()
   const offer = /^\/o\/([0-9a-f-]{36})$/i.exec(route)
   if (offer) return <Offer id={offer[1]} />
+  const stylist = /^\/s\/([0-9a-f-]{36})\/([A-Za-z0-9_-]+)\/([0-9a-f]{32})$/i.exec(route)
+  if (stylist) return <Suspense fallback={phoneWait}><StaffView ws={stylist[1]} staff={stylist[2]} keyStr={stylist[3]} /></Suspense>
+  const preview = /^\/staff\/([A-Za-z0-9_-]+)$/.exec(route)
+  const desk = readDesk()
+  if (preview && desk) return <Suspense fallback={phoneWait}><StaffView ws={desk.id} staff={preview[1]} keyStr={desk.key} preview /></Suspense>
+  const join = /^\/join\/([0-9a-f]{8})$/i.exec(route)
+  if (join) return <Suspense fallback={phoneWait}><Join code={join[1]} /></Suspense>
+  const me = /^\/me\/([0-9a-f]{32})$/i.exec(route)
+  if (me) return <Suspense fallback={phoneWait}><Me token={me[1]} /></Suspense>
   return <Shell route={route} />
 }
 
@@ -48,7 +70,10 @@ function Shell({ route }: { route: string }) {
       <Header route={route} book={book} />
       {book.offline && <p className="banner" role="status">Offline. Showing the last saved state; changes resume when the connection is back.</p>}
       <main className="page">
-        {route === '/lab' ? <Suspense fallback={<Loading phase="lab" />}><Lab /></Suspense> : book.state ? <Desk book={book} /> : <Loading phase={book.phase} />}
+        {route === '/lab' ? <Suspense fallback={<Loading phase="lab" />}><Lab /></Suspense>
+          : !book.state ? <Loading phase={book.phase} />
+            : route === '/team' ? <Suspense fallback={<Loading phase="team" />}><Team book={book} /></Suspense>
+              : <Desk book={book} />}
       </main>
     </div>
   )
@@ -95,6 +120,7 @@ function Entry({ fonts, phase, onEnter }: { fonts: boolean; phase: string; onEnt
 }
 
 type InstallEvent = Event & { prompt: () => Promise<void> }
+const PAGES = [['#/', 'Desk'], ['#/team', 'Team'], ['#/lab', 'Lab']] as const
 
 function Header({ route, book }: { route: string; book: ReturnType<typeof useBook> }) {
   const [menu, setMenu] = useState(false)
@@ -137,8 +163,10 @@ function Header({ route, book }: { route: string; book: ReturnType<typeof useBoo
       {ws && <span className="salon">{ws.salon}<small>synthetic demo day</small></span>}
       {route !== '/lab' && ws && <ClockControl now={ws.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />}
       <nav className="top-nav" aria-label="Pages">
-        <a href="#/" className={route !== '/lab' ? 'is-on' : ''} aria-current={route !== '/lab' ? 'page' : undefined}>Desk</a>
-        <a href="#/lab" className={route === '/lab' ? 'is-on' : ''} aria-current={route === '/lab' ? 'page' : undefined}>Lab</a>
+        {PAGES.map(([href, label]) => {
+          const on = href === '#/' ? !['/lab', '/team'].includes(route) : route === href.slice(1)
+          return <a key={href} href={href} className={on ? 'is-on' : ''} aria-current={on ? 'page' : undefined}>{label}</a>
+        })}
       </nav>
       <div className="menu-wrap" ref={menuRef}>
         <button className="icon-btn" onClick={() => setMenu((m) => !m)} aria-expanded={menu} aria-label="More"><Icon name="more" /></button>
@@ -158,7 +186,7 @@ function Header({ route, book }: { route: string; book: ReturnType<typeof useBoo
           </div>
         )}
       </div>
-      {qr && <Modal title="This desk on a phone" onClose={() => setQr(false)}><div className="qr-one"><Qr text={location.href} size={208} /><p className="quiet">Same day, same data. Changes on one screen show on the other.</p></div></Modal>}
+      {qr && <Modal title="This desk on a phone" onClose={() => setQr(false)}><div className="qr-one"><Qr text={book.desk ? ownerLink(book.desk) : location.href} size={208} /><p className="quiet">Same day, same data. This code carries your owner key, so keep it to yourself.</p></div></Modal>}
     </header>
   )
 }

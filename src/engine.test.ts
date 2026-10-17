@@ -45,6 +45,28 @@ describe.each([
   })
 })
 
+describe('v2: staff-aware matching', () => {
+  const day = demoDay()
+  const input = { slots: day.slots, waitlist: day.waitlist, staff: day.staff }
+  test('a freed slot fits more people when the stylist can do more (v2 >= v1)', () => {
+    const slot = { ...day.slots.find((s) => s.id === 'R5')! } // Riya does hair and skin
+    const v1 = candidates(slot, day.waitlist).eligible.map((e) => e.id)
+    const v2 = candidates(slot, day.waitlist, day.staff.find((p) => p.id === slot.staff)).eligible.map((e) => e.id)
+    expect(v2).toEqual(expect.arrayContaining(v1))
+    expect(v2.length).toBeGreaterThan(v1.length) // Rhea's 45-min facial now fits Riya's 60-min gap
+  })
+  test('an absent stylist takes every free slot of theirs off the table', () => {
+    const absent = { ...input, staff: day.staff.map((p) => (p.id === 'ST1' ? { ...p, present: false } : p)) }
+    const r = matchAll(absent)
+    expect(r.perSlot.R5.staffAbsent).toBe(true)
+    expect(r.matches.some(([, s]) => s === 'R5')).toBe(false)
+  })
+  test('v1 rules are still available for the before/after comparison', () => {
+    const v1 = matchAll(input, { staffAware: false })
+    expect(v1.perSlot.R5.staffAbsent).toBeUndefined()
+  })
+})
+
 describe('time policy', () => {
   test('a 20-minute notice is a late cancellation', () => expect(notice(toMin('12:00'), toMin('11:40'))).toBe('LATE'))
   test('three hours notice is normal', () => expect(notice(toMin('15:00'), toMin('12:00'))).toBe('NORMAL'))
