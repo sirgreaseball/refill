@@ -44,17 +44,20 @@ export default function Activity({ book }: { book: Book }) {
         </span>
       </header>
       <div className="chips" role="group" aria-label="Filter">
-        {FILTERS.map(([label], i) => <button key={label} className={i === f ? 'is-on' : ''} aria-pressed={i === f} onClick={() => setF(i)}>{label}</button>)}
+        {FILTERS.map(([label, keep], i) => <button key={label} className={i === f ? 'is-on' : ''} aria-pressed={i === f} onClick={() => setF(i)}>{label}<span className="count">{st.events.filter(keep).length}</span></button>)}
       </div>
       <section className="group">
         <ol className="rows ev">
-          {shown.map((e) => (
-            <li key={e.id}>
+          {shown.map((e) => {
+            const tone = e.kind === 'BOOKED' ? 'is-act' : e.kind === 'CANCELLED' ? 'is-beat' : e.kind === 'STAFF_ABSENT' || e.code === 'NO_CONSENT' ? 'is-risk' : ''
+            return (
+            <li key={e.id} className={tone}>
               <span className="ev-at">{stamp(e.at)}</span>
-              <span className={`code ${e.kind === 'BOOKED' ? 'is-act' : e.kind === 'CANCELLED' ? 'is-beat' : e.kind === 'STAFF_ABSENT' || e.code === 'NO_CONSENT' ? 'is-risk' : ''}`}>{chip(e)}</span>
+              <span className={`code ${tone}`}>{chip(e)}</span>
               <span className="ev-text">{sentence(e, st)}</span>
             </li>
-          ))}
+            )
+          })}
           {shown.length === 0 && <li className="quiet" style={{ padding: '12px 0' }}>Nothing yet.</li>}
         </ol>
         {rows.length > 50 && !all && <button className="btn is-quiet" onClick={() => setAll(true)}>Show all {rows.length}</button>}
