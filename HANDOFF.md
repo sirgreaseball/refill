@@ -117,6 +117,13 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 - **Client pages** say "synthetic demo" only on a demo (`kind` from `join_info`, `get_my_entry`, `get_offer`, `get_move`).
 - Tested end to end in the browser on 18 Oct: setup, booking, open time, staff add/remove/refusal, tasks, services, history rollover (backdated the test business's `day` by SQL), client join, places, demo switch back. All checks pass: tests 51/51, dbtest 25/25, race 3/3. Test business `ffeb1f31-...` ("Bright Minds Tuition") is synthetic and can stay.
 
+**v5.1 accounts (18 Oct ~01:30, pushed):**
+- The real product needs an account. Live mode, signed out, opens `src/SignIn.tsx`: create an account or sign in with email and password. This is Supabase Auth called with plain fetch (`src/auth.ts`); the session is in `refill.session` and `rpc.ts` sends it as a Bearer token.
+- After the first sign-in, Welcome asks "I run a business" or "I book appointments" (`set_profile`). Owners go to Setup, then their dashboard (`my_businesses`; the account owns the business through `workspaces.owner_user`, and `is_owner` / `role_of` accept the account or the key). Clients go to `src/ClientHome.tsx` (`my_entries`: every place joined while signed in, open offers, bookings, past visits). Sign out is in the ⋯ menu.
+- **Needs Dhruv:** Supabase → Authentication → Sign In / Providers → Email → turn off "Confirm email". Until then sign-up asks for email confirmation and `npm run dbtest` reports 1 FAIL (the throwaway-account check). Check the setting with GET `/auth/v1/settings` → `mailer_autoconfirm`.
+- Also fixed: the dial's glow clipped shallow arcs flat (filter now `userSpaceOnUse`); the top bar's glass did not blur (moved from `.bar::before` onto `.bar`); theme is one tap in the top bar with Threshold's flood; the calendar has no sideways scrollbar.
+- Note: `src/auth.ts` and a page called `Auth.tsx` clash on Windows (case-insensitive), hence `SignIn.tsx`.
+
 **Known limits (say them honestly if asked):**
 - A live book holds one day: no booking for future dates yet.
 - The live clock moves only while a desk or owner page is open.
