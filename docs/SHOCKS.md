@@ -6,8 +6,8 @@ Four things that go wrong in a real salon day, and the exact clicks to handle ea
 
 ## Before you start
 
-1. Open a **private / incognito window** and go to <https://fillthechair.vercel.app>. A browser with no saved day gets its own new demo day, so you won't touch the day anyone else is using.
-2. Wait until the bottom of the home page says **Live · demo clock 11:15 · synthetic data**.
+1. Open a **private / incognito window** and go to <https://fillthechair.vercel.app>. A fresh browser opens **Set up your business** (the real product). Tap **Try the demo** in the top bar: you get your own new demo day, so you won't touch the day anyone else is using.
+2. Wait until the top bar shows **Demo · Exit** and the home page shows the Day Dial at **11:15**.
 3. Tap **Front desk**. The page header shows **Front desk · 11:15**. Leave the clock at 11:15; every expected result below assumes it.
 4. **Reset between shocks** so each one starts from the same day: tap the role pill (top right) → **Owner** → the **⋯** button → **Reset demo day** → **Tap again to reset the day**, then role pill → **Front desk**.
 
@@ -25,7 +25,7 @@ Prices below are the live app's current prices. Once this PR merges they change 
 
 | # | Click | You should see |
 |---|---|---|
-| 1 | **Schedule** → Kabir's **12:00 Harsh** block (on a phone: the list row **12:00 Harsh · Hair spa · 60 min · Kabir**) | A sheet tagged **Booked**, heading **12:00–13:00**, line **Hair spa · 60 min · Kabir · Harsh** |
+| 1 | On the **Today** card, switch **Dial** to **Calendar**, then tap Kabir's **12:00 Harsh** block (on a phone: the list row **12:00 Harsh · Hair spa · 60 min · Kabir**). On the dial you can also tap Harsh's arc on Kabir's ring. | A sheet tagged **Booked**, heading **12:00–13:00**, line **Hair spa · 60 min · Kabir · Harsh** |
 | 2 | Under **Cancelled?** → **Record a cancellation** | Two buttons: **Yes, Harsh cancelled** and **Keep it** |
 | 3 | **Yes, Harsh cancelled** | Message **Late cancellation (45 min notice). The gap is open to fill.** The tag changes to **Open gap · late cancellation** and the line gains **· ₹1,500**. **Offer it to the waitlist — 6 fit**: Meera, Sameer, Omar, Tanvi, Vikram, Ira (the first three are ticked). **Not offered, and why — 8**. An **Undo the cancellation (Harsh)** button appears. |
 | 4 | **Send 3 offers** | **3 offers sent. First to book gets it.** **Offers out — 3**: Meera, Sameer, Omar, each **Waiting for reply · reply by 11:30** |
@@ -37,7 +37,7 @@ Prices below are the live app's current prices. Once this PR merges they change 
 
 | Rehearsed on | By | Seconds (step 1 → ⏱) | What it actually showed (only where it differs) |
 |---|---|---|---|
-| | | | |
+| 18 Oct 00:55 | Claude (live database, local build of main) | — | As written. Prices are now ₹1,600; booking #135. |
 
 ---
 
@@ -54,13 +54,14 @@ Prices below are the live app's current prices. Once this PR merges they change 
 | 5 | **Kunal: Arjun is out** → **Let Kunal choose** | A **Kunal's link** box with a QR code and the message **Hi Kunal, Arjun can't come in today, so your 14:00 Blow-dry needs a new time. Pick one that suits you here: …**, plus **Copy message** and **Open as Kunal** |
 | 6 | **Open as Kunal** | Kunal's phone view: **Your appointment needs a new time**, **Booked now: 14:00–14:30 · Blow-dry · Arjun (out today)**, a list of times, and **Cancel my appointment instead** |
 | 7 | Tap any time → **Move to … with …** | ⏱ **You're moved**, **Blow-dry at … with …. See you then.** |
-| 8 | Back to the desk; do the same for **Tara** and **Neha** (step 2–4 with any time the list offers) | When all four are moved, **Clients whose staff member is out** reads **0** |
+| 8 | Back to the desk; do the same for **Tara** (step 2–4 with any time the list offers) | Tara moves; **Clients whose staff member is out** drops by one |
+| 9 | **Neha: Arjun is out** → **Pick a new time** | **Nobody who does this service is free later today.** This is correct: her root colour needs 90 minutes and no hair stylist has a free 90-minute window left. Show **Let Neha choose** (she sees the same honest answer and can cancel), or **Record a cancellation**. The count only reaches **0** once Neha is cancelled. |
 
 Nobody else is free at Kunal's, Tara's or Neha's exact time, so expect only later times for them. One question for the MBA team: **Lakshmi** (Arjun, 11:00–13:00, already started at 11:15) is *not* flagged, because the app treats an appointment in progress as already happening. Ask an owner what really happens when a stylist leaves in the middle of one.
 
 | Rehearsed on | By | Seconds: mark out (1) | Seconds: desk move (2 → 4) | Seconds: client's own link (5 → 7) | What it actually showed |
 |---|---|---|---|---|---|
-| | | | | | |
+| 18 Oct 00:55 | Claude | — | — | — | As written up to Tara. Neha has no 90-minute window anywhere, so step 9 replaced the old "reaches 0" line. |
 
 ---
 
@@ -70,8 +71,8 @@ Nobody else is free at Kunal's, Tara's or Neha's exact time, so expect only late
 
 | # | Click | You should see |
 |---|---|---|
-| 1 | **Needs you now** → **Open gap · Hair spa** at 14:30 | Sheet tagged **Open gap**, **14:30–15:30**, **Hair spa · 60 min · Riya · ₹1,500**. **Offer it to the waitlist — 4 fit**: Meera, Zoya, Rhea, Omar |
-| 2 | **Not offered, and why — 10** | ⏱ Leela: **Needs more time · Needs 90 min; the gap is 60 min** `DURATION_TOO_LONG`. Aarav: **Needs more time · Needs 120 min; the gap is 60 min**. The other 8 have other reasons (no permission, different service, not free then). |
+| 1 | **Needs you now** → **Open gap · Hair spa** at 14:30 | Sheet tagged **Open gap**, **14:30–15:30**, **Hair spa · 60 min · Riya · ₹1,600**. **Offer it to the waitlist — 5 fit**: Meera, Zoya, Rhea, Omar, Naina |
+| 2 | **Not offered, and why — 12** | ⏱ Leela: **Needs more time · Needs 90 min; the gap is 60 min** `DURATION_TOO_LONG`. Aarav: **Needs more time · Needs 120 min; the gap is 60 min**. The other 8 have other reasons (no permission, different service, not free then). |
 | 3 | *(optional, shows it with a new client)* Dock → **Waitlist** → **Add someone** → Name **Test Long**, Service **Global colour · 120 min · ₹4,500**, **Yes** → **Add to waitlist** | **Test Long added to the waitlist.** |
 | 4 | Dock → **Today** → the 14:30 gap → **Not offered, and why — 11** | **Test Long · Needs more time · Needs 120 min; the gap is 60 min**. Test Long never appears in the tick list, so they can't be offered the slot by mistake. |
 
@@ -79,7 +80,7 @@ The rules are checked in a fixed order (permission first, then service, then len
 
 | Rehearsed on | By | Seconds (step 1 → ⏱) | Seconds: add + check (3 → 4) | What it actually showed |
 |---|---|---|---|---|
-| | | | | |
+| 18 Oct 00:55 | Claude | — | — | 5 fit, 12 not offered (three waitlist clients were added since). Leela and Aarav: DURATION_TOO_LONG as written. |
 
 ---
 
@@ -101,4 +102,4 @@ Even if Zoya opens her old link again, it can't be booked: the database checks c
 
 | Rehearsed on | By | Seconds: client stop (2 → 3) | Seconds: desk version (7) | What it actually showed |
 |---|---|---|---|---|
-| | | | | |
+| 18 Oct 00:55 | Claude | — | — | As written: Zoya's offer shows Withdrawn, she moves to No permission to message, the Activity log has both lines. | |
