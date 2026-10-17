@@ -64,6 +64,7 @@ export default function Move({ id }: { id: string }) {
 
       {v.state === 'open' && c && (
         <>
+          <div className="phone-lead">
           <div>
             <p className="overline">Hi {v.customer}</p>
             <h1 className="phone-h">{v.reason === 'STAFF_ABSENT' ? 'Your appointment needs a new time' : 'Change your appointment'}</h1>
@@ -78,6 +79,8 @@ export default function Move({ id }: { id: string }) {
               big={clock(c.start_min)} small={`${c.minutes} min · ${c.stylist ?? ''}`} label={`Booked now: ${span(c.start_min, c.minutes)}`} />
             <figcaption><span className="overline">Booked now</span> {span(c.start_min, c.minutes)} · {c.service} · {c.stylist}{c.stylist_present === false ? ' (out today)' : ''}</figcaption>
           </figure>
+          </div>
+          <div className="phone-body">
           <MovePicker options={v.options} busy={busy}
             confirm={(o) => `Move to ${clock(o.start_min)} with ${o.name}`}
             onPick={(o) => act('choose_move', { p_staff: o.staff, p_start: o.start_min })} />
@@ -89,6 +92,7 @@ export default function Move({ id }: { id: string }) {
               <button className="link" onClick={() => setCancelling(false)}>Keep it</button>
             </div>
           ) : <button className="link" onClick={() => setCancelling(true)}>Cancel my appointment instead</button>}
+          </div>
         </>
       )}
 

@@ -66,6 +66,7 @@ export default function Offer({ id }: { id: string }) {
         <span><strong>{v.salon}</strong><small>via Refill</small></span>
       </header>
 
+      <div className="phone-lead">
       <SlotDial segs={[{ start: v.slot.start_min, minutes: v.slot.minutes, kind: v.state === 'OPEN' ? 'open' : v.state === 'CONFIRMED' ? 'refilled' : 'lapsed' }]} now={v.now_min}
         big={clock(v.slot.start_min)} small={`${v.slot.minutes} min${v.slot.staff ? ` · ${v.slot.staff}` : ''}`}
         label={`${when}${v.slot.staff ? ` with ${v.slot.staff}` : ''}: ${v.state === 'OPEN' ? 'open for you' : v.state === 'CONFIRMED' ? 'booked for you' : v.state === 'CANCELLED' ? 'cancelled' : 'no longer yours'}`} />
@@ -74,6 +75,9 @@ export default function Offer({ id }: { id: string }) {
         <p>Hi {first}, a {v.slot.minutes}-minute {v.slot.skill} slot just opened today at <strong>{clock(v.slot.start_min)}</strong>{v.slot.staff ? <> with {v.slot.staff}</> : null}.</p>
         <p>It fits your {v.entry.service ?? 'appointment'} ({v.entry.minutes} min{v.entry.price_inr ? `, ${money(v.entry.price_inr)}` : ''}). Want it?</p>
       </div>}
+      </div>
+
+      <div className="phone-body">
 
       {v.state === 'OPEN' && (
         <div className="phone-acts">
@@ -126,6 +130,8 @@ export default function Offer({ id }: { id: string }) {
       {v.state === 'BOOKED_ELSEWHERE' && (
         <div className="verdict"><h1 className="phone-h">You already have a slot</h1><p>You booked another gap today, so this one goes to the next person.</p></div>
       )}
+
+      </div>
 
       <footer className="phone-foot">
         <p>{consentLine}</p>

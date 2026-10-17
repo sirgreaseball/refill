@@ -706,3 +706,24 @@ button.demo-pill:hover { color: var(--ink); border-color: var(--ink-3); }
   .menu .menu-theme { display: flex !important; }
   .bar .brand { margin-right: 2px; }
 }
+
+/* ---------- Client and staff pages on a wide screen: the same page as on a phone, opened up into
+   two columns. The lead (who, when, the dial) stays in view on the left; the actions and lists
+   run on the right. On a phone both wrappers vanish from the layout, so nothing moves there. */
+.phone-lead, .phone-body { display: contents; }
+.phone-foot a { display: inline-flex; align-items: center; gap: 6px; }
+@media (min-width: 960px) {
+  .phone:has(.phone-lead) {
+    max-width: 1120px; display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); column-gap: clamp(56px, 7vw, 120px);
+    align-items: start; align-content: start; padding-top: 40px; padding-left: var(--gutter); padding-right: var(--gutter);
+  }
+  .phone:has(.phone-lead) > * { grid-column: 1 / -1; }
+  .phone-lead { display: flex; flex-direction: column; gap: 22px; grid-column: 1 !important; position: sticky; top: calc(var(--bar-h) + 24px); min-width: 0; }
+  .phone-body { display: flex; flex-direction: column; gap: 22px; grid-column: 2 !important; min-width: 0; }
+  .phone-lead + .phone-body { padding-top: 6px; }
+  .phone-lead .phone-h { font-size: clamp(40px, 3.6vw, 56px); }
+  .phone-lead .slotdial { max-width: 340px; margin: 8px 0 0; }
+  .phone-lead .dial-fig { margin: 0; }
+  .phone:has(.phone-lead) > .phone-top, .phone:has(.phone-lead) > .phone-foot { margin-top: 0; }
+  .phone:has(.phone-lead) > .phone-foot { padding-top: 28px; border-top: 1px solid var(--line); }
+}

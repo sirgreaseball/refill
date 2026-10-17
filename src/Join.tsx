@@ -122,13 +122,14 @@ export default function Join({ code }: { code: string }) {
           <button className="btn" onClick={() => setMode('book')}>Look at times again</button>
         </div>
       ) : <>
-        <div>
+        <div className="phone-lead">
           <h1 className="phone-h">{mode === 'wait' ? 'Get the next time that fits' : 'Book a time today'}</h1>
           <p className="quiet">{mode === 'wait'
             ? `When someone cancels, ${salon} can offer you their time if it suits your service and your hours.`
             : 'Pick a service and a time. If nothing fits, join the waitlist and get offered the next opening.'}</p>
         </div>
 
+        <div className="phone-body">
         <form className="join" onSubmit={mode === 'wait' ? wait : (e) => { e.preventDefault(); book() }} noValidate>
           <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" maxLength={60} /></label>
           <label>Service
@@ -194,6 +195,7 @@ export default function Join({ code }: { code: string }) {
           </div>
           {mode === 'wait' && <p className="quiet small">We record when and how you answered. You can change it or leave from your page.</p>}
         </form>
+        </div>
       </>}
       {demo && <footer className="phone-foot"><p>Synthetic demo. No real message is ever sent.</p></footer>}
     </main>
