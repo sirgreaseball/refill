@@ -58,13 +58,11 @@ export default function Me({ token }: { token: string }) {
       </header>
 
       {me.state === 'waiting' && (
-        <SlotDial start={Math.max(600, me.free_from ?? 600)} minutes={Math.min(1200, me.free_until ?? 1200) - Math.max(600, me.free_from ?? 600)} now={me.now_min}
-          kind="booked" big={me.free_from != null ? clock(me.free_from) : 'Any'} small={me.free_until != null ? `free until ${clock(Math.min(me.free_until, 1439))}` : me.free_from != null ? 'free from then on' : 'time today'}
+        <SlotDial segs={[{ start: Math.max(600, me.free_from ?? 600), minutes: Math.min(1200, me.free_until ?? 1200) - Math.max(600, me.free_from ?? 600), kind: 'booked' }]} now={me.now_min} big={me.free_from != null ? clock(me.free_from) : 'Any'} small={me.free_until != null ? `free until ${clock(Math.min(me.free_until, 1439))}` : me.free_from != null ? 'free from then on' : 'time today'}
           label={`Number ${me.place} in the queue`} />
       )}
       {me.booking && (me.state === 'booked' || me.state === 'removed') && (
-        <SlotDial start={me.booking.start_min} minutes={me.booking.minutes} now={me.now_min}
-          kind={me.booking.status === 'cancelled' ? 'lapsed' : me.booking.stylist_present === false ? 'risk' : 'refilled'}
+        <SlotDial segs={[{ start: me.booking.start_min, minutes: me.booking.minutes, kind: me.booking.status === 'cancelled' ? 'lapsed' : me.booking.stylist_present === false ? 'risk' : 'refilled' }]} now={me.now_min}
           big={clock(me.booking.start_min)} small={`${me.booking.minutes} min · ${me.booking.stylist ?? ''}`}
           label={`${me.booking.service} at ${span(me.booking.start_min, me.booking.minutes)}`} />
       )}

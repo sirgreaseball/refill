@@ -74,7 +74,7 @@ export default function Move({ id }: { id: string }) {
             </p>
           </div>
           <figure className="dial-fig">
-            <SlotDial start={c.start_min} minutes={c.minutes} now={v.now_min} kind={c.stylist_present === false ? 'risk' : 'booked'}
+            <SlotDial segs={[{ start: c.start_min, minutes: c.minutes, kind: c.stylist_present === false ? 'risk' : 'booked' }]} now={v.now_min}
               big={clock(c.start_min)} small={`${c.minutes} min · ${c.stylist ?? ''}`} label={`Booked now: ${span(c.start_min, c.minutes)}`} />
             <figcaption><span className="overline">Booked now</span> {span(c.start_min, c.minutes)} · {c.service} · {c.stylist}{c.stylist_present === false ? ' (out today)' : ''}</figcaption>
           </figure>
@@ -93,7 +93,7 @@ export default function Move({ id }: { id: string }) {
       )}
 
       {v.state === 'moved' && v.moved_to && (
-        <SlotDial start={v.moved_to.start_min} minutes={v.moved_to.minutes} now={v.now_min} kind="refilled"
+        <SlotDial segs={[{ start: v.moved_to.start_min, minutes: v.moved_to.minutes, kind: 'refilled' }]} now={v.now_min}
           big={clock(v.moved_to.start_min)} small={`${v.moved_to.minutes} min · ${v.moved_to.stylist ?? ''}`} label={`Moved to ${span(v.moved_to.start_min, v.moved_to.minutes)}`} />
       )}
       {v.state === 'moved' && v.moved_to && (

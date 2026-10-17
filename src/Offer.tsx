@@ -63,8 +63,7 @@ export default function Offer({ id }: { id: string }) {
         <span><strong>{v.salon}</strong><small>via Refill</small></span>
       </header>
 
-      <SlotDial start={v.slot.start_min} minutes={v.slot.minutes} now={v.now_min}
-        kind={v.state === 'OPEN' ? 'open' : v.state === 'CONFIRMED' ? 'refilled' : 'lapsed'}
+      <SlotDial segs={[{ start: v.slot.start_min, minutes: v.slot.minutes, kind: v.state === 'OPEN' ? 'open' : v.state === 'CONFIRMED' ? 'refilled' : 'lapsed' }]} now={v.now_min}
         big={clock(v.slot.start_min)} small={`${v.slot.minutes} min${v.slot.staff ? ` · ${v.slot.staff}` : ''}`}
         label={`${when}${v.slot.staff ? ` with ${v.slot.staff}` : ''}: ${v.state === 'OPEN' ? 'open for you' : v.state === 'CONFIRMED' ? 'booked for you' : 'no longer yours'}`} />
 
