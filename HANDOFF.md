@@ -18,6 +18,7 @@ Last updated: 17 Oct 2026, ~22:00 IST, at tag `v2.0.0` (commit after `c9084f8`).
 | Case book PDF | `C:\Users\dhruv\Downloads\Use_Case_Book.pdf` (case C29, Appointment Recovery Desk) |
 | Design reference for the revamp | Trace dashboard: https://tracethis.vercel.app, repo `sirgreaseball/trace`, local `Z:\trace` (v3 "daylight glass") |
 | Skills for this project | `.claude/skills/` in this repo (auto-loaded by Claude Code here) |
+| Ops reports | `docs/ops/` (operational check PDF + HTML source; regenerate with headless Edge `--print-to-pdf` after re-running the checks) |
 | Code graph | `graphify-out/` (`graphify query "..."` before broad reads; `graphify update .` after code changes) |
 
 Launch configs for the browser preview live in `Z:\claude\.claude\launch.json`: `refill` (Vite dev, port 5180) and `refill-dist`.

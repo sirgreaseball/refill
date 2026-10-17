@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Refill · Operational check · 17 Oct 2026</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm; }
+  :root { --ink: #1f1a1e; --ink2: #5d555a; --hair: #e4ddd3; --paper: #fbf8f3; --act: #3f5a1f; --actbg: #e3ead3; --beat: #9a6a00; --beatbg: #f6e7c4; --bad: #a3271f; --badbg: #f6dcd8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 10.5pt/1.45 "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+  h1 { font: 600 24pt/1.05 Georgia, serif; letter-spacing: -0.02em; margin: 0 0 4px; }
+  h2 { font: 600 13pt/1.2 Georgia, serif; margin: 20px 0 8px; padding-top: 10px; border-top: 1px solid var(--hair); break-after: avoid; }
+  p { margin: 0 0 8px; }
+  .meta { color: var(--ink2); font-size: 9.5pt; margin-bottom: 14px; }
+  .mono, code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; }
+  .status { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--actbg); margin-bottom: 12px; }
+  .status b { font: 700 15pt/1 Georgia, serif; color: var(--act); }
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0 4px; }
+  .kpi { border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; }
+  .kpi .v { font: 700 16pt/1.1 Georgia, serif; }
+  .kpi .l { font-size: 8pt; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.06em; }
+  table { width: 100%; border-collapse: collapse; margin: 4px 0 6px; break-inside: auto; }
+  tr { break-inside: avoid; }
+  th { text-align: left; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink2); padding: 5px 8px 5px 0; border-bottom: 1px solid var(--ink); }
+  td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  .ok { color: var(--act); font-weight: 700; white-space: nowrap; }
+  .warn { color: var(--beat); font-weight: 700; white-space: nowrap; }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 8pt; font-weight: 600; }
+  .tag.ok { background: var(--actbg); }
+  .tag.warn { background: var(--beatbg); }
+  ul { margin: 0 0 8px; padding-left: 18px; }
+  li { margin-bottom: 3px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .foot { margin-top: 18px; padding-top: 8px; border-top: 1px solid var(--hair); color: var(--ink2); font-size: 8.5pt; }
+  .pb { break-before: page; }
+</style>
+</head>
+<body>
+
+<h1>Refill · Operational check</h1>
+<p class="meta">Team C29, Appointment Recovery Desk · Fynd × NMIMS Hyderabad · Checked <b>17 Oct 2026, 22:28 IST</b> · Release <b>v2.0.0</b>, commit <span class="mono">4177d25</span> · Prepared by Dhruv Sonar (engineering)</p>
+
+<div class="status">
+  <b>OPERATIONAL</b>
+  <span>The live product, its database and every automated check are green. No open defect blocks the demo. The phone layout and the clarity of the screens are being reworked now (section 7); the logic and data underneath are stable and tested.</span>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">38/38</div><div class="l">Rule and scenario tests</div></div>
+  <div class="kpi"><div class="v">20/20</div><div class="l">Live database checks</div></div>
+  <div class="kpi"><div class="v">3/3</div><div class="l">Live race runs, 8 taps each</div></div>
+  <div class="kpi"><div class="v">6/6</div><div class="l">Live endpoints HTTP 200</div></div>
+  <div class="kpi"><div class="v">0</div><div class="l">Double bookings, ever</div></div>
+</div>
+
+<h2>1. What is running</h2>
+<table>
+  <tr><th style="width:24%">Component</th><th>Where</th><th style="width:16%">Status</th></tr>
+  <tr><td>Web app (installable PWA)</td><td><span class="mono">https://fillthechair.vercel.app</span> · Vercel, deploys on every push to <span class="mono">main</span></td><td class="ok">Up · 0.25 s</td></tr>
+  <tr><td>Database and rules</td><td>Supabase Postgres, project <span class="mono">mbvxzuuuuzgpmsjggblo</span> · 5 migrations applied · all access through checked functions</td><td class="ok">Up · 0.71 s</td></tr>
+  <tr><td>Source code</td><td><span class="mono">github.com/sirgreaseball/refill</span> (public) · branch protection and CI on <span class="mono">main</span></td><td class="ok">Current</td></tr>
+  <tr><td>Guides</td><td><span class="mono">/guide/engineering.html</span>, <span class="mono">/guide/mba.html</span></td><td class="ok">Up</td></tr>
+  <tr><td>Offline shell</td><td><span class="mono">/manifest.webmanifest</span>, <span class="mono">/sw.js</span></td><td class="ok">Up</td></tr>
+</table>
+<p>Stack: React 19 + TypeScript (Vite), a pure rules engine shared by the app and the tests, Postgres functions that re-check every rule under row locks. Data is synthetic. No real message is ever sent.</p>
+
+<h2>2. Automated checks, run at 22:28 IST</h2>
+<table>
+  <tr><th style="width:30%">Check</th><th>Result</th><th style="width:12%">Status</th></tr>
+  <tr><td><span class="mono">npm test</span> rules engine, organiser fixture, 23 core scenarios, v2 staff rules</td><td>38 passed, 1 skipped (the teammate scenario file is empty until that pull request lands)</td><td class="ok">Pass</td></tr>
+  <tr><td><span class="mono">npm run dbtest</span> against the live database</td><td>20 of 20 guarantees hold (listed in section 4)</td><td class="ok">Pass</td></tr>
+  <tr><td><span class="mono">npm run race</span> against the live database</td><td>3 runs × 8 simultaneous taps on one slot: exactly 1 booking each run (#120, #121, #122); 7 keep their waitlist place; a repeated tap returns the same booking; a customer who replied STOP cannot book. Resolved in 126–663 ms.</td><td class="ok">Pass</td></tr>
+  <tr><td>Type check and production build</td><td>No type errors · main bundle 90.9 kB gzipped · role pages load on demand</td><td class="ok">Pass</td></tr>
+  <tr><td>Live smoke test (browser)</td><td>Desk loads, stylist marked out, appointment rescheduled by the desk, customer picks a new time from a link, owner page and front-desk view load. No console errors.</td><td class="ok">Pass</td></tr>
+</table>
+
+<h2>3. The three case checks</h2>
+<table>
+  <tr><th style="width:34%">Case check</th><th>How it is enforced and proven</th><th style="width:10%">Status</th></tr>
+  <tr><td>A 60-minute request cannot take a 30-minute slot</td><td>Rule <span class="mono">DURATION_TOO_LONG</span> in the engine and again in the database at the moment of booking. Covered by tests and the Lab.</td><td class="ok">Pass</td></tr>
+  <tr><td>Two competing requests: 1 confirmed, 1 waitlisted</td><td>Row locks plus a unique index allowing one confirmed booking per slot. The live race above: 8 at once, 1 confirmed, the rest told who won and kept in the queue.</td><td class="ok">Pass</td></tr>
+  <tr><td>No consent: excluded from outreach</td><td>Rule <span class="mono">NO_CONSENT</span> before any offer; consent re-checked at booking; sign-up cannot proceed without an explicit yes or no (nothing pre-ticked); STOP revokes every open offer.</td><td class="ok">Pass</td></tr>
+</table>
+
+<h2 class="pb">4. Live database guarantees (20 of 20 passing)</h2>
+<div class="two">
+<ul>
+  <li>Direct table reads and writes with the public key are refused (HTTP 401).</li>
+  <li>Internal functions cannot be called from outside.</li>
+  <li>Oversized days (301 slots), over-long or control-character names are refused.</li>
+  <li>The desk refuses a missing or wrong owner key.</li>
+  <li>An offer accepted after its 15-minute hold is refused.</li>
+  <li>A fourth message to one customer in a day is refused.</li>
+  <li>A mistaken cancellation can be undone.</li>
+  <li>Stylist marked out: their open offers revoked, gaps held, a late tap cannot book.</li>
+  <li>An absent stylist's gap cannot be offered.</li>
+  <li>Moves refuse a busy or unskilled stylist.</li>
+</ul>
+<ul>
+  <li>A stylist's key opens only their own day, never the desk.</li>
+  <li>Customer sign-up needs an explicit consent choice; the private token manages only that entry.</li>
+  <li>Front-desk key runs the day but is refused policy changes and link creation.</li>
+  <li>Owner rule changes are bounds-checked.</li>
+  <li>A stylist who has gone home is never offered: no option after their shift.</li>
+  <li>A customer picks a new time from their link: moved exactly once.</li>
+  <li>A customer cancelling from their link opens the slot for the waitlist at once.</li>
+  <li>A burst of 260 writes is cut off at 240 per minute.</li>
+  <li>One confirmed booking per slot, whatever path writes it.</li>
+  <li>Every action lands in an append-only evidence log.</li>
+</ul>
+</div>
+
+<h2>5. Features by role</h2>
+<table>
+  <tr><th style="width:16%">Role</th><th>What works today</th><th style="width:12%">Status</th></tr>
+  <tr><td>Front desk</td><td>Day book per staff member with demo clock; record cancellations (late ones flagged) and undo; open gaps with who fits and a plain reason for every skip; send offers with a hold window; live offer states and QR codes; two-phone race; waitlist with consent; mark staff in or out; reschedule (pick a time, or send the customer a link); evidence log with CSV/JSON export.</td><td class="ok">Working</td></tr>
+  <tr><td>Owner</td><td>Revenue recovered, still open and lost; offers, consent and reschedule figures; staff load; the rules (hold window, message cap, late cut-off, lead time); front-desk link; who-can-do-what matrix.</td><td class="ok">Working</td></tr>
+  <tr><td>Staff member</td><td>Private link to their own day (first names only) and "I can't come in today".</td><td class="ok">Working</td></tr>
+  <tr><td>Client</td><td>QR sign-up with explicit consent; private page (queue place, booking, consent, leave); offer page (book, decline, stop messages); move link (pick a time that truly works, or cancel).</td><td class="ok">Working</td></tr>
+  <tr><td>Judges (Lab)</td><td>The three checks live, organiser fixture, editable input, edge-case toggles with before/after export, live race.</td><td class="ok">Working</td></tr>
+</table>
+
+<h2>6. Change made after MBA feedback</h2>
+<p>The business team asked for a way to reschedule instead of only cancelling. Shipped in v2.0.0: the desk can move any booking, or send the client a private link listing only times that truly work (right service, staff member present and on shift, slot free). The time they leave opens for the waitlist. A flaw found while building it was fixed the same evening: staff now have working hours, so nothing is ever moved onto someone who is not at work.</p>
+
+<h2>7. Known issues and risks</h2>
+<table>
+  <tr><th style="width:34%">Issue</th><th>Impact and plan</th><th style="width:12%">Status</th></tr>
+  <tr><td>Phone layout faults reported on Android and Firefox</td><td>Some screens crowd or misplace controls on small screens. Full interface rework in progress tonight: one clear dashboard per role, phone-first layout, tested at 360 and 412 px widths.</td><td class="warn">In progress</td></tr>
+  <tr><td>Screens feel cluttered; desk and team pages overlap</td><td>Same rework: separate, simple views for front desk, owner, staff and client, and general wording so any appointment business can use it.</td><td class="warn">In progress</td></tr>
+  <tr><td>MBA guide still describes v1</td><td>Update after the rework so screenshots match.</td><td class="warn">Planned</td></tr>
+  <tr><td>Teammate pull requests not yet merged</td><td>Scenario file, salon data and shock notes; review against the contribution rules, then merge.</td><td class="warn">Planned</td></tr>
+  <tr><td>Free-tier hosting</td><td>Rate limits, a 20,000-day capacity cap and 3-day retention keep the demo inside free limits. Monitored.</td><td class="ok">Mitigated</td></tr>
+</table>
+
+<h2>8. Ready for the 9 AM market shock</h2>
+<table>
+  <tr><th style="width:26%">Likely shock</th><th>Handled by</th></tr>
+  <tr><td>Late cancellation</td><td>Cancellations inside the owner's cut-off are tagged LATE; the gap is still offered while there is time to arrive.</td></tr>
+  <tr><td>Staff absence</td><td>Mark the staff member out: offers on their time withdrawn, gaps held, their clients flagged; rebook at the desk or let the client choose.</td></tr>
+  <tr><td>Duration change</td><td>Duration is checked before every offer and again at booking; the Lab shows before and after for a changed input.</td></tr>
+  <tr><td>Consent withdrawn</td><td>STOP or the client's page revokes every open offer at once; the database refuses a booking without consent.</td></tr>
+</table>
+
+<p class="foot">Re-run any of these: <span class="mono">npm test</span> · <span class="mono">npm run dbtest</span> · <span class="mono">npm run race</span> in the repository. Results above are copied from the runs at 22:28 IST, not estimated. Synthetic demo data; no real customer data is stored.</p>
+</body>
+</html>
