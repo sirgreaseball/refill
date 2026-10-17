@@ -1,5 +1,5 @@
 // Refill service worker: the app shell works offline; live data never comes from cache.
-const SHELL = 'refill-shell-v1'
+const SHELL = 'refill-shell-v2'
 const CORE = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/icon-192.png']
 
 self.addEventListener('install', (e) => {
@@ -17,7 +17,8 @@ self.addEventListener('fetch', (e) => {
   if (url.hostname.endsWith('supabase.co')) return // bookings are always live
   if (req.mode === 'navigate') {
     // network first, so a new deploy shows at once; the cached shell only when offline
-    e.respondWith(fetch(req).then((res) => { caches.open(SHELL).then((c) => c.put('/', res.clone())); return res }).catch(() => caches.match('/')))
+    const shell = url.pathname === '/' || url.pathname === '/index.html'
+    e.respondWith(fetch(req).then((res) => { if (shell && res.ok) { const copy = res.clone(); caches.open(SHELL).then((c) => c.put('/', copy)) } return res }).catch(() => caches.match(shell ? '/' : req).then((hit) => hit || caches.match('/'))))
     return
   }
   if (url.origin === location.origin || url.hostname.endsWith('fonts.gstatic.com') || url.hostname.endsWith('fonts.googleapis.com')) {

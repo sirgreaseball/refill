@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refill · engineering guide</title>
+<meta name="description" content="How Refill works, how it is judged, and what each engineer says on stage.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&display=swap">
+<style>
+:root{--paper:#f3eee6;--raised:#fbf8f3;--ink:#1f1a1e;--ink-2:#645b5f;--hair:rgb(31 26 30/.11);--tint:rgb(31 26 30/.05);--act:#4b6626;--act-soft:#dde4c9;--act-text:#3c521d;--beat:#d99a14;--beat-soft:rgb(217 154 20/.2);--beat-text:#8a5a00;--r:12px;--g:clamp(16px,4vw,56px)}
+@media (prefers-color-scheme:dark){:root{--paper:#151214;--raised:#1e1a1d;--ink:#efe8dd;--ink-2:#a89ea0;--hair:rgb(239 232 221/.12);--tint:rgb(239 232 221/.05);--act:#a7c06b;--act-soft:rgb(167 192 107/.18);--act-text:#bfd48a;--beat:#ecb13a;--beat-soft:rgb(236 177 58/.18);--beat-text:#f0c25e}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 'Fraunces',Georgia,serif;font-variation-settings:'SOFT' 60;-webkit-font-smoothing:antialiased}
+::selection{background:var(--beat-soft)}
+a{color:var(--act-text);text-underline-offset:3px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 var(--g) 96px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;border-bottom:1px solid var(--hair);position:sticky;top:0;background:color-mix(in oklab,var(--paper),transparent 8%);backdrop-filter:blur(10px);z-index:5}
+.top a{font:500 12px/1 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--ink-2)}
+.brand{display:flex;gap:10px;align-items:center;font-size:20px;letter-spacing:-.02em}
+.mono,.over,code,th{font-family:'DM Mono',ui-monospace,monospace}
+.over{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+h1{font-size:clamp(46px,8vw,104px);line-height:.92;letter-spacing:-.045em;font-weight:400;margin:56px 0 18px;font-variation-settings:'SOFT' 100}
+h2{font-size:clamp(28px,3.6vw,40px);line-height:1.05;letter-spacing:-.03em;font-weight:400;margin:72px 0 14px}
+h3{font-size:19px;font-weight:600;margin:28px 0 8px}
+p,li{max-width:66ch}
+.lede{font-size:clamp(20px,2.2vw,25px);line-height:1.35;max-width:40ch}
+.quiet{color:var(--ink-2)}
+code{font-size:.84em;background:var(--tint);padding:2px 6px;border-radius:6px}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:15.5px}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);text-align:left;font-weight:500;padding:10px 12px 10px 0;border-bottom:1px solid var(--hair)}
+td{padding:11px 12px 11px 0;border-bottom:1px solid var(--hair);vertical-align:top}
+td:first-child{white-space:nowrap}
+.pts{font-family:'DM Mono',monospace;color:var(--act-text)}
+.card{background:var(--raised);border-radius:var(--r);padding:20px 22px;margin:14px 0;box-shadow:0 18px 40px -26px rgb(31 26 30/.35)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.grid .card{margin:0}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0}
+.links a{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:var(--r);background:var(--act);color:var(--paper);text-decoration:none;font-weight:500}
+.links a.alt{background:transparent;border:1px solid var(--hair);color:var(--ink)}
+ol li,ul li{margin:6px 0}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;counter-reset:s;padding:0;list-style:none}
+.flow li{background:var(--raised);border-radius:var(--r);padding:14px 16px;margin:0;font-size:15px;counter-increment:s}
+.flow li::before{content:counter(s,decimal-leading-zero);display:block;font:500 11px/1 'DM Mono',monospace;color:var(--beat-text);margin-bottom:8px;letter-spacing:.1em}
+details{border-top:1px solid var(--hair);padding:12px 0}
+details:last-of-type{border-bottom:1px solid var(--hair)}
+summary{cursor:pointer;font-weight:500;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'+';font-family:'DM Mono',monospace;color:var(--ink-2);display:inline-block;width:22px}
+details[open] summary::before{content:'–'}
+details p{margin:8px 0 0 22px}
+.gap{display:grid;grid-template-columns:1.1fr .9fr 2fr;gap:10px;align-items:center;margin:8px 0 0}
+.gap span{height:6px;border-radius:3px;background:var(--ink)}
+.gap .g{height:20px;border-radius:10px;border:1.5px solid var(--beat);background:linear-gradient(90deg,var(--act) 62%,transparent 62%)}
+pre{background:var(--raised);border-radius:var(--r);padding:16px 18px;overflow:auto;font:13.5px/1.6 'DM Mono',monospace}
+.tag{font:500 11px/1 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:6px;background:var(--beat-soft);color:var(--beat-text)}
+@media (max-width:640px){td:first-child{white-space:normal}table{font-size:14.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><span class="brand">Refill <span class="over">engineering guide</span></span><a href="/guide/mba.html">MBA guide →</a></header>
+
+<p class="over" style="margin-top:48px">Fynd × NMIMS Hyderabad · case C29 · 17–18 Oct 2026</p>
+<h1>Refill</h1>
+<div class="gap" aria-hidden="true"><span></span><span class="g"></span><span></span></div>
+<p class="lede" style="margin-top:28px">An empty chair is money walking out of the salon. Refill offers the cancelled slot to the next waiting customer who fits it, checks consent before every message, and never books two people into one chair.</p>
+<div class="links">
+<a href="https://fillthechair.vercel.app">Open the live app</a>
+<a class="alt" href="https://fillthechair.vercel.app/#/lab">Open the Lab</a>
+<a class="alt" href="https://github.com/sirgreaseball/refill">GitHub repo</a>
+</div>
+
+<h2>What we built, in one minute</h2>
+<ol class="flow">
+<li>A customer cancels. The owner taps the appointment: <em>Customer cancelled</em>. Under 2 hours notice is marked late.</li>
+<li>The gap glows. The panel lists who fits it, and who is skipped with a rule code.</li>
+<li>The owner reviews and sends offers. The database re-checks every rule first.</li>
+<li>The customer gets a phone page: Book, Not today, or Stop messages.</li>
+<li>Two taps at once: one booking. The other customer keeps their queue place.</li>
+<li>Every step lands in the Evidence log, exportable as JSON or CSV.</li>
+</ol>
+
+<h2>How we are judged, and where each point comes from</h2>
+<table>
+<tr><th>Rubric row</th><th>Pts</th><th>What we show</th></tr>
+<tr><td>Working user journey</td><td class="pts">25</td><td>The six steps above, live, from a fresh demo day. Every visitor gets their own workspace, so judges never collide.</td></tr>
+<tr><td>Case check 1: 60-minute request vs 30-minute slot</td><td class="pts">10</td><td>Rule <code>DURATION_TOO_LONG</code> in the engine and in the database (<code>fit_reason</code>, checked at outreach and at booking). Lab check 1, tests C01–C02.</td></tr>
+<tr><td>Case check 2: two requests, one slot</td><td class="pts">10</td><td>Row lock in <code>accept_offer</code> plus a one-booking-per-slot index. Desk button "Two phones, one slot", Lab "Run live race", <code>npm run race</code>.</td></tr>
+<tr><td>Case check 3: no consent, no outreach</td><td class="pts">5</td><td>Consent is the first rule; unknown counts as no; checked when the offer is sent and again right before booking; STOP revokes open offers.</td></tr>
+<tr><td>Reliability and failure handling</td><td class="pts">15</td><td>Bad input stops with <code>DUPLICATE_ID</code> / <code>MISSING_FIELD</code> / <code>INVALID_VALUE</code>; repeated taps are idempotent; offline banner; slots too close to start are never offered.</td></tr>
+<tr><td>Improvement after business feedback</td><td class="pts">15</td><td>Tag <code>v1-mba-handover</code> is what the MBA team inherited. Their request lives in an <code>mba-request</code> issue; the shipped change gets its own tag.</td></tr>
+<tr><td>Handoff and reproducibility</td><td class="pts">10</td><td><code>npm install</code>, <code>npm test</code>, <code>npm run race</code>; no keys needed; README; CI runs tests on every pull request; Vedanth's clean-machine check.</td></tr>
+<tr><td>Individual technical contribution</td><td class="pts">10</td><td>One question each. Everyone's work is in their own files, branch and pull request, recorded in <code>docs/contributions/</code>.</td></tr>
+</table>
+
+<h2>How it works</h2>
+<div class="grid">
+<div class="card"><p class="over">Rules engine</p><h3>src/engine.ts</h3><p>Pure functions. For each free slot it checks every waitlist entry in this order and stops at the first failure: consent → skill → duration → availability. Free slots are filled in order; each takes the first eligible person in the queue; nobody gets two slots.</p></div>
+<div class="card"><p class="over">Database</p><h3>Supabase Postgres</h3><p>Every table has row level security on and <strong>no policies</strong>, so the public key cannot read or write tables. The browser can only call 12 functions, and each one re-checks the rules. The page's suggestions are never trusted.</p></div>
+<div class="card"><p class="over">No double booking</p><h3>accept_offer</h3><p>Locks the offer, then the slot, then the customer, in that order everywhere. Simultaneous taps queue on the slot lock: the first finds it free and books; the rest find it booked and keep their place. A partial unique index is the last line of defence.</p></div>
+<div class="card"><p class="over">Front end</p><h3>React + Vite + TypeScript</h3><p>Three screens: Desk (owner), Offer (customer's phone), Lab (judges). Talks to the database with plain <code>fetch</code> (15 lines, no client library). Polls every 1.2 s. Installable as an app; works on phones.</p></div>
+</div>
+
+<h3>Tech stack, and why</h3>
+<table>
+<tr><th>Piece</th><th>Choice</th><th>Why</th></tr>
+<tr><td>UI</td><td>React 19, Vite, TypeScript</td><td>Fast to build, typed end to end, tiny production bundle (85 kB gzipped).</td></tr>
+<tr><td>Data</td><td>Supabase Postgres, SQL functions</td><td>Transactions and row locks are the honest answer to double booking. Free tier, Mumbai region.</td></tr>
+<tr><td>Hosting</td><td>Vercel</td><td>Push to main deploys. Security headers and a content security policy in <code>vercel.json</code>.</td></tr>
+<tr><td>Tests</td><td>Vitest + a live race script</td><td>30 unit and scenario tests in under a second; the race script hits the real database.</td></tr>
+<tr><td>Install</td><td>Web app manifest + service worker</td><td>Add to home screen on Android, iPhone and desktop. The shell opens offline; bookings stay live.</td></tr>
+</table>
+
+<h2>The 4-minute demo (draft, Vedanth owns the final)</h2>
+<table>
+<tr><th>Time</th><th>On screen</th><th>Say</th></tr>
+<tr><td class="mono">0:00</td><td>Entry screen</td><td>"An empty chair is money walking out of the salon. Refill fills it, with consent, without double booking."</td></tr>
+<tr><td class="mono">0:20</td><td>Desk, tap Simran 12:30 → Customer cancelled</td><td>"A customer cancels 75 minutes before. Refill marks it late and opens the gap."</td></tr>
+<tr><td class="mono">0:45</td><td>Recovery panel</td><td>"Who fits, and who is skipped and why. Arnav's consent is unknown, so he is never messaged."</td></tr>
+<tr><td class="mono">1:15</td><td>Send offers, show QR codes</td><td>"The database re-checks every rule before an offer exists."</td></tr>
+<tr><td class="mono">1:40</td><td>Two phones tap Book together</td><td>"Two taps, same millisecond: one booking. The other keeps their place."</td></tr>
+<tr><td class="mono">2:20</td><td>Phone: Stop messages</td><td>"Consent withdrawn: every open offer is revoked instantly."</td></tr>
+<tr><td class="mono">2:45</td><td>Evidence log, export</td><td>"Every decision is explained and exportable."</td></tr>
+<tr><td class="mono">3:05</td><td>Lab: checks, live race</td><td>"All three case checks run live; here is a real race at the real database."</td></tr>
+<tr><td class="mono">3:35</td><td>What changed after MBA feedback</td><td>"Our business team asked for staff-aware matching; here is before and after."</td></tr>
+</table>
+
+<h2>Questions judges will ask</h2>
+<details><summary>How do you guarantee two people never get the same slot?</summary><p>The booking happens inside one database transaction that locks the slot row. Concurrent taps wait in line. The first finds the slot free; everyone after finds it booked and is told which booking won. A unique index on confirmed bookings per slot backs it up. We test it with 8 and 12 simultaneous taps against the live database.</p></details>
+<details><summary>Why not check availability in the app before booking?</summary><p>Two phones can both see "free" at the same moment. Only the database can serialise them. The page previews; the database decides.</p></details>
+<details><summary>What if a customer taps Accept twice?</summary><p>The second tap returns ALREADY_CONFIRMED with the same booking number. Idempotent: one booking.</p></details>
+<details><summary>What does consent mean in your system?</summary><p>Yes, no or unknown, with a timestamp and a source. Unknown is never treated as yes. It is checked when the offer is sent and again right before the booking, so withdrawing consent between the two stops it. A STOP from the customer revokes every open offer.</p></details>
+<details><summary>Can someone bypass the page and write to your tables?</summary><p>No. Row level security is on with no policies. The public key can only call the 12 functions, and each one validates its inputs and re-checks the rules. Supabase's linter lists those functions as callable by anyone; that is intentional, they are the API.</p></details>
+<details><summary>What happens with a bad input file?</summary><p>It stops with a code (duplicate id, missing field, invalid value) and the exact location. A bad file never produces a half-right answer. Try it in the Lab.</p></details>
+<details><summary>What if two judges use the app at once?</summary><p>Each visitor gets a separate workspace (a uuid in the link). Share the link to open the same day on a phone.</p></details>
+<details><summary>How do you know your rules are right?</summary><p>The organiser's fixture reproduces its expected match (W1 → S2). 18 core scenarios plus the team's own file run on every push in CI, and live in the Lab.</p></details>
+<details><summary>What does it not do yet?</summary><p>No owner login, no real WhatsApp/SMS sending, polling instead of a live socket, synthetic data only. All listed in the README and KNOWN_LIMITS.</p></details>
+
+<h2>Your part, and your question</h2>
+<div class="grid">
+<div class="card"><p class="over">Dhruv · 3rd year</p><h3>Product and full-stack build</h3><p>Engine, database functions, all screens, deployment. Your question: "Walk us through the lock order in accept_offer."</p></div>
+<div class="card"><p class="over">Vedanth · 4th year</p><h3>Reliability and handoff</h3><p>Clean-machine setup check, race test runs, known limits, the demo script. Your question: "Could someone else run and trust this?"</p></div>
+<div class="card"><p class="over">Parth · 2nd year</p><h3>Test scenarios</h3><p><code>tests/scenarios.json</code>, run on every push. Your question: "How do you know it is correct?"</p></div>
+<div class="card"><p class="over">Chirag · 2nd year</p><h3>Salon data and shocks</h3><p><code>data/salon/*.csv</code> and the four shock scenarios. Your question: "Where does your data come from and what does it prove?"</p></div>
+</div>
+
+<h2>9 AM market shock: what we show</h2>
+<table>
+<tr><th>Shock</th><th>In the app</th></tr>
+<tr><td>Late cancellation</td><td>Move the demo clock, cancel an appointment inside 2 hours: tagged LATE, offers still go out; inside 10 minutes nothing is offered. Lab toggle "Late cancellation" with before/after export.</td></tr>
+<tr><td>Staff absence</td><td>Lab toggle "Staff absence" blocks the slot. Staff-aware matching (who is in, who has the skill) is the change negotiated with the MBA team.</td></tr>
+<tr><td>Different service duration</td><td>Lab toggle "Longer service": the match disappears with DURATION_TOO_LONG. A shorter service may still take the slot.</td></tr>
+<tr><td>Consent withdrawn</td><td>Phone: Stop messages, or the desk's consent toggle. Open offers revoked; a booking attempt is refused.</td></tr>
+</table>
+
+<h2>Commands</h2>
+<pre>npm install
+npm run dev     # local app on the shared demo database
+npm test        # engine, fixture, scenarios, data
+npm run race    # 8 simultaneous taps x 3 runs, live database
+npm run build</pre>
+<p class="quiet" style="margin-top:56px">Synthetic demo. Kesar Salon and every person in it are invented. <a href="/guide/mba.html">MBA guide</a> · <a href="https://github.com/sirgreaseball/refill">GitHub</a></p>
+</div>
+</body>
+</html>

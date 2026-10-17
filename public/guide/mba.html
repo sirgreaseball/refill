@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refill · business guide</title>
+<meta name="description" content="Everything the business team needs: the product in plain words, the rubric, the research, the numbers to build and how to request a change.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&display=swap">
+<style>
+:root{--paper:#f3eee6;--raised:#fbf8f3;--ink:#1f1a1e;--ink-2:#645b5f;--hair:rgb(31 26 30/.11);--tint:rgb(31 26 30/.05);--act:#4b6626;--act-soft:#dde4c9;--act-text:#3c521d;--beat:#d99a14;--beat-soft:rgb(217 154 20/.2);--beat-text:#8a5a00;--r:12px;--g:clamp(16px,4vw,56px)}
+@media (prefers-color-scheme:dark){:root{--paper:#151214;--raised:#1e1a1d;--ink:#efe8dd;--ink-2:#a89ea0;--hair:rgb(239 232 221/.12);--tint:rgb(239 232 221/.05);--act:#a7c06b;--act-soft:rgb(167 192 107/.18);--act-text:#bfd48a;--beat:#ecb13a;--beat-soft:rgb(236 177 58/.18);--beat-text:#f0c25e}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 'Fraunces',Georgia,serif;font-variation-settings:'SOFT' 60;-webkit-font-smoothing:antialiased}
+::selection{background:var(--beat-soft)}
+a{color:var(--act-text);text-underline-offset:3px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 var(--g) 96px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;border-bottom:1px solid var(--hair);position:sticky;top:0;background:color-mix(in oklab,var(--paper),transparent 8%);backdrop-filter:blur(10px);z-index:5}
+.top a{font:500 12px/1 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;color:var(--ink-2)}
+.brand{display:flex;gap:10px;align-items:center;font-size:20px;letter-spacing:-.02em}
+.mono,.over,th{font-family:'DM Mono',ui-monospace,monospace}
+.over{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+h1{font-size:clamp(46px,8vw,104px);line-height:.92;letter-spacing:-.045em;font-weight:400;margin:56px 0 18px;font-variation-settings:'SOFT' 100}
+h2{font-size:clamp(28px,3.6vw,40px);line-height:1.05;letter-spacing:-.03em;font-weight:400;margin:72px 0 14px}
+h3{font-size:19px;font-weight:600;margin:26px 0 8px}
+p,li{max-width:66ch}
+.lede{font-size:clamp(20px,2.2vw,25px);line-height:1.35;max-width:40ch}
+.quiet{color:var(--ink-2)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:15.5px}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);text-align:left;font-weight:500;padding:10px 12px 10px 0;border-bottom:1px solid var(--hair)}
+td{padding:11px 12px 11px 0;border-bottom:1px solid var(--hair);vertical-align:top}
+.pts{font-family:'DM Mono',monospace;color:var(--act-text)}
+.card{background:var(--raised);border-radius:var(--r);padding:20px 22px;margin:14px 0;box-shadow:0 18px 40px -26px rgb(31 26 30/.35)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.grid .card{margin:0}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0}
+.links a{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:var(--r);background:var(--act);color:var(--paper);text-decoration:none;font-weight:500}
+.links a.alt{background:transparent;border:1px solid var(--hair);color:var(--ink)}
+.gap{display:grid;grid-template-columns:1.1fr .9fr 2fr;gap:10px;align-items:center;margin:8px 0 0}
+.gap span{height:6px;border-radius:3px;background:var(--ink)}
+.gap .g{height:20px;border-radius:10px;border:1.5px solid var(--beat);background:linear-gradient(90deg,var(--act) 62%,transparent 62%)}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;counter-reset:s;padding:0;list-style:none}
+.flow li{background:var(--raised);border-radius:var(--r);padding:14px 16px;margin:0;font-size:15px;counter-increment:s}
+.flow li::before{content:counter(s,decimal-leading-zero);display:block;font:500 11px/1 'DM Mono',monospace;color:var(--beat-text);margin-bottom:8px;letter-spacing:.1em}
+.note{border-left:3px solid var(--beat);padding:4px 0 4px 16px;margin:18px 0}
+.formula{font-family:'DM Mono',monospace;font-size:14.5px;background:var(--raised);border-radius:var(--r);padding:14px 16px;display:block;margin:10px 0;line-height:1.7}
+@media (max-width:640px){table{font-size:14.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><span class="brand">Refill <span class="over">business guide</span></span><a href="/guide/engineering.html">Engineering guide →</a></header>
+
+<p class="over" style="margin-top:48px">Fynd × NMIMS Hyderabad · case C29 · for the MBA team</p>
+<h1>Refill</h1>
+<div class="gap" aria-hidden="true"><span></span><span class="g"></span><span></span></div>
+<p class="lede" style="margin-top:28px">An empty chair is money walking out of the salon. Refill gives a cancelled slot to the next waiting customer who fits it, only messages people who said yes, and never books two people into one chair.</p>
+<div class="links">
+<a href="https://fillthechair.vercel.app">Try the product</a>
+<a class="alt" href="https://github.com/sirgreaseball/refill/issues/new/choose">Request a product change</a>
+</div>
+
+<h2>Try it in two minutes</h2>
+<ol class="flow">
+<li>Open the link and press "Open today’s book". You are the owner of Kesar Salon (invented).</li>
+<li>Tap any future appointment and press "Customer cancelled". The gap glows.</li>
+<li>The right side shows who on the waitlist fits, and who is skipped and why.</li>
+<li>Press "Send offers". Open an offer on your phone with the QR code.</li>
+<li>Tap Book on your phone. Watch the desk update. Try "Two phones, one slot".</li>
+<li>Try "Stop messages" on the phone. That customer is never messaged again.</li>
+</ol>
+<p class="quiet">On a phone, the app can be installed: browser menu → "Install app" or "Add to Home Screen".</p>
+
+<h2>How you are scored</h2>
+<table>
+<tr><th>Rubric row</th><th>Pts</th><th>What judges look for</th></tr>
+<tr><td>Customer and choice</td><td class="pts">15</td><td>One clear customer and payer, and why this is the right opportunity.</td></tr>
+<tr><td>Business model and unit economics</td><td class="pts">20</td><td>Price, cost to serve, contribution per location, base and downside case, every number labelled.</td></tr>
+<tr><td>Growth plan and experiment design</td><td class="pts">15</td><td>A 30-day plan with a success threshold and a stop rule; the five-role-player experiment run and recorded.</td></tr>
+<tr><td>Product direction and delivered change</td><td class="pts">20</td><td>One change you asked for, that engineering actually shipped, with before and after evidence.</td></tr>
+<tr><td>Negotiation, recruitment and team building</td><td class="pts">15</td><td>A log of what you asked, offered, countered and agreed, including how you joined this team.</td></tr>
+<tr><td>Pitch and defence</td><td class="pts">10</td><td>Six slides, four minutes, then three minutes of questions.</td></tr>
+<tr><td>Contribution and conduct</td><td class="pts">5</td><td>Each of you answers one question about your own work.</td></tr>
+</table>
+<p class="note">Judges compare <strong>what you inherited</strong> with <strong>what changed because of your decisions</strong>. A polished product does not earn business points on its own. Your choices do.</p>
+
+<h2>What the product does today (version 1)</h2>
+<div class="grid">
+<div class="card"><p class="over">For the owner</p><h3>The desk</h3><p>Today’s appointments per stylist. Mark a cancellation; the app says how much notice was given (under two hours is "late"). It lists who fits the empty slot, who does not and why, and sends offers only after the owner approves.</p></div>
+<div class="card"><p class="over">For the customer</p><h3>The offer page</h3><p>A short message on the phone: the slot, the stylist, the service and price. Book, Not today, or Stop messages. If someone else booked a moment earlier, it says so and the customer keeps their place in the queue.</p></div>
+<div class="card"><p class="over">Trust</p><h3>Consent and evidence</h3><p>Every customer’s consent is yes, no or "not asked". "Not asked" is never treated as yes. Every action is logged with a reason and can be exported for the owner, or for an auditor.</p></div>
+</div>
+
+<h3>The gap you can negotiate</h3>
+<p>The case card says your change is: <strong>"add service-duration and staff constraints before outreach."</strong> In version 1 the app knows how long each slot is and what kind of service it was booked for (hair, nails, skin). It does <strong>not</strong> yet know which stylist is actually in today, or that a stylist who does hair can also do a facial. So:</p>
+<ul>
+<li>if a stylist calls in sick, version 1 cannot tell which of their slots to stop offering;</li>
+<li>a freed hair slot with a stylist who also does skin cannot go to a waiting facial customer, so a possible booking is missed.</li>
+</ul>
+<p>Check this yourself in the app, decide whether it matters to a real owner, and then ask for it (or for something better) through a GitHub issue. Engineering will reply with scope, an offer or a counter-offer.</p>
+
+<h2>The market, in numbers you can defend</h2>
+<p class="note">All figures below are secondary sources or assumptions. Quote a number only with its source, or mark it "unverified".</p>
+<h3>How often chairs go empty</h3>
+<ul>
+<li>A 20% salon no-show rate is widely repeated, but its original source is hard to trace. Treat it as unverified.</li>
+<li>A Booksy survey of U.S. salons found only about 2% of clients cancel without any warning.</li>
+<li>Treatwell (UK) reports 2–3% no-shows per treatment, and says salons requiring prepayment halved theirs.</li>
+<li>Most valuable for us: <strong>cancellations with some notice</strong>, because those slots can still be refilled. Ask owners how many they get per week.</li>
+</ul>
+<h3>Competitors (your research, plus Indian players)</h3>
+<table>
+<tr><th>Product</th><th>Who it is for</th><th>Waitlist today</th><th>Price as given (verify)</th></tr>
+<tr><td>Mangomint</td><td>Mid-to-large salons and spas</td><td>Express booking, virtual waiting room</td><td>$165–375/month by team size</td></tr>
+<tr><td>Vagaro</td><td>Multi-staff salons, barbers</td><td>Waitlist tracking, email/SMS add-ons</td><td>From $30/month per calendar</td></tr>
+<tr><td>Fresha</td><td>Independent stylists, salons</td><td>Self-booking, reminders, marketplace</td><td>Low base plus transaction and message fees</td></tr>
+<tr><td>Zenoti (Hyderabad)</td><td>Chains and enterprise</td><td>Automated waitlist management</td><td>Custom pricing; one anecdote ~₹15k/branch/month</td></tr>
+<tr><td>Dingg, Zylu, Salonist</td><td>Indian salons</td><td>Booking and CRM suites</td><td>~₹1.5–3.5k/month (Dingg, vendor blog); Zylu $19–249</td></tr>
+<tr><td>TutorBird, Calendly</td><td>Tutors, general booking</td><td>Make-up slots on a portal; weak backfill</td><td>$10–30/seat</td></tr>
+</table>
+<p><strong>So the pitch cannot be "we have a waitlist".</strong> Several do. Ours: the app checks consent, length and staff <em>before</em> any message, shows why each person was skipped, never double-books, and costs a flat fee per location rather than per seat.</p>
+<h3>Consent is a selling point</h3>
+<p>Meta requires opt-in before business-initiated WhatsApp marketing messages. India's DPDP Act expects consent that is explicit, recorded and easy to withdraw. Refill records who said yes, when and how, and honours STOP at once. For an owner, that is less risk of a blocked WhatsApp number or a complaint.</p>
+
+<h2>Numbers you need to build</h2>
+<p>Fill <span class="mono">Templates/Unit_Economics.csv</span> (Item, Unit, Base, Downside, Source or status, Formula). A starting structure:</p>
+<span class="formula">Recovered revenue / month = refillable cancellations per week × share Refill fills × average ticket × 4.3<br>Variable cost / month = offers sent × cost per message + support minutes × cost per minute + hosting share<br>Contribution / month = price − variable cost<br>Payback (months) = onboarding cost ÷ contribution</span>
+<table>
+<tr><th>Input</th><th>Where to get it</th><th>Mark as</th></tr>
+<tr><td>Refillable cancellations per week</td><td>Ask 2–3 salon owners or reception staff</td><td>observed (if asked) / assumption</td></tr>
+<tr><td>Share Refill fills</td><td>Your role-play results; then a pilot</td><td>assumption until piloted</td></tr>
+<tr><td>Average ticket</td><td>Salon menus (our demo uses ₹500–4,500)</td><td>source: link</td></tr>
+<tr><td>Cost per WhatsApp message</td><td>Meta's published India rates</td><td>source: link, or unverified</td></tr>
+<tr><td>Price per location</td><td>Your decision, anchored to recovered revenue</td><td>hypothesis</td></tr>
+</table>
+<p class="note">Rule of thumb to test, not a fact: if one refilled slot is worth about ₹800, filling two or three a month pays a modest monthly fee. Your job is to find out whether owners agree.</p>
+
+<h2>The growth experiment on the card</h2>
+<p>"Test opt-in waitlist messages with five consenting role players. Record who was approached, the response and what would count as a useful result."</p>
+<ol>
+<li>Before you start, write down what counts as a useful result (for example: at least 3 of 5 book within two minutes) and what would change your mind.</li>
+<li>Five teammates act as customers (label it as role play). Each gets an offer on their phone from the live app.</li>
+<li>Record: who, time sent, what they saw, what they did, how long they took.</li>
+<li>Include one who says STOP and one who is too slow, so you see the full journey.</li>
+<li>Chirag from engineering logs each session in <span class="mono">docs/ROLEPLAY_LOG.md</span>; you write the conclusions.</li>
+</ol>
+
+<h2>9 AM market shock: think through all four tonight</h2>
+<table>
+<tr><th>If the shock is…</th><th>Trade-off to discuss</th><th>Business consequence to quantify</th></tr>
+<tr><td>Late cancellation</td><td>Offer it urgently and accept a lower fill rate, or charge a late fee</td><td>Revenue still recoverable vs fee income vs customer goodwill</td></tr>
+<tr><td>Staff absence</td><td>Move their bookings to other stylists, or cancel and refill later</td><td>Lost revenue per absent stylist-day; why staff-aware matching matters</td></tr>
+<tr><td>Different service duration</td><td>Never squeeze a longer service in, or offer shorter services only</td><td>Smaller tickets refilled vs empty chair</td></tr>
+<tr><td>Consent withdrawn</td><td>Respect it instantly, even mid-offer</td><td>Compliance risk avoided; trust as a selling point</td></tr>
+</table>
+
+<h2>How to request a change (no coding)</h2>
+<ol>
+<li>Make a free GitHub account if you do not have one.</li>
+<li>Open <a href="https://github.com/sirgreaseball/refill/issues/new/choose">github.com/sirgreaseball/refill → Issues → New issue</a> and pick <strong>MBA product request</strong>.</li>
+<li>Fill in: the problem, your evidence, the change (must-have vs nice-to-have), how we will verify it, the business reason.</li>
+<li>Engineering replies on the issue with scope, an offer or a counter. Agree there; that thread is your evidence.</li>
+<li>Log each step in <span class="mono">Negotiation_and_Transfer_Log.csv</span>.</li>
+</ol>
+
+<h2>Six slides</h2>
+<ol>
+<li>The customer and the problem: an empty chair is lost revenue.</li>
+<li>The product, and the change you negotiated, before vs after.</li>
+<li>Price, cost to serve and unit economics, base vs downside.</li>
+<li>Evidence: interviews or role play, separated from assumptions.</li>
+<li>The 30-day growth plan with a success threshold and a stop rule.</li>
+<li>Market-shock response, risks, and the next test.</li>
+</ol>
+<p class="quiet" style="margin-top:56px">Synthetic demo. Kesar Salon and every person in it are invented. No real message is ever sent. <a href="/guide/engineering.html">Engineering guide</a></p>
+</div>
+</body>
+</html>
