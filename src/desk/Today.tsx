@@ -16,6 +16,9 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
   const st = book.state!
   const run = useRun(book)
   const [selected, setSelected] = useState<string | null>(initial ?? null)
+  // Dial or calendar: one view of the day at a time, remembered on this device.
+  const [view, setView] = useState<'dial' | 'calendar'>(() => { try { return localStorage.getItem('refill.dayView') === 'calendar' ? 'calendar' : 'dial' } catch { return 'dial' } })
+  const pickView = (v: 'dial' | 'calendar') => { setView(v); try { localStorage.setItem('refill.dayView', v) } catch { /* private mode */ } }
   const now = st.workspace.now_min
   const f = useMemo(() => figures(st), [st])
   const sel = st.slots.find((s) => s.id === selected) ?? null
@@ -31,15 +34,26 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
         </div>
       </header>
 
-      <section className="group today-hero" aria-label="Today at a glance">
-        <Dial st={st} onPick={(x) => setSelected(x.id)} center={{ big: clock(now), small: queue.length ? `${queue.length} need${queue.length === 1 ? 's' : ''} you` : 'all clear' }} />
+      <section className={`group today-hero is-${view}`} aria-label="Today at a glance">
+        <div className="today-head">
+          <h2>Today</h2>
+          <div className="seg day-view" role="group" aria-label="Show the day as">
+            {(['dial', 'calendar'] as const).map((v) => (
+              <button key={v} className={view === v ? 'is-on' : ''} aria-pressed={view === v} onClick={() => pickView(v)}>
+                <Icon name={v === 'dial' ? 'clock' : 'calendar'} size={16} />{v === 'dial' ? 'Dial' : 'Calendar'}
+              </button>
+            ))}
+          </div>
+        </div>
+        {view === 'dial'
+          ? <Dial st={st} onPick={(x) => setSelected(x.id)} center={{ big: clock(now), small: queue.length ? `${queue.length} need${queue.length === 1 ? 's' : ''} you` : 'all clear' }} />
+          : <div className="day-cal"><Board st={st} selected={selected} onPick={setSelected} /><Agenda st={st} selected={selected} onPick={setSelected} /></div>}
         <div className="stats">
         <div className={`stat spot ${f.recovered ? 'is-act' : ''}`}><div className="stat-v"><Num value={f.recovered} format={money} /></div><div className="stat-l">Recovered today · {plural(f.refilled, 'gap')} refilled</div></div>
         <div className={`stat spot ${f.openValue ? 'is-beat' : ''}`}><div className="stat-v"><Num value={f.openValue} format={money} /></div><div className="stat-l">In {plural(f.open.length, 'open gap')} you can still fill</div></div>
         <div className={`stat spot ${f.risk.length ? 'is-risk' : ''}`}><div className="stat-v"><Num value={f.risk.length} /></div><div className="stat-l">Clients whose staff member is out</div></div>
         <div className="stat spot"><div className="stat-v"><Num value={st.waitlist.filter((e) => e.status === 'waiting').length} /></div><div className="stat-l">On the waitlist</div></div>
         </div>
-
       </section>
 
       <section className="group spot" aria-label="Needs you now">
@@ -61,12 +75,6 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="group spot" aria-label="Schedule">
-        <div className="group-head"><h2>Schedule</h2><p className="hide-phone">Amber is an open gap, green was refilled, red needs moving.</p></div>
-        <Board st={st} selected={selected} onPick={setSelected} />
-        <Agenda st={st} selected={selected} onPick={setSelected} />
       </section>
 
       {sel && <SlotSheet key={sel.id} st={st} slot={sel} run={run} onClose={() => setSelected(null)} />}

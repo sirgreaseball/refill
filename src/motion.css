@@ -437,3 +437,20 @@
   .lab .rows > li.check > .check-io, .lab .rows > li.check > .race-checks { grid-column: 2; }
   .check-io { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
+
+/* ---------- front desk: one view of the day at a time, dial or calendar */
+.today-hero { grid-template-areas: 'head head' 'view stats'; row-gap: 14px; }
+.today-head { grid-area: head; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.today-head h2 { font-size: 17px; }
+.today-hero > .dial, .today-hero > .day-cal { grid-area: view; }
+.today-hero > .stats { grid-area: stats; }
+.today-hero.is-calendar { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'head' 'view' 'stats'; }
+.today-hero.is-calendar .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.day-cal { min-width: 0; animation: rise 0.6s var(--ease-rare) both; }
+.today-hero > .dial { animation: rise 0.6s var(--ease-rare) both; }
+.seg.day-view button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-2); font-size: 13.5px; font-weight: 600; }
+.seg.day-view button.is-on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }
+@media (max-width: 900px) {
+  .today-hero { grid-template-areas: 'head' 'view' 'stats'; }
+  .today-hero.is-calendar .stats { grid-template-columns: 1fr 1fr; }
+}
