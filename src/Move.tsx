@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { MoveOption } from './api'
 import { MovePicker } from './MovePicker'
 import { rpc } from './rpc.ts'
+import { SlotDial } from './Dial'
 import { Icon, Mark, clock, span } from './ui'
 
 interface Appt { start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present?: boolean }
@@ -72,10 +73,11 @@ export default function Move({ id }: { id: string }) {
                 : `You have ${c.service} at ${span(c.start_min, c.minutes)} with ${c.stylist}. Pick a new time, or cancel.`}
             </p>
           </div>
-          <div className="slot-card">
-            <p className="overline">Booked now</p>
-            <p><strong>{span(c.start_min, c.minutes)}</strong> · {c.service} · {c.stylist}{c.stylist_present === false ? ' (out today)' : ''}</p>
-          </div>
+          <figure className="dial-fig">
+            <SlotDial start={c.start_min} minutes={c.minutes} now={v.now_min} kind={c.stylist_present === false ? 'risk' : 'booked'}
+              big={clock(c.start_min)} small={`${c.minutes} min · ${c.stylist ?? ''}`} label={`Booked now: ${span(c.start_min, c.minutes)}`} />
+            <figcaption><span className="overline">Booked now</span> {span(c.start_min, c.minutes)} · {c.service} · {c.stylist}{c.stylist_present === false ? ' (out today)' : ''}</figcaption>
+          </figure>
           <MovePicker options={v.options} busy={busy}
             confirm={(o) => `Move to ${clock(o.start_min)} with ${o.name}`}
             onPick={(o) => act('choose_move', { p_staff: o.staff, p_start: o.start_min })} />
@@ -90,6 +92,10 @@ export default function Move({ id }: { id: string }) {
         </>
       )}
 
+      {v.state === 'moved' && v.moved_to && (
+        <SlotDial start={v.moved_to.start_min} minutes={v.moved_to.minutes} now={v.now_min} kind="refilled"
+          big={clock(v.moved_to.start_min)} small={`${v.moved_to.minutes} min · ${v.moved_to.stylist ?? ''}`} label={`Moved to ${span(v.moved_to.start_min, v.moved_to.minutes)}`} />
+      )}
       {v.state === 'moved' && v.moved_to && (
         <div className="verdict is-act">
           <h1 className="phone-h">You’re moved</h1>

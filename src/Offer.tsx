@@ -3,6 +3,7 @@
 // the slot first, this page says so before the customer even taps.
 import { useCallback, useEffect, useState } from 'react'
 import { rpc } from './api'
+import { SlotDial } from './Dial'
 import { Icon, Mark, clock, money, span } from './ui'
 
 interface OfferView {
@@ -62,6 +63,11 @@ export default function Offer({ id }: { id: string }) {
         <span><strong>{v.salon}</strong><small>via Refill</small></span>
       </header>
 
+      <SlotDial start={v.slot.start_min} minutes={v.slot.minutes} now={v.now_min}
+        kind={v.state === 'OPEN' ? 'open' : v.state === 'CONFIRMED' ? 'refilled' : 'lapsed'}
+        big={clock(v.slot.start_min)} small={`${v.slot.minutes} min${v.slot.staff ? ` · ${v.slot.staff}` : ''}`}
+        label={`${when}${v.slot.staff ? ` with ${v.slot.staff}` : ''}: ${v.state === 'OPEN' ? 'open for you' : v.state === 'CONFIRMED' ? 'booked for you' : 'no longer yours'}`} />
+
       <div className="bubble">
         <p>Hi {first}, a {v.slot.minutes}-minute {v.slot.skill} slot just opened today at <strong>{clock(v.slot.start_min)}</strong>{v.slot.staff ? <> with {v.slot.staff}</> : null}.</p>
         <p>It fits your {v.entry.service ?? 'appointment'} ({v.entry.minutes} min{v.entry.price_inr ? `, ${money(v.entry.price_inr)}` : ''}). Want it?</p>
@@ -82,7 +88,7 @@ export default function Offer({ id }: { id: string }) {
 
       {v.state === 'CONFIRMED' && (
         <div className="verdict is-act">
-          <svg className="tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-16" /></svg>
+          <svg className="tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-16" pathLength={100} /></svg>
           <h1 className="phone-h">You’re booked</h1>
           <p>{when}{v.slot.staff ? ` with ${v.slot.staff}` : ''} · booking #{v.booking}</p>
           {lastTap === 'ALREADY_CONFIRMED' && <p className="quiet">You tapped again. Still one booking.</p>}

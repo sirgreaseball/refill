@@ -2,6 +2,7 @@
 // Opened with the private token from sign-up; shows nothing about anyone else.
 import { useCallback, useEffect, useState } from 'react'
 import { rpc } from './rpc.ts'
+import { SlotDial } from './Dial'
 import { Icon, Mark, clock, money, span } from './ui'
 
 interface Mine {
@@ -56,6 +57,17 @@ export default function Me({ token }: { token: string }) {
         <span><strong>{me.salon}</strong><small>your waitlist place</small></span>
       </header>
 
+      {me.state === 'waiting' && (
+        <SlotDial start={Math.max(600, me.free_from ?? 600)} minutes={Math.min(1200, me.free_until ?? 1200) - Math.max(600, me.free_from ?? 600)} now={me.now_min}
+          kind="booked" big={me.free_from != null ? clock(me.free_from) : 'Any'} small={me.free_until != null ? `free until ${clock(Math.min(me.free_until, 1439))}` : me.free_from != null ? 'free from then on' : 'time today'}
+          label={`Number ${me.place} in the queue`} />
+      )}
+      {me.booking && (me.state === 'booked' || me.state === 'removed') && (
+        <SlotDial start={me.booking.start_min} minutes={me.booking.minutes} now={me.now_min}
+          kind={me.booking.status === 'cancelled' ? 'lapsed' : me.booking.stylist_present === false ? 'risk' : 'refilled'}
+          big={clock(me.booking.start_min)} small={`${me.booking.minutes} min · ${me.booking.stylist ?? ''}`}
+          label={`${me.booking.service} at ${span(me.booking.start_min, me.booking.minutes)}`} />
+      )}
       {me.state === 'waiting' && (
         <div>
           <p className="overline">Hi {me.name.split(' ')[0]}</p>

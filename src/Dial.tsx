@@ -92,3 +92,42 @@ export function SubDial({ pct, label, sub, out }: { pct: number; label: string; 
     </figure>
   )
 }
+
+/** One appointment on the day's watch face: its arc on the 10:00 to 20:00 ring, the demo clock's hand, and the time in the middle. */
+export function SlotDial({ start, minutes, now, kind, big, small, label }: {
+  start: number; minutes: number; now?: number; kind: 'open' | 'refilled' | 'booked' | 'risk' | 'lapsed'; big: string; small: string; label: string
+}) {
+  const c = 100
+  const r = 76
+  const hours = Array.from({ length: 11 }, (_, i) => DAY_START + i * 60)
+  const a1 = ang(start) + 0.8
+  const a2 = Math.max(a1 + 1, ang(start + minutes) - 0.8)
+  const showNow = now != null && now >= DAY_START && now <= DAY_END
+  return (
+    <svg className="dial slotdial" viewBox="0 0 200 200" role="img" aria-label={label}>
+      <defs>
+        <filter id="dial-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      {hours.map((h) => {
+        const [x1, y1] = pt(r + 9, ang(h), c)
+        const [x2, y2] = pt(r + (h % 120 === 0 ? 14 : 12), ang(h), c)
+        const [tx, ty] = pt(r + 22, ang(h), c)
+        return (
+          <g key={h} className="dial-hour">
+            <line x1={x1} y1={y1} x2={x2} y2={y2} />
+            {h % 120 === 0 && <text x={tx} y={ty} dy="0.35em" textAnchor="middle">{clock(h).slice(0, 2)}</text>}
+          </g>
+        )
+      })}
+      <path className="dial-track" d={arc(r, -SPAN / 2, SPAN / 2, c)} />
+      <path className={`dial-seg is-${kind}`} d={arc(r, a1, a2, c)} pathLength={100} />
+      {showNow && (() => {
+        const [x1, y1] = pt(r - 12, ang(now), c)
+        const [x2, y2] = pt(r + 12, ang(now), c)
+        return <g className="slotdial-now"><line x1={x1} y1={y1} x2={x2} y2={y2} /><circle cx={x2} cy={y2} r="2.2" /></g>
+      })()}
+      <text className="dial-big" x={c} y={c + 8} textAnchor="middle">{big}</text>
+      <text className="dial-small" x={c} y={c + 26} textAnchor="middle">{small}</text>
+    </svg>
+  )
+}
