@@ -120,7 +120,10 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 **v5.1 accounts (18 Oct ~01:30, pushed):**
 - The real product needs an account. Live mode, signed out, opens `src/SignIn.tsx`: create an account or sign in with email and password. This is Supabase Auth called with plain fetch (`src/auth.ts`); the session is in `refill.session` and `rpc.ts` sends it as a Bearer token.
 - After the first sign-in, Welcome asks "I run a business" or "I book appointments" (`set_profile`). Owners go to Setup, then their dashboard (`my_businesses`; the account owns the business through `workspaces.owner_user`, and `is_owner` / `role_of` accept the account or the key). Clients go to `src/ClientHome.tsx` (`my_entries`: every place joined while signed in, open offers, bookings, past visits). Sign out is in the ⋯ menu.
-- **Needs Dhruv:** Supabase → Authentication → Sign In / Providers → Email → turn off "Confirm email". Until then sign-up asks for email confirmation and `npm run dbtest` reports 1 FAIL (the throwaway-account check). Check the setting with GET `/auth/v1/settings` → `mailer_autoconfirm`.
+- "Confirm email" is **off** (done 18 Oct ~01:15; GET `/auth/v1/settings` shows `mailer_autoconfirm: true`). Any email works with no inbox step, so demos can use many Gmail addresses. `npm run dbtest` = 28/28, including a throwaway owner account.
+- Tested end to end in the browser on 18 Oct:
+  - Owner: sign up, choose "I run a business", set up Glow Spa, reach the dashboard. Sign out, clear the local key, sign in: the business opens from the account alone.
+  - Client: sign up, choose "I book appointments", join with the code, see the place listed. The owner adds open time and sends the offer. The client's home shows it, they book it, and the home reads "You're booked".
 - Also fixed: the dial's glow clipped shallow arcs flat (filter now `userSpaceOnUse`); the top bar's glass did not blur (moved from `.bar::before` onto `.bar`); theme is one tap in the top bar with Threshold's flood; the calendar has no sideways scrollbar.
 - Note: `src/auth.ts` and a page called `Auth.tsx` clash on Windows (case-insensitive), hence `SignIn.tsx`.
 
