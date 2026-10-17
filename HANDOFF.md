@@ -162,7 +162,7 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 - **Booking times** (Join) read as an hour-by-hour face: one row per hour, the quarter hours in fixed columns, so a gap in a row is a time already taken; amber outline = a cancelled time back on offer; staff choice is chips.
 - `npm run flowtest` = 14 checks (new: self-booking reaches the owner, no double booking, a gap with an offer out is held, desk books a waiting client, rename/delete guards).
 
-**Splash (another Claude account, 18 Oct ~03:15):** the story page `#/story` (GSAP + Lenis, the Day Dial as art) is being built on branch `splash` in the worktree `Z:\claude\refill-splash`, brief in `docs/agents/splash-brief.md`. Do not edit `src/story/**`; it arrives as a pull request that Dhruv merges.
+**Splash (another Claude account, 18 Oct ~03:15):** the story page at the real path `/splash` (GSAP + Lenis, the Day Dial as art; a `vercel.json` rewrite serves it) is being built on branch `splash` in the worktree `Z:\claude\refill-splash`, brief in `docs/agents/splash-brief.md`. Do not edit `src/story/**`; it arrives as a pull request that Dhruv merges.
 
 **Known limits (say them honestly if asked):**
 - A live book holds one day: clients book today's times only, no future dates yet.
