@@ -1,10 +1,10 @@
 id,name,skill,minutes,price_inr
-SV1,Haircut,hair,30,600
-SV2,Blow-dry,hair,30,500
-SV3,Hair spa,hair,60,1500
-SV4,Root colour,hair,90,2800
-SV5,Global colour,hair,120,4500
-SV6,Manicure,nails,45,700
+SV1,Haircut,hair,30,650
+SV2,Blow-dry,hair,30,550
+SV3,Hair spa,hair,60,1600
+SV4,Root colour,hair,90,2500
+SV5,Global colour,hair,120,5000
+SV6,Manicure,nails,45,750
 SV7,Gel polish,nails,60,1200
-SV8,Clean-up facial,skin,45,1100
-SV9,Hydra facial,skin,60,2500
+SV8,Clean-up facial,skin,45,1200
+SV9,Hydra facial,skin,60,2800
