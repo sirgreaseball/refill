@@ -1,6 +1,7 @@
 # Fills in the contents page of the financial brief in Word, saves it, and exports a PDF.
+# Pass another .docx to do the same for it (for example the credits document).
+param([string]$f = 'Z:\claude\refill\docs\team\Refill-Financial-Projections-Brief.docx')
 $ErrorActionPreference = 'Stop'
-$f = 'Z:\claude\refill\docs\team\Refill-Financial-Projections-Brief.docx'
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
 $word.DisplayAlerts = 0
