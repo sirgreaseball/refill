@@ -1,5 +1,7 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
+> **NEWEST FIRST: read 0.8** (18 Oct afternoon: the film, the splash merge, sign-in v8, the team documents and the themed final deck). Everything below it is the earlier history and still true.
+>
 > **START HERE.** State at 18 Oct 2026, ~02:40 IST (checks: tests 51/51, build green, flowtest 14/14; migration 011 applied: booking first, server clock, settings and deletes; v7 phone pass, see the last block of 0.7). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
 ## 0. The short version
@@ -176,6 +178,37 @@ Preview: `.claude/launch.json` defines `refill` (Vite on port 5180). Use the bro
 2. ~~`docs/DEMO_SCRIPT.md`~~ **rewritten 18 Oct ~01:40** for accounts + Try the demo + v6 UI: sign-in page, real desk, demo Home dial, Harsh late cancel (case checks 1 and 3), two phones (case check 2), Arjun out with Manav moved and Kunal's link (MBA change), Owner, Lab live race. Labels verified against source; Q&A rewritten and honest about limits.
 3. Admin console for the team (business-level data and feedback only, never client data). It needs an admin key table and a feedback table.
 4. Dates on appointments (future booking, true multi-day history). Cross-device client accounts.
+
+### 0.8 Now (18 Oct ~13:00): film, splash, sign-in v8, team documents, final deck
+Everything here was done in one Claude session after the hackathon build. App checks after it: `npm test` 51/51, build green. Main is at `428c477` plus the uncommitted files listed under "Not committed".
+
+**1. The product film (done, uploaded).**
+- A 3:29 narrated motion-graphics film of Refill, 1080p 60 fps, in the chronograph language. Remotion project in `video/` (inside this repo folder, **not committed**; `video/.gitignore` keeps out `node_modules`, `out`, `.env`).
+- Flow: case brief, pain, solution and logo, front desk, client, two-phone race, staff, owner, features, USP (rules live in the database), Lab proof, business and pilot, end card.
+- Voice: ElevenLabs free tier, premade voice **Sarah** (`EXAVITQu4vr4xnSDxMaL`), model `eleven_multilingual_v2`. The free tier cannot use Voice Library voices through the API (402 `paid_plan_required`). The key is in `video/.env` (gitignored). A full pass used about 1,700 of 10,000 credits.
+- Timing is driven by the voice: `video/src/data/scenes.json` + `video/src/data/vo.json`; animations key to spoken words with `at(sc, line, word)`. Sound effects (`tools/sfx.py`, 29 sounds) and the music bed (`tools/music.py`) are synthesised, so there are no licence issues. Pipeline and commands: `video/README.md`.
+- Output: `video/out/Refill.mp4` (mastered to -14 LUFS). Uploaded **unlisted** to Dhruv's channel SirGreaseball: https://youtu.be/5BfsKofkIHw, with title, description, 11 chapters, tags, English captions (`video/out/youtube/refill.en.srt`) and a custom thumbnail. The upload kit is in `video/out/youtube/`.
+
+**2. Splash merged.** Chirag's `/splash` story page (PR #22) was reviewed locally (desktop, phone, no console errors, GSAP/Lenis only in its own chunk), then approved and merged by Dhruv. Live at https://fillthechair.vercel.app/splash.
+
+**3. Sign-in page v8 (commit `e5daa23`, live).** Rebuilt after studying Linear, Stripe, Resend, Clerk, Cal.com and Supabase sign-in pages. Details are in 0.2 and in `src/SignIn.tsx` plus the v8 block at the end of `src/motion.css`. Not added: Google sign-in and "forgot password" (they need a Supabase OAuth app and SMTP).
+
+**4. Team documents (commit `428c477`, in `docs/team/`).**
+- `Refill-BTech-Master.pdf/.docx` (28 pages): architecture, stack, repository map, rules engine and algorithms, database (security model, tables, indexes, locking, offers, rate limits, clocks, migrations, all 83 functions), frontend, tests, deployment, status, codes, Q&A.
+- `Refill-MBA-Master.pdf/.docx` (25 pages): problem, product in plain words, personas, customer value, competitors, pricing and cost hypotheses (marked as assumptions), first-customer path, growth experiment, negotiated change, 30-day pilot, evidence vs assumptions, risks, pitch kit.
+- Sources: `docs/team/source/` (`btech.js`, `mba.js`, `lib.js`, figures). Rebuild: `npm i docx@9` there, `node btech.js && node mba.js`, then `topdf.ps1` (Windows + Word fills the contents page and exports PDFs). Figures come from `video/tools/docfigs.mjs` (diagrams in `video/src/doc/Diagrams.tsx`).
+
+**5. Final presentation deck (done, NOT committed).**
+- `docs/team/Refill-Final-Deck.pptx` (+ `.pdf` preview): the MBA team's `REFILL_Deck.pptx` (from Dhruv's Downloads) rebuilt in Refill's dark chronograph theme, 7 slides.
+- Slide 1 is new: a splash-style cover ("Every cancelled appointment, filled again.", the Day Dial) with the team: **Team C29** (placeholder name, Dhruv to confirm); B.Tech Dhruv Sonar, Vedanth Raj, Parth Kachhara, Chirag Seervi; MBA **Parth Srivastava, Tushar Walia**.
+- Changes Dhruv asked for: slide 3 (STP) keeps the psychographic insight, STP and beachhead but has **two** versatile personas (business side, client side) instead of three salon ones; slide 4 has five concrete, built features with proof chips; slide 5 (onboarding + a day) matches the real app flow, with real screens; slide 6 (pricing) uses the WHY text from Dhruv's screenshot and general-terms unit economics; slide 7 keeps GTM weeks 1–4 and the projections table, shortens the north-star KPIs, and adds **risk mitigation on the three star features**. All other content is the MBA team's, unchanged. Speaker notes on every slide; slide 7's notes carry the projection reasoning.
+- `docs/team/Refill-Financial-Projections-Brief.pdf/.docx` (11 pages): how every number on the projections slide is built (₹699 × average locations × 12; COGS ₹100; break-even 209 / 682 locations), why the location counts and OpEx, value to the owner, sensitivities (₹499 / ₹999 / slower adoption) and sourced market facts. For the MBA presenter.
+- Sources: `docs/team/source/deck/` (`build.js` with pptxgenjs, `finalize.ps1`, `art/`) and `docs/team/source/fin.js`. Rebuild the deck: `npm i pptxgenjs@3.12.0` in that folder, `node build.js`, then `finalize.ps1` (PowerPoint embeds the fonts and exports PNGs).
+- **Fonts:** the deck uses Clash Display, Satoshi and JetBrains Mono. They were installed for Dhruv's Windows user only (`%LOCALAPPDATA%\Microsoft\Windows\Fonts` + HKCU registry) and are embedded in the .pptx for the characters already used. If someone types new text on a laptop without them, PowerPoint substitutes; fix in PowerPoint with File → Options → Save → "Embed all characters", then save.
+
+**Not committed (decide with Dhruv):** `docs/team/Refill-Final-Deck.*`, `docs/team/Refill-Financial-Projections-Brief.*`, `docs/team/source/deck/`, `docs/team/source/fin.js`, `docs/team/source/topdf-fin.ps1`, and the whole `video/` folder.
+
+**Open items:** confirm the team name on the cover; Dhruv may ask for more slide changes (keep content edits to what he names); the market-shock rehearsal in `docs/SHOCKS.md` is still not timed on live.
 
 ### 0.6 Tools on the new account
 - **Same PC, Claude Code:** open `Z:\claude\refill`. `CLAUDE.md` and `.claude/skills/` load by themselves.
