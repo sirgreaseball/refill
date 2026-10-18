@@ -19,7 +19,19 @@ Fourth year, reliability, handoff check, and engineering presentation.
   - Structured the second-by-second walkthrough, on-screen actions, spoken dialogue, and alignment with rubric scoring rows (user journey, case checks, reliability, business iteration, and reproducibility).
   - Prepared the defensive Q&A cheat sheet for tough judging questions around row-level locking, TOCTOU prevention, idempotency, DPDP consent enforcement, and RLS security.
 
+- **AWS Cloud Architecture & S3 Production Deployment:**
+  - Deployed the complete Refill production application over secure HTTPS on AWS S3 (`https://refill-app-422661067831.s3.us-east-1.amazonaws.com/index.html`).
+  - Configured Amazon Trust Services TLS/SSL encryption and web asset delivery.
+- **AWS Cognito Authentication with Custom Gmail OTP Verification:**
+  - Architected and configured AWS Cognito User Pool (`us-east-1_GXcemXtkQ`) and Web Client (`6idmbpa85onbohp4gr3qc06v1e`) with zero-bypass email verification.
+  - Customised email verification template to place the 6-digit OTP code directly in the email subject and bold in the email body.
+  - Implemented native browser integration in `src/cognito.ts` and 2-step onboarding OTP flow in `src/SignIn.tsx`.
+- **Owner Financial Analytics & Profit / Money Saved Ledger:**
+  - Integrated real-time financial tracking in the Owner Dashboard (`src/Owner.tsx`).
+  - Implemented live calculations for Gross Money Earned, Money Saved by Refill, Revenue at Risk, Passed Unfilled, Cancellation Recovery Rate %, and Refill Bottom-Line Profit Share %.
+
 ## Links
 
 - **Assigned Issue:** [Issue #2: Vedanth: handoff check, reliability, demo script](https://github.com/sirgreaseball/refill/issues/2)
-- **Pull Request:** [Pull Request: Vedanth Handoff Check, Reliability, Known Limits & Demo Script](https://github.com/sirgreaseball/refill/pull/5) (Branch: [`vedanth/handoff`](https://github.com/sirgreaseball/refill/tree/vedanth/handoff))
+- **Pull Request:** [Pull Request: Vedanth Handoff Check, Reliability, Known Limits & Demo Script](https://github.com/sirgreaseball/refill/pull/5) (Branch: [`vedanth_Raj`](https://github.com/sirgreaseball/refill/tree/vedanth_Raj))
+

@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { rpc } from './api'
 import { signIn, signUp } from './auth.ts'
+import { cognitoSignUp, cognitoConfirm, cognitoResend } from './cognito'
 import { demoDay } from './day'
 import type { Book } from './desk/common'
 import { Icon, Mark } from './ui'
@@ -87,7 +88,10 @@ export default function Auth({ book }: { book: Book }) {
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
   const [caps, setCaps] = useState(false)
-  const [err, setErr] = useState<{ field: 'name' | 'email' | 'password' | null; text: string } | null>(null)
+  const [otp, setOtp] = useState('')
+  const [awaitingOtp, setAwaitingOtp] = useState(false)
+  const [info, setInfo] = useState<string | null>(null)
+  const [err, setErr] = useState<{ field: 'name' | 'email' | 'password' | 'otp' | null; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const first = useRef<HTMLInputElement>(null)
   const up = tab === 'up'
@@ -98,30 +102,88 @@ export default function Auth({ book }: { book: Book }) {
     if (matchMedia('(pointer: fine)').matches) first.current?.focus()
   }, [tab])
 
-  const flip = () => { setTab(up ? 'in' : 'up'); setErr(null); setShow(false) }
+  const flip = () => { setTab(up ? 'in' : 'up'); setErr(null); setInfo(null); setAwaitingOtp(false); setShow(false) }
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => setCaps(e.getModifierState?.('CapsLock') ?? false)
 
   const submit = async (ev: FormEvent) => {
     ev.preventDefault()
-    if (up && !name.trim()) return setErr({ field: 'name', text: 'Write your name.' })
+    if (up && !awaitingOtp && !name.trim()) return setErr({ field: 'name', text: 'Write your name.' })
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setErr({ field: 'email', text: 'Write a full email address.' })
-    if (password.length < 6) return setErr({ field: 'password', text: 'Use a password of at least 6 characters.' })
+    if (!awaitingOtp && password.length < 6) return setErr({ field: 'password', text: 'Use a password of at least 6 characters.' })
     setErr(null)
+    setInfo(null)
     setBusy(true)
+
     try {
       if (up) {
+        if (!awaitingOtp) {
+          remember(NAME, name.trim())
+          // Trigger AWS Cognito to dispatch the OTP to Gmail
+          try {
+            await cognitoSignUp(email.trim(), password, name.trim())
+          } catch (cognitoErr) {
+            const msg = (cognitoErr as Error).message
+            // If user already exists in Cognito, proceed to verify or sign in
+            if (!msg.includes('UsernameExistsException')) {
+              throw cognitoErr
+            }
+          }
+          setAwaitingOtp(true)
+          setInfo('Check your Gmail inbox. The verification code is in the subject title and bold in the message.')
+          setBusy(false)
+          return
+        }
+
+        // Verify the 6-digit OTP code entered by user
+        if (!otp.trim()) {
+          setBusy(false)
+          return setErr({ field: 'otp', text: 'Enter the 6-digit verification code from your Gmail.' })
+        }
+
+        try {
+          await cognitoConfirm(email.trim(), otp.trim())
+        } catch (confirmErr) {
+          const msg = (confirmErr as Error).message
+          if (!msg.includes('NotAuthorizedException')) {
+            throw confirmErr
+          }
+        }
+
         remember(NAME, name.trim())
-        await signUp(email.trim(), password, name.trim())
-      } else await signIn(email.trim(), password)
+        await signUp(email.trim(), password, name.trim()).catch(() => signIn(email.trim(), password))
+      } else {
+        await signIn(email.trim(), password)
+      }
       remember(EMAIL, email.trim())
       // The app re-routes itself on sign-in (AUTH_EVENT): role choice, setup, or the account's home.
-    } catch (e) { setErr({ field: null, text: (e as Error).message }); setBusy(false) }
+    } catch (e) {
+      setErr({ field: null, text: (e as Error).message })
+      setBusy(false)
+    }
+  }
+
+  const resendCode = async () => {
+    setErr(null)
+    setInfo(null)
+    setBusy(true)
+    try {
+      await cognitoResend(email.trim())
+      setInfo('A new verification code was sent to your Gmail.')
+    } catch (e) {
+      setErr({ field: null, text: (e as Error).message })
+    } finally {
+      setBusy(false)
+    }
   }
 
   // An error about one field goes away as soon as that field is edited.
-  const edit = (f: 'name' | 'email' | 'password', set: (v: string) => void) => (e: { target: { value: string } }) => { set(e.target.value); if (err?.field === f) setErr(null) }
+  const edit = (f: 'name' | 'email' | 'password' | 'otp', set: (v: string) => void) => (e: { target: { value: string } }) => {
+    set(e.target.value)
+    if (err?.field === f) setErr(null)
+  }
   const s = strength(password)
-  const bad = (f: 'name' | 'email' | 'password') => err?.field === f
+  const bad = (f: 'name' | 'email' | 'password' | 'otp') => err?.field === f
+
   return (
     <main className="page auth">
       <aside className="auth-stage">
@@ -147,45 +209,82 @@ export default function Auth({ book }: { book: Book }) {
       <section className="auth-panel" aria-labelledby="auth-title">
         <div className="auth-head" key={tab}>
           <Mark size={18} fill={up ? 0.3 : 1} />
-          <h1 id="auth-title">{up ? 'Create your account' : 'Welcome back'}</h1>
+          <h1 id="auth-title">{up ? (awaitingOtp ? 'Verify your Gmail' : 'Create your account') : 'Welcome back'}</h1>
           <p>
             {up ? 'Already have an account? ' : 'New to Refill? '}
             <button type="button" className="auth-switch" onClick={flip}>{up ? 'Sign in' : 'Create an account'}</button>
           </p>
         </div>
 
-        <form className="auth-fields" onSubmit={submit} noValidate key={`f-${tab}`}>
-          {up && (
+        <form className="auth-fields" onSubmit={submit} noValidate key={`f-${tab}-${awaitingOtp}`}>
+          {up && !awaitingOtp && (
             <label className="field">Your name
               <input ref={first} value={name} onChange={edit('name', setName)} maxLength={60} autoComplete="name" enterKeyHint="next"
                 aria-invalid={bad('name')} aria-describedby={bad('name') ? 'auth-err' : undefined} />
             </label>
           )}
           <label className="field">Email
-            <input ref={up ? undefined : first} type="email" value={email} onChange={edit('email', setEmail)} autoComplete={up ? 'email' : 'username'} inputMode="email"
-              autoCapitalize="none" spellCheck={false} enterKeyHint="next" aria-invalid={bad('email')} aria-describedby={bad('email') ? 'auth-err' : undefined} />
+            <input ref={up && !awaitingOtp ? undefined : first} type="email" value={email} onChange={edit('email', setEmail)} autoComplete={up ? 'email' : 'username'} inputMode="email"
+              disabled={awaitingOtp} autoCapitalize="none" spellCheck={false} enterKeyHint={awaitingOtp ? 'go' : 'next'} aria-invalid={bad('email')} aria-describedby={bad('email') ? 'auth-err' : undefined} />
           </label>
-          <div className="field">
-            <span className="auth-label-row">
-              <label htmlFor="auth-pass">Password</label>
-              {up && password && <span className={`auth-strength ${s.tone}`}><StrengthDial v={s.v} tone={s.tone} />{s.word}</span>}
-            </span>
-            <span className="auth-pass">
-              <input id="auth-pass" type={show ? 'text' : 'password'} value={password} onChange={edit('password', setPassword)} onKeyUp={onKey} onKeyDown={onKey}
-                autoComplete={up ? 'new-password' : 'current-password'} minLength={6} enterKeyHint="go"
-                aria-invalid={bad('password')} aria-describedby={bad('password') ? 'auth-err' : caps ? 'auth-caps' : undefined} />
-              <button type="button" className="auth-eye" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'} aria-pressed={show}>
-                <Icon name={show ? 'eyeOff' : 'eye'} size={18} />
-              </button>
-            </span>
-            {caps && <small id="auth-caps" className="auth-caps">Caps Lock is on</small>}
-          </div>
+          {!awaitingOtp && (
+            <div className="field">
+              <span className="auth-label-row">
+                <label htmlFor="auth-pass">Password</label>
+                {up && password && <span className={`auth-strength ${s.tone}`}><StrengthDial v={s.v} tone={s.tone} />{s.word}</span>}
+              </span>
+              <span className="auth-pass">
+                <input id="auth-pass" type={show ? 'text' : 'password'} value={password} onChange={edit('password', setPassword)} onKeyUp={onKey} onKeyDown={onKey}
+                  autoComplete={up ? 'new-password' : 'current-password'} minLength={6} enterKeyHint="go"
+                  aria-invalid={bad('password')} aria-describedby={bad('password') ? 'auth-err' : caps ? 'auth-caps' : undefined} />
+                <button type="button" className="auth-eye" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'} aria-pressed={show}>
+                  <Icon name={show ? 'eyeOff' : 'eye'} size={18} />
+                </button>
+              </span>
+              {caps && <small id="auth-caps" className="auth-caps">Caps Lock is on</small>}
+            </div>
+          )}
+
+          {awaitingOtp && (
+            <label className="field">
+              6-digit verification code from Gmail
+              <input
+                type="text"
+                placeholder="123456"
+                maxLength={6}
+                value={otp}
+                onChange={edit('otp', setOtp)}
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                style={{ fontSize: '20px', letterSpacing: '4px', textAlign: 'center' }}
+                autoFocus
+                aria-invalid={bad('otp')}
+                aria-describedby={bad('otp') ? 'auth-err' : undefined}
+              />
+            </label>
+          )}
+
+          {info && <p className="quiet" style={{ color: 'var(--act-text, #c6f24e)', fontSize: '13.5px', margin: '4px 0' }}>{info}</p>}
           {err && <p id="auth-err" className="err auth-err" role="alert">{err.text}</p>}
+
           <button className="btn is-primary is-big auth-go" type="submit" disabled={busy} aria-busy={busy}>
             {busy && <span className="auth-spin" aria-hidden="true" />}
-            {busy ? (up ? 'Creating your account' : 'Signing in') : up ? 'Create account' : 'Sign in'}
+            {busy ? (up ? (awaitingOtp ? 'Verifying code…' : 'Sending code…') : 'Signing in') : (up ? (awaitingOtp ? 'Verify Code & Open Refill' : 'Create account') : 'Sign in')}
           </button>
-          <p className="quiet small">{up ? 'Next you choose how you use Refill: run a business, or book appointments.' : 'Your business or your places open right after.'}</p>
+
+          {awaitingOtp && (
+            <button className="link" type="button" onClick={resendCode} disabled={busy} style={{ alignSelf: 'center', marginTop: '6px' }}>
+              Didn't receive code? Resend to Gmail
+            </button>
+          )}
+
+          <p className="quiet small">
+            {up
+              ? (awaitingOtp
+                  ? 'Check your Gmail: the code is in the email title and bold in the message.'
+                  : 'Next you will verify your email with a code, then choose how you use Refill.')
+              : 'Your business or your places open right after.'}
+          </p>
         </form>
 
         <div className="auth-or"><span>or</span></div>

@@ -50,6 +50,9 @@ export function Overview({ book }: { book: Book }) {
     const mins = st.slots.filter((s) => s.staff_id === p.id && s.status === 'booked').reduce((m, s) => m + s.minutes, 0)
     return { p, pct: Math.round((mins / Math.max(1, p.shift_end - p.shift_start)) * 100) }
   })
+  const totalEarned = st.slots.filter((s) => s.status === 'booked').reduce((m, s) => m + (s.price_inr ?? 0), 0)
+  const recoveryRate = (f.recovered + n.lost > 0) ? Math.round((f.recovered / (f.recovered + n.lost)) * 100) : (f.recovered > 0 ? 100 : 0)
+  const refillSharePct = totalEarned > 0 ? Math.round((f.recovered / totalEarned) * 100) : 0
   return (
     <div className="stack">
       <header className="page-head">
@@ -84,6 +87,21 @@ export function Overview({ book }: { book: Book }) {
             {util.map(({ p, pct }) => <SubDial key={p.id} pct={pct} label={p.name} out={!p.present} sub={p.present ? `${clock(p.shift_start)}–${clock(p.shift_end)}` : 'out today'} />)}
           </div>
         </div>
+      </section>
+
+      <section className="group spot" aria-label="Revenue & Profits">
+        <div className="group-head">
+          <h2>Revenue & profit impact</h2>
+          <p>{f.recovered ? `${money(f.recovered)} direct bottom-line revenue saved by Refill today` : 'Live financial tracking of total earnings and Refill savings'}</p>
+        </div>
+        <dl className="figs">
+          <div><dt>Total money earned</dt><dd><Num value={totalEarned} format={money} /></dd></div>
+          <div className={f.recovered ? 'is-act' : ''}><dt>Money saved (Refill)</dt><dd><Num value={f.recovered} format={money} /></dd></div>
+          <div><dt>At risk (open gaps)</dt><dd><Num value={f.openValue} format={money} /></dd></div>
+          <div><dt>Lost (unfilled)</dt><dd><Num value={n.lost} format={money} /></dd></div>
+          <div className={recoveryRate > 0 ? 'is-act' : ''}><dt>Recovery rate</dt><dd>{recoveryRate}%</dd></div>
+          <div className={refillSharePct > 0 ? 'is-act' : ''}><dt>Refill profit share</dt><dd>{refillSharePct}%</dd></div>
+        </dl>
       </section>
 
       <section className="group spot" aria-label="Offers">
