@@ -218,6 +218,21 @@ Everything here was done in one Claude session after the hackathon build. App ch
 - Client pages (`#/o/`, `#/m/`, `#/me/`, `#/join/`) ignore the light/dark toggle and always render dark: the theme effect runs only inside `Shell` in `src/App.tsx`. A small app fix if Dhruv wants it.
 - The market-shock rehearsal in `docs/SHOCKS.md` is still not timed on live.
 
+### 0.9 Now (18 Oct ~14:15): final-submission pack
+The organisers' submission asks for: GitHub URL, live app URL, pitch deck link, a **4–5 minute demo video**, supporting documents. Everything here is committed (`82f4651`).
+- **README** rebuilt as the submission front page: banner from `/splash`, eight loops cut from the film (`.github/media/*.webp`, made with `Z:\claude\repo-glowup\_work` tools: `post.py anim`, `run.mjs`, `preview.mjs`), three real-app screens, a links table, case checks, proof table, business, team. Repo About now points at fillthechair.vercel.app with topics.
+- **`docs/submission/Refill-Citations.xlsx`** (source `docs/team/source/citations.py`): 36 outside sources read on 18 Oct, 12 product claims with test evidence, 15 assumptions, and the financial table rebuilt with formulas (19/19 match the deck). Recalculate with Excel (LibreOffice's recalc does not run on this PC).
+- **`docs/submission/Refill-Credits-and-Inspirations.docx/.pdf`** (source `credits.js`; PDF via `topdf-fin.ps1 -f <docx>`). `docs/team/source/package.json` makes that folder CommonJS.
+- Live checks on 18 Oct: `npm test` 51/51, `dbtest` 28/28, `flowtest` 14/14, `race` 3/3. Issues #11–#14 and #19 closed (fixed in `ba121f9`).
+
+**Open items:**
+- **Claude in the GitHub contributors list** comes from `Co-Authored-By: Claude` trailers in Chirag's commits `14a5e89` and `adbdfed`. Removing it means rewriting main from there (about 90 commit hashes change; tags are not affected), lifting branch protection for a force push, and teammates re-syncing. Waiting on Dhruv's go-ahead; merge PR #21 first.
+- **Demo video:** the film is 3:29; the brief asks for 4–5 minutes.
+- **Citation fixes (workbook, 'Needs correction'):** Lakmé/Naturals cited to Inventiva (use Ken Research; Inventiva says Naturals 650+), UserJot does not support 3–7% monthly churn, ₹85/US$ is now ≈ ₹95, Mangomint is $120/location + $10/user, Zenoti's HQ is Bellevue (founded in Hyderabad).
+- MBA master section 8 prices (₹999/₹1,499/₹1,999) disagree with the deck's ₹699 anchor.
+- `docs/KNOWN_LIMITS.md` still says there is no owner login (accounts exist since v5.1).
+- The STME/SBM rules are not in the shared Drive folder we can see (only the case book).
+
 ### 0.6 Tools on the new account
 - **Same PC, Claude Code:** open `Z:\claude\refill`. `CLAUDE.md` and `.claude/skills/` load by themselves.
   - Git push works through the PC's credential manager.
