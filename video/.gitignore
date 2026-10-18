@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Ignore the output video from Git but not videos you import into src/.
+out
+
+# Generated audio (86 MB): rebuild with tools/vo.mjs (ElevenLabs credits), sfx.py and music.py.
+public/vo
+public/sfx
+public/music

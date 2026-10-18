@@ -1,0 +1,480 @@
+{
+ "staff": [
+  {
+   "id": "ST1",
+   "name": "Riya",
+   "skills": "hair|skin",
+   "from": 600,
+   "to": 1170
+  },
+  {
+   "id": "ST2",
+   "name": "Arjun",
+   "skills": "hair",
+   "from": 630,
+   "to": 1140
+  },
+  {
+   "id": "ST3",
+   "name": "Meher",
+   "skills": "nails|skin",
+   "from": 600,
+   "to": 1140
+  },
+  {
+   "id": "ST4",
+   "name": "Kabir",
+   "skills": "hair|nails",
+   "from": 630,
+   "to": 1200
+  }
+ ],
+ "slots": [
+  {
+   "id": "R1",
+   "start": 600,
+   "staff": "ST1",
+   "min": 60,
+   "svc": "Hair spa",
+   "price": 1600,
+   "who": "Ananya",
+   "status": "booked"
+  },
+  {
+   "id": "R2",
+   "start": 660,
+   "staff": "ST1",
+   "min": 30,
+   "svc": "Haircut",
+   "price": 650,
+   "who": "Ishaan",
+   "status": "booked"
+  },
+  {
+   "id": "R3",
+   "start": 690,
+   "staff": "ST1",
+   "min": 90,
+   "svc": "Root colour",
+   "price": 2500,
+   "who": "Farah",
+   "status": "booked"
+  },
+  {
+   "id": "R4",
+   "start": 810,
+   "staff": "ST1",
+   "min": 45,
+   "svc": "Clean-up facial",
+   "price": 1200,
+   "who": "Pooja",
+   "status": "booked"
+  },
+  {
+   "id": "R5",
+   "start": 870,
+   "staff": "ST1",
+   "min": 60,
+   "svc": "Hair spa",
+   "price": 1600,
+   "who": "",
+   "status": "free"
+  },
+  {
+   "id": "R6",
+   "start": 960,
+   "staff": "ST1",
+   "min": 30,
+   "svc": "Haircut",
+   "price": 650,
+   "who": "Varun",
+   "status": "booked"
+  },
+  {
+   "id": "R7",
+   "start": 1020,
+   "staff": "ST1",
+   "min": 60,
+   "svc": "Hydra facial",
+   "price": 2800,
+   "who": "Sana",
+   "status": "booked"
+  },
+  {
+   "id": "R8",
+   "start": 1110,
+   "staff": "ST1",
+   "min": 30,
+   "svc": "Blow-dry",
+   "price": 550,
+   "who": "Diya",
+   "status": "booked"
+  },
+  {
+   "id": "A1",
+   "start": 630,
+   "staff": "ST2",
+   "min": 30,
+   "svc": "Haircut",
+   "price": 650,
+   "who": "Rohan",
+   "status": "booked"
+  },
+  {
+   "id": "A2",
+   "start": 660,
+   "staff": "ST2",
+   "min": 120,
+   "svc": "Global colour",
+   "price": 5000,
+   "who": "Lakshmi",
+   "status": "booked"
+  },
+  {
+   "id": "A3",
+   "start": 840,
+   "staff": "ST2",
+   "min": 30,
+   "svc": "Blow-dry",
+   "price": 550,
+   "who": "Kunal",
+   "status": "booked"
+  },
+  {
+   "id": "A4",
+   "start": 900,
+   "staff": "ST2",
+   "min": 60,
+   "svc": "Hair spa",
+   "price": 1600,
+   "who": "Tara",
+   "status": "booked"
+  },
+  {
+   "id": "A5",
+   "start": 990,
+   "staff": "ST2",
+   "min": 30,
+   "svc": "Haircut",
+   "price": 650,
+   "who": "Manav",
+   "status": "booked"
+  },
+  {
+   "id": "A6",
+   "start": 1050,
+   "staff": "ST2",
+   "min": 90,
+   "svc": "Root colour",
+   "price": 2500,
+   "who": "Neha",
+   "status": "booked"
+  },
+  {
+   "id": "M1",
+   "start": 600,
+   "staff": "ST3",
+   "min": 45,
+   "svc": "Manicure",
+   "price": 750,
+   "who": "Aisha",
+   "status": "booked"
+  },
+  {
+   "id": "M2",
+   "start": 660,
+   "staff": "ST3",
+   "min": 60,
+   "svc": "Gel polish",
+   "price": 1200,
+   "who": "Kavya",
+   "status": "booked"
+  },
+  {
+   "id": "M3",
+   "start": 750,
+   "staff": "ST3",
+   "min": 60,
+   "svc": "Hydra facial",
+   "price": 2800,
+   "who": "Simran",
+   "status": "booked"
+  },
+  {
+   "id": "M4",
+   "start": 870,
+   "staff": "ST3",
+   "min": 45,
+   "svc": "Manicure",
+   "price": 750,
+   "who": "Ritu",
+   "status": "booked"
+  },
+  {
+   "id": "M5",
+   "start": 960,
+   "staff": "ST3",
+   "min": 45,
+   "svc": "Clean-up facial",
+   "price": 1200,
+   "who": "Zainab",
+   "status": "booked"
+  },
+  {
+   "id": "M6",
+   "start": 1080,
+   "staff": "ST3",
+   "min": 60,
+   "svc": "Gel polish",
+   "price": 1200,
+   "who": "Mitali",
+   "status": "booked"
+  },
+  {
+   "id": "K1",
+   "start": 630,
+   "staff": "ST4",
+   "min": 30,
+   "svc": "Blow-dry",
+   "price": 550,
+   "who": "Dev",
+   "status": "booked"
+  },
+  {
+   "id": "K2",
+   "start": 720,
+   "staff": "ST4",
+   "min": 60,
+   "svc": "Hair spa",
+   "price": 1600,
+   "who": "Harsh",
+   "status": "booked"
+  },
+  {
+   "id": "K3",
+   "start": 810,
+   "staff": "ST4",
+   "min": 60,
+   "svc": "Gel polish",
+   "price": 1200,
+   "who": "Anjali",
+   "status": "booked"
+  },
+  {
+   "id": "K4",
+   "start": 930,
+   "staff": "ST4",
+   "min": 30,
+   "svc": "Haircut",
+   "price": 650,
+   "who": "Yash",
+   "status": "booked"
+  },
+  {
+   "id": "K5",
+   "start": 990,
+   "staff": "ST4",
+   "min": 45,
+   "svc": "Manicure",
+   "price": 750,
+   "who": "Prerna",
+   "status": "booked"
+  },
+  {
+   "id": "K6",
+   "start": 1080,
+   "staff": "ST4",
+   "min": 60,
+   "svc": "Hair spa",
+   "price": 1600,
+   "who": "Aditya",
+   "status": "booked"
+  }
+ ],
+ "wait": [
+  {
+   "id": "W1",
+   "name": "Meera",
+   "svc": "Hair spa",
+   "min": 60,
+   "consent": "true"
+  },
+  {
+   "id": "W2",
+   "name": "Zoya",
+   "svc": "Haircut",
+   "min": 30,
+   "consent": "true"
+  },
+  {
+   "id": "W3",
+   "name": "Arnav",
+   "svc": "Hair spa",
+   "min": 60,
+   "consent": ""
+  },
+  {
+   "id": "W4",
+   "name": "Leela",
+   "svc": "Root colour",
+   "min": 90,
+   "consent": "true"
+  },
+  {
+   "id": "W5",
+   "name": "Sameer",
+   "svc": "Manicure",
+   "min": 45,
+   "consent": "true"
+  },
+  {
+   "id": "W6",
+   "name": "Nisha",
+   "svc": "Blow-dry",
+   "min": 30,
+   "consent": "false"
+  },
+  {
+   "id": "W7",
+   "name": "Kiran",
+   "svc": "Hair spa",
+   "min": 60,
+   "consent": "true"
+  },
+  {
+   "id": "W8",
+   "name": "Rhea",
+   "svc": "Clean-up facial",
+   "min": 45,
+   "consent": "true"
+  },
+  {
+   "id": "W9",
+   "name": "Omar",
+   "svc": "Haircut",
+   "min": 30,
+   "consent": "true"
+  },
+  {
+   "id": "W10",
+   "name": "Tanvi",
+   "svc": "Gel polish",
+   "min": 60,
+   "consent": "true"
+  },
+  {
+   "id": "W11",
+   "name": "Aarav",
+   "svc": "Global colour",
+   "min": 120,
+   "consent": "true"
+  },
+  {
+   "id": "W12",
+   "name": "Fatima",
+   "svc": "Hydra facial",
+   "min": 60,
+   "consent": ""
+  },
+  {
+   "id": "W13",
+   "name": "Vikram",
+   "svc": "Blow-dry",
+   "min": 30,
+   "consent": "true"
+  },
+  {
+   "id": "W14",
+   "name": "Ira",
+   "svc": "Manicure",
+   "min": 45,
+   "consent": "true"
+  },
+  {
+   "id": "W15",
+   "name": "Naina",
+   "svc": "Hydra facial",
+   "min": 60,
+   "consent": "true"
+  },
+  {
+   "id": "W16",
+   "name": "Yusuf",
+   "svc": "Root colour",
+   "min": 90,
+   "consent": "false"
+  },
+  {
+   "id": "W17",
+   "name": "Priya",
+   "svc": "Haircut",
+   "min": 30,
+   "consent": "true"
+  }
+ ],
+ "services": [
+  {
+   "id": "SV1",
+   "name": "Haircut",
+   "skill": "hair",
+   "minutes": "30",
+   "price_inr": "650"
+  },
+  {
+   "id": "SV2",
+   "name": "Blow-dry",
+   "skill": "hair",
+   "minutes": "30",
+   "price_inr": "550"
+  },
+  {
+   "id": "SV3",
+   "name": "Hair spa",
+   "skill": "hair",
+   "minutes": "60",
+   "price_inr": "1600"
+  },
+  {
+   "id": "SV4",
+   "name": "Root colour",
+   "skill": "hair",
+   "minutes": "90",
+   "price_inr": "2500"
+  },
+  {
+   "id": "SV5",
+   "name": "Global colour",
+   "skill": "hair",
+   "minutes": "120",
+   "price_inr": "5000"
+  },
+  {
+   "id": "SV6",
+   "name": "Manicure",
+   "skill": "nails",
+   "minutes": "45",
+   "price_inr": "750"
+  },
+  {
+   "id": "SV7",
+   "name": "Gel polish",
+   "skill": "nails",
+   "minutes": "60",
+   "price_inr": "1200"
+  },
+  {
+   "id": "SV8",
+   "name": "Clean-up facial",
+   "skill": "skin",
+   "minutes": "45",
+   "price_inr": "1200"
+  },
+  {
+   "id": "SV9",
+   "name": "Hydra facial",
+   "skill": "skin",
+   "minutes": "60",
+   "price_inr": "2800"
+  }
+ ]
+}
