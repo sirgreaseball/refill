@@ -8,3 +8,7 @@ dist
 .playwright-mcp
 .DS_Store
 graphify-out/cache
+
+# Deck build output (docs/team/source/deck/build.js, finalize.ps1)
+docs/team/source/deck/*-raw.pptx
+docs/team/source/deck/png*/
