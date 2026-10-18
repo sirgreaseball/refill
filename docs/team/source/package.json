@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "description": "Builds the team documents. The repo root is an ES module package; these scripts use require().",
+  "dependencies": {
+    "docx": "^9.0.0"
+  }
+}
