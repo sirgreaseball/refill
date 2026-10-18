@@ -244,4 +244,24 @@ npm ci
 
 ## 9. Progress (keep this section current; Dhruv may switch accounts at any time)
 
-- *(empty: start here)*
+- **18 Oct ~04:30 IST, plain version working.** Branch `splash`, worktree `C:\Projects\refill\refill-splash` (this session runs on a different PC from `Z:`; the branch on GitHub is the source of truth).
+  - Files: `src/story/` (`Story.tsx` page, loader, proof, ending, still frames; `StoryDial.tsx` the dial as layered SVG; `scenes.ts` the scroll timeline and still states; `facts.ts` every number, computed from `dayPayload()`/`demoDay()` with the engine; `geo.ts`; `pointer.ts` cursor effects; `story.css`), the `/splash` switch in `src/App.tsx`, the link in `src/SignIn.tsx`, the `rewrites` in `vercel.json`, `gsap` 3.15.0 + `lenis` 1.3.27.
+  - Checks: tests 51/51, `tsc -b` and `vite build` green; main `index-*.js` 274.5 kB (unchanged), GSAP and Lenis only in `Story-*.js` (167 kB, 61 kB gzip).
+  - Next: light theme, 1280/820/390 and reduced-motion passes, the loader, frame times, then the pull request.
+- **18 Oct ~04:05 IST, section 7 checks pass; pull request opened.**
+  - Screenshots at 1440, 1280, 820 and 390, dark and light, with and without reduced motion (72 frames): no console errors, no horizontal scroll at any width.
+  - Frame times while wheel-scrolling the whole page at 1440×900 (Edge, Intel UHD integrated graphics): p50 8.3 ms, p95 8.4 ms, worst 16.7 ms, none over 20 ms.
+  - Flow: `/splash` → **Try the demo** → `/#/` in demo mode with no `lenis` classes left on `<html>`, and the desk scrolls; sign-in shows **See how Refill works** → `/splash`; `/` is unchanged, sign-in first on phones.
+  - Vercel preview: https://refill-git-splash-sirgreaseballs-projects.vercel.app/splash sits behind Vercel's login (deployment protection), so the `/splash` rewrite on Vercel could not be checked from here; it opens when signed in to Vercel.
+  - The splash fingerprint is in the appendix of `.claude/skills/flagship-feel/SKILL.md`.
+- **18 Oct ~04:15 IST, pull request #22 open; polish passes on the same branch.** https://github.com/sirgreaseball/refill/pull/22 (CI `test` green).
+  - Lighthouse mobile on the production build (`vite preview`): performance 88 to 89, accessibility 100, best practices 100, layout shift 0. The app's own `/` scores 91 on the same machine. The gap is the loader the brief asks for, and the render-blocking font stylesheets in `index.html` (outside the splash's files).
+  - Frame times while scrolling: p95 8.5 ms at 1440 (dev) and at 1280 (production build).
+  - The brief's exact path on the production build: `/splash` → **Open Refill** → sign-in → demo → `#/desk` scrolls, `<html>` has no classes, no console errors.
+  - After the merge: add the splash line to `HANDOFF.md` 0.7.
+- **18 Oct ~04:30 IST, polish on the same branch.** Screen readers get the whole story as text (one h1, an h2 per chapter). The gap headline uses the demo script's words. The race names `accept_offer`'s row lock and `bookings_one_per_slot`. The stage closes back into its frame as the story ends, and the mark's gap fills as the ending arrives. A final sweep at 1440, 1280, 820 and 390, in both themes and with reduced motion, shows no console errors and no horizontal scroll.
+- **18 Oct ~04:56 IST, the alive pass (asked for: more reactive to the cursor, more alive, more interactive to the scroll).**
+  - Cursor (fine pointers): over the stage the cursor is a ring that reads the time on the face under it and takes the colour of what it is over (amber open gap, lime refilled, coral needs moving). A dashed reading hand follows it round the dial; the arcs and hours nearest it swell and brighten (`--near`, set in `pointer.ts`).
+  - Scroll: the scroll's speed turns the bezel up to 9 degrees, like a crown, and it settles home; at rest the face drifts about a degree.
+  - Modules: the evidence log (the app's event codes and wording from `sentence()` in `src/desk/common.tsx`, fed line by line by the timeline); the race on two phones drawn like `src/Offer.tsx` (Book, You're booked, Someone got there first); a chapter rail at the left edge that glides to each chapter's still; IST real time in the HUD.
+  - Frame times: p95 8.5 ms, none over 20 ms, both scrolling and circling the cursor over the dial. Lighthouse mobile performance 85 to 87 now (the extra DOM lengthens the first commit), accessibility 100, best practices 100.
