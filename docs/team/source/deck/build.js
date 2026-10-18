@@ -252,8 +252,10 @@ function head(s, kicker, title, size = 23) {
   card(s, 0.45, 4.15, 4.6, 1.15, { fill: K.surface2 })
   over(s, 'Evidence trail saved at every step', { x: 0.62, y: 4.28, w: 4.2, h: 0.18, color: K.act })
   T(s, 'Every cancellation, offer (sent or skipped, with its reason), booking, expiry, move and undo is logged automatically. Export as CSV or JSON for the owner; live businesses archive each day into History.', { x: 0.62, y: 4.52, w: 4.3, h: 0.72, fontSize: 8.3, color: K.ink2, lineSpacingMultiple: 1.08 })
-  s.addImage({ path: A('film-desk_fit.jpg'), x: 5.25, y: 4.15, w: 2.04, h: 1.15 })
-  s.addImage({ path: A('film-client.jpg'), x: 7.51, y: 4.15, w: 2.04, h: 1.15 })
+  // real screens: film frames on the dark deck, the live app in its light theme on the light one
+  s.addImage({ path: V('film-desk_fit.jpg'), x: 5.25, y: 4.15, w: 2.04, h: 1.15 })
+  s.addImage({ path: V('film-client.jpg'), x: 7.51, y: 4.15, w: 2.04, h: 1.15 })
+  if (LIGHT) [5.25, 7.51].forEach((x) => s.addShape(pres.shapes.RECTANGLE, { x, y: 4.15, w: 2.04, h: 1.15, fill: { type: 'none' }, line: { color: K.line2, width: 0.75 } }))
   T(s, 'FRONT DESK · WHO FITS', { x: 5.25, y: 5.33, w: 2.04, h: 0.14, fontFace: MONO, fontSize: 5.5, color: K.ink3 })
   T(s, 'CLIENT · ONE-TAP BOOKING', { x: 7.51, y: 5.33, w: 2.04, h: 0.14, fontFace: MONO, fontSize: 5.5, color: K.ink3 })
   s.addNotes('Onboarding is done inside the app: create an account, set up the business (services, staff, hours), share three links (front desk, staff, client booking page with QR), and set the rules. A day: the desk opens Today on the Day Dial; a client cancels and the gap turns amber; Refill shows who fits and who is skipped and why; one tap sends offers; the first client to tap Book gets it; the slot turns lime and the owner sees the money recovered. If a staff member is out, their clients are flagged and moved by the desk. Every step is logged and exportable.')
