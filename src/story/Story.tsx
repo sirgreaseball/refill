@@ -11,7 +11,8 @@ import { reduced } from '../motion'
 import { Icon, Mark } from '../ui'
 import * as F from './facts'
 import { ang } from './geo'
-import { attachPointer } from './pointer'
+import { startField, fieldState } from './particles'
+import { attachPointer, type Touch } from './pointer'
 import { CHAPTERS, LENGTH, still, storyTimeline, type Scene } from './scenes'
 import StoryDial from './StoryDial'
 import './story.css'
@@ -48,12 +49,20 @@ function Copy({ scene, live }: { scene: Scene; live?: boolean }) {
       <p className="st-over">Refill · appointment recovery desk</p>
       <h1 className="st-h is-hero">{ln(<>Every <em data-hover="open">cancelled</em></>, <em data-hover="open">appointment,</em>, <em data-hover="fill">filled again.</em>)}</h1>
       <p className="st-p">When a client cancels, Refill offers the time to the next person on the waitlist who fits it and said yes to messages. The first to accept gets it.</p>
+      {/* The product's three promises, as the sign-in page states them (src/SignIn.tsx). */}
+      <ul className="st-promises">
+        <li><b>Only people who said yes</b><span>Nobody is messaged without their consent.</span></li>
+        <li><b>Never double-booked</b><span>The database decides who got the slot, once.</span></li>
+        <li><b>Every decision explained</b><span>Who was offered, who was not, and why.</span></li>
+      </ul>
     </>
     case 'gap': return <>
       <p className="st-over">01 · {F.hhmm(F.NOW)} · the gap</p>
       {/* The demo script's own words (docs/DEMO_SCRIPT.md, 1:00). */}
       <h2 className="st-h">{ln(`${F.harsh.customer} cancels his`, `${F.hhmm(F.harsh.startMin)} ${F.harsh.service?.toLowerCase()}.`)}</h2>
       <p className="st-p">{F.leadMin} minutes’ notice{F.late ? ', so Refill flags it late' : ''}. {k}’s chair goes amber: an open gap, and {F.inr(F.stake)} about to walk out of the door.</p>
+      {/* docs/DEMO_SCRIPT.md, 0:00: the moment Refill fixes. */}
+      <p className="st-note">Without it, the desk calls people one by one, or messages a whole list that never agreed to it.</p>
     </>
     case 'fits': return <>
       <p className="st-over">02 · who fits</p>
@@ -75,6 +84,8 @@ function Copy({ scene, live }: { scene: Scene; live?: boolean }) {
       <p className="st-over">04 · staff out</p>
       <h2 className="st-h">{ln(`${F.arjun.name} can’t come in.`, 'Nobody is dropped.')}</h2>
       <p className="st-p">{F.arjun.name}’s {F.toMove.length} clients still to come turn coral: they need moving, and nothing moves on its own. The desk moves {F.manav.customer} to {F.hhmm(F.manav.startMin)} with {F.moveTo.name}. {F.kunal.customer} gets a link and picks a new time.</p>
+      {/* docs/DEMO_SCRIPT.md, 2:05; HANDOFF.md section 2: rescheduling is the post-feedback change. */}
+      <p className="st-note">Rescheduling is the change our business team asked for.</p>
     </>
   }
 }
@@ -185,6 +196,15 @@ function Proof() {
           </li>
         ))}
       </ol>
+      {/* The case's three checks, worded as src/Lab.tsx runs them. */}
+      <div className="st-checks">
+        <p className="st-over">The case’s three checks, live in the app</p>
+        <ol>
+          <li><b>01</b><span>A 60-minute request cannot occupy a 30-minute slot.</span></li>
+          <li><b>02</b><span>Two requests compete for one slot: one confirmed, one waitlisted.</span></li>
+          <li><b>03</b><span>A customer without consent is excluded from outreach.</span></li>
+        </ol>
+      </div>
       <a className="st-more" href="/#/lab">Watch the case checks run live <Icon name="arrow" size={16} /></a>
     </section>
   )
@@ -200,7 +220,8 @@ function End() {
         <button className="btn is-primary is-big" data-magnet onClick={tryDemo}>Try the demo</button>
         <button className="btn is-big st-quiet" data-magnet onClick={openApp}>Open Refill</button>
       </div>
-      <p className="st-small">The demo is a sample salon day. No account needed.</p>
+      {/* dayPayload() in src/api.ts opens the demo at 11:15; the open gap is the amber arc. */}
+      <p className="st-small">The demo opens this same salon day at {F.hhmm(F.NOW)}, no account needed. Tap the amber gap and send the offers yourself.</p>
       <footer className="st-foot">
         <span>Kesar Salon is invented; every name and booking is synthetic.</span>
         <a href="https://github.com/sirgreaseball/refill" target="_blank" rel="noreferrer">Source on GitHub</a>
@@ -264,7 +285,7 @@ function intro(root: HTMLElement) {
     .fromTo(arcs, { opacity: 0 }, { opacity: 1, duration: 0.6, stagger: 0.015 }, 0.25)
     .fromTo(q('[data-hand]'), { rotation: ang(F.LO) - ang(F.NOW), svgOrigin: '0 0' }, { rotation: 0, svgOrigin: '0 0', duration: 1.5, ease: 'expo.inOut' }, 0.1)
     .fromTo(q('[data-beat="hero"] .ln > span'), { yPercent: 112 }, { yPercent: 0, duration: 1, stagger: 0.07 }, 0.2)
-    .fromTo(q('[data-beat="hero"] .st-over, [data-beat="hero"] .st-p, .st-cue > *, .st-hud > *'), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.9, stagger: 0.06 }, 0.4)
+    .fromTo(q('[data-beat="hero"] .st-over, [data-beat="hero"] .st-p, [data-beat="hero"] .st-promises li, .st-cue > *, .st-hud > *'), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.9, stagger: 0.06 }, 0.4)
     .fromTo(q('.sd-c[data-c="time"] > *'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.9, stagger: 0.08 }, 0.5)
 }
 
@@ -274,6 +295,8 @@ function Scrolled() {
   const [loading, setLoading] = useState(() => !seen())
   const lenis = useRef<Lenis | null>(null)
   const [ready] = useState(() => { let r = () => {}; const p = new Promise<void>((res) => { r = res }); return { p, r } })
+  const [field] = useState(fieldState)
+  const [touch] = useState<Touch>(() => ({ x: 0, y: 0, on: 0, rx: 0, ry: 0, rt: -1e9 }))
 
   useLayoutEffect(() => {
     const el = root.current!
@@ -339,7 +362,7 @@ function Scrolled() {
     // first paint, and the page never blocks on it. The loader waits for it as its last share.
     const ctx = gsap.context(() => {}, el)
     const build = setTimeout(() => ctx.add(() => {
-      const tl = storyTimeline(stage)
+      const tl = storyTimeline(stage, field)
       const story = ScrollTrigger.create({ trigger: track, start: 'top top', end: 'bottom bottom', scrub: 0.6, animation: tl, invalidateOnRefresh: true })
       storyST = story
       const proof = ScrollTrigger.create({ trigger: el.querySelector('.st-proof'), start: 'top 55%' })
@@ -367,6 +390,10 @@ function Scrolled() {
           scrollTrigger: { trigger: el.querySelector('.st-figs'), start: 'top bottom', end: 'top 72%', scrub: 0.4 },
         })
       })
+      // The proof's rows rise into place with the scroll, a beat apart.
+      for (const [rows, at] of [['.st-figs li', '.st-figs'], ['.st-checks li', '.st-checks']] as const) {
+        gsap.fromTo(el.querySelectorAll(rows), { y: 26, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.12, ease: 'power2.out', scrollTrigger: { trigger: el.querySelector(at), start: 'top 96%', end: 'top 62%', scrub: 0.6 } })
+      }
       // The mark's gap fills as the ending arrives: the logo is the story, finished.
       const fill = el.querySelector('.st-word .mark-fill')
       if (fill) gsap.fromTo(fill, { attr: { width: 0 } }, { attr: { width: 17 }, ease: 'power2.out', scrollTrigger: { trigger: el.querySelector('.st-word'), start: 'top 90%', end: 'top 45%', scrub: 0.6 } })
@@ -376,19 +403,43 @@ function Scrolled() {
       // Two frames after the story is built, it is really on screen.
       requestAnimationFrame(() => requestAnimationFrame(() => ready.r()))
     }), 0)
-    // The cursor wakes in its own task too, after the timeline.
+    // The cursor and the particle field wake in their own task too, after the timeline.
     let off = () => {}
+    let stopField: (() => void) | null = null
+    let unrouse = () => {}
+    let stopped = false
     const wake = setTimeout(() => {
       off = attachPointer(stage, (text) => {
         readHover.textContent = text ?? ''
         readHover.parentElement!.classList.toggle('is-hover', !!text)
-      })
+      }, touch)
+      const tiltEl = stage.querySelector('.sd-tilt')
+      const faceEl = stage.querySelector('.sd-face')
+      let near = 0
+      // The minutes wake with you: the first move, touch, scroll or key gathers them in, so a page
+      // nobody touches never pays for WebGL.
+      const wakeOn = ['pointermove', 'pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const
+      const rouse = () => {
+        wakeOn.forEach((t) => removeEventListener(t, rouse))
+        if (stopped) return
+        stopField = startField(stage.querySelector<HTMLCanvasElement>('.st-particles')!, stage.querySelector<HTMLElement>('.sd')!, field, {
+        pointer: () => { near += (touch.on - near) * 0.12; return { x: touch.x, y: touch.y, on: near } },
+        ripple: () => ({ x: touch.rx, y: touch.ry, age: (performance.now() - touch.rt) / 1000 }),
+        tilt: () => ({ x: Number(gsap.getProperty(tiltEl, 'rotationX')) || 0, y: Number(gsap.getProperty(tiltEl, 'rotationY')) || 0, spin: Number(gsap.getProperty(faceEl, 'rotation')) || 0 }),
+        velocity: () => l.velocity,
+        })
+      }
+      wakeOn.forEach((t) => addEventListener(t, rouse, { passive: true }))
+      unrouse = () => wakeOn.forEach((t) => removeEventListener(t, rouse))
     }, 0)
     readScene.textContent = EVIDENCE.hero
     if (seen()) ctx.add(() => intro(el))
     return () => {
       clearTimeout(build)
       clearTimeout(wake)
+      stopped = true
+      unrouse()
+      stopField?.()
       rail.removeEventListener('click', go)
       gsap.ticker.remove(turn)
       off()
@@ -399,7 +450,7 @@ function Scrolled() {
       lenis.current = null
       history.scrollRestoration = 'auto'
     }
-  }, [ready])
+  }, [ready, field, touch])
 
   // The wipe uncovers the dial as it assembles; scrolling opens once the loader has gone.
   const [reveal] = useState(() => () => { if (root.current) intro(root.current) })
@@ -419,6 +470,8 @@ function Scrolled() {
             <div className="st-plate" aria-hidden="true" />
             <div className="st-spot" aria-hidden="true" />
             <div className="st-dial"><StoryDial label={`${F.SALON}'s sample day as a watch face: one ring per staff member, one arc per appointment.`} /></div>
+            {/* The day's minutes as particles, drawn over the face in its own coordinates (particles.ts). */}
+            <canvas className="st-particles" aria-hidden="true" />
             {/* The animated copy shows one chapter at a time; screen readers get the whole story at once, below. */}
             <div className="st-copy" aria-hidden="true">
               {CHAPTERS.map((c) => <div key={c.scene} className="st-beat" data-beat={c.scene}><Copy scene={c.scene} live /></div>)}

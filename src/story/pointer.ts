@@ -39,7 +39,10 @@ function under(x: number, y: number, marksOn: boolean): { text: string; arc?: st
   return { text: `${p.name} · ${hhmm(s.startMin)} · ${s.service} · ${what}`, arc: s.id }
 }
 
-export function attachPointer(stage: HTMLElement, read: (text: string | null) => void): () => void {
+/** Where the pointer is on the face and where the last click landed, for the particle field. */
+export interface Touch { x: number; y: number; on: number; rx: number; ry: number; rt: number }
+
+export function attachPointer(stage: HTMLElement, read: (text: string | null) => void, touch?: Touch): () => void {
   if (!finePointer()) return () => {}
   const dial = stage.querySelector<HTMLElement>('.sd')!
   const tilt = stage.querySelector<HTMLElement>('.sd-tilt')!
@@ -151,6 +154,7 @@ export function attachPointer(stage: HTMLElement, read: (text: string | null) =>
     const [ux, uy] = unrotate(x, y)
     const r = Math.hypot(ux, uy)
     const overFace = r < FACE && r > 60
+    if (touch) { touch.x = ux; touch.y = uy; touch.on = r < FACE + 160 ? 1 : 0 }
     lens(ux, uy, r < FACE + 40)
 
     // The reading hand follows the pointer round the face, the short way.
@@ -177,6 +181,7 @@ export function attachPointer(stage: HTMLElement, read: (text: string | null) =>
     } else setCursor('', '', '')
   }
   const leave = () => {
+    if (touch) touch.on = 0
     tiltX(0); tiltY(0)
     hot?.classList.remove('is-hot'); hot = null
     lens(0, 0, false)
@@ -204,6 +209,7 @@ export function attachPointer(stage: HTMLElement, read: (text: string | null) =>
     if (click) ripple(...unrotate(...local(e)))
   }
   const ripple = (x: number, y: number) => {
+    if (touch) { touch.rx = x; touch.ry = y; touch.rt = performance.now() }
     const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
     c.setAttribute('class', 'sd-ripple')
     c.setAttribute('cx', x.toFixed(1))
