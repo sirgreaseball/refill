@@ -1,6 +1,6 @@
 # HANDOFF: read this first if you are a fresh Claude working for Dhruv
 
-> **NEWEST FIRST: read 0.8** (18 Oct afternoon: the film, the splash merge, sign-in v8, the team documents and the themed final deck). Everything below it is the earlier history and still true.
+> **NEWEST FIRST: read 0.8** (18 Oct afternoon: the film, the splash merge, sign-in v8, the team documents, and the final deck in dark and light). Everything below it is the earlier history and still true. Dhruv switched Claude accounts after 0.8; nothing is half-done.
 >
 > **START HERE.** State at 18 Oct 2026, ~02:40 IST (checks: tests 51/51, build green, flowtest 14/14; migration 011 applied: booking first, server clock, settings and deletes; v7 phone pass, see the last block of 0.7). v4 redesign done on every page. v5 (real product + Try the demo) is live. Parth's Lab bugs are with his agent. Read 0.7 first. Dhruv switched Claude accounts because the old one ran out of usage. You have no chat history. This file is the history. Do not ask Dhruv to re-explain anything covered here. Read sections 0 to 9, run the checks in 0.4, then continue with 0.5, item 1. Keep this file current after every milestone (commit + push), because Dhruv may switch accounts again at any time.
 
@@ -206,7 +206,17 @@ Everything here was done in one Claude session after the hackathon build. App ch
 - Sources: `docs/team/source/deck/` (`build.js` with pptxgenjs, `finalize.ps1`, `art/`) and `docs/team/source/fin.js`. Rebuild the deck: `npm i pptxgenjs@3.12.0` in that folder, `node build.js` (dark) and `node build.js --light`, then `finalize.ps1` for dark and `finalize.ps1 -Raw refill-deck-light-raw.pptx -Out <...>\Refill-Final-Deck-Light.pptx -Png png-light` for light (PowerPoint embeds the fonts, exports PNGs and the PDF). Art (both themes) comes from `video/tools/deckart.mjs`.
 - **Fonts:** the deck uses Clash Display, Satoshi and JetBrains Mono. They were installed for Dhruv's Windows user only (`%LOCALAPPDATA%\Microsoft\Windows\Fonts` + HKCU registry) and are embedded in the .pptx for the characters already used. If someone types new text on a laptop without them, PowerPoint substitutes; fix in PowerPoint with File → Options → Save → "Embed all characters", then save.
 
-**Open items:** confirm the team name on the cover; Dhruv may ask for more slide changes (keep content edits to what he names); the market-shock rehearsal in `docs/SHOCKS.md` is still not timed on live.
+**6. Last edits before the account switch (18 Oct ~13:20).** Commits `340af29` (handoff), `9a4bdcc` (decks, brief, `video/` source), `b02c833` (light screens). Working tree clean except `.vs/` (Visual Studio cache, never commit it).
+- Light deck: `node build.js --light`. Cover marks **Vedanth Raj** as B.Tech team lead (repo spelling; Dhruv typed "Vedant"). Slide 3 persona cards have icon badges top right. Slide 7 label is plain "Financial projections". Slide 5 of the light deck uses light screens of the live demo; the dark deck keeps the film frames.
+- Deck art in both themes comes from `video/tools/deckart.mjs` (`video/src/doc/Deck.tsx`; the Dial takes an optional `palette`). The two light screens were taken with the Playwright MCP and composed with PIL; they are plain JPGs in `docs/team/source/deck/art/`, no script.
+- **Demo state changed:** to take the client screen, 3 offers went out on the demo day's 14:30 Riya gap and Meera booked it (booking #154). That demo workspace lives in the Playwright browser profile, not in Dhruv's browser, but reset the demo day before any rehearsal anyway (Owner, profile button, Reset demo day).
+- **Rebuilding the deck on a new account:** the earlier build ran from a session scratchpad that is gone. Run `npm i pptxgenjs@3.12.0` in `docs/team/source/deck`, then the commands in item 5. Build output (`*-raw.pptx`, `png*/`) is gitignored there. The brand fonts are installed for Dhruv's Windows user, so PowerPoint on this PC renders them.
+
+**Open items:**
+- Confirm the team name on the cover ("Team C29" is a placeholder).
+- Dhruv may ask for more slide changes. Change only what he names, in both themes (`build.js` serves both).
+- Client pages (`#/o/`, `#/m/`, `#/me/`, `#/join/`) ignore the light/dark toggle and always render dark: the theme effect runs only inside `Shell` in `src/App.tsx`. A small app fix if Dhruv wants it.
+- The market-shock rehearsal in `docs/SHOCKS.md` is still not timed on live.
 
 ### 0.6 Tools on the new account
 - **Same PC, Claude Code:** open `Z:\claude\refill`. `CLAUDE.md` and `.claude/skills/` load by themselves.
@@ -343,4 +353,4 @@ Teammate task messages (paste-ready, Dhruv sends them): `docs/TEAM_TASKS.md`. Up
 
 ## 10. First message to paste into a new Claude session
 
-> Open `Z:\claude\refill`. Read `HANDOFF.md` fully and follow it. Use the skills in `.claude/skills/` (caveman voice, ponytail code, flagship-feel for UI). Run `npm test` and `npm run dbtest` to confirm the state, then continue with section 5, item 1, unless I say otherwise.
+> Open `Z:\claude\refill`. Read `HANDOFF.md` fully and follow it. Use the skills in `.claude/skills/` (caveman voice, ponytail code, flagship-feel for UI). Run `npm test` and `npm run dbtest` to confirm the state. Then read the open items at the end of 0.8 and ask me which one to do.
