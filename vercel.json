@@ -1,4 +1,5 @@
 {
+  "rewrites": [{ "source": "/splash", "destination": "/index.html" }, { "source": "/splash/", "destination": "/index.html" }],
   "headers": [
     { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
     { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },

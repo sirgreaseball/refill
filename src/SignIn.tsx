@@ -47,6 +47,7 @@ export default function Auth({ book }: { book: Book }) {
         </ul>
         <button className="link" onClick={() => book.setMode('demo')}>Or look around the demo first, no account needed</button>
         <a className="link" href="#/places">Browse places you can book</a>
+        <a className="link" href="/splash">See how Refill works</a>
       </section>
 
       <section className="group auth-form" aria-label={tab === 'up' ? 'Create an account' : 'Sign in'}>
