@@ -12,10 +12,12 @@ export interface Workspace {
   hold_min: number; max_offers: number; join_code: string | null
   /** 'demo': the sample day on a demo clock. 'live': a real business on the real clock. Absent before migration 007. */
   kind?: Mode; business_type?: string | null; day?: string | null; listed?: boolean
+  /** Move an absent person's appointments to a teammate automatically (migration 012). */
+  auto_cover?: boolean
 }
 export interface DbStaff { id: string; name: string; skills: string[]; present: boolean; shift_start: number; shift_end: number }
 export interface DbService { id: string; name: string; minutes: number; skill: string; price_inr: number | null }
-export interface DbTask { id: number; staff_id: string; text: string; done: boolean; created_at: string }
+export interface DbTask { id: number; staff_id: string; text: string; done: boolean; created_at: string; missed?: boolean }
 export interface DbHistory { id: number; day: string; start_min: number; minutes: number; service: string | null; staff_name: string | null; customer: string | null; status: 'booked' | 'unfilled' | 'held'; price_inr: number | null; refilled: boolean }
 export interface DbSlot {
   id: string; start_min: number; minutes: number; skill: string; status: 'free' | 'booked' | 'blocked'
@@ -31,10 +33,18 @@ export interface DbOffer { id: string; slot_id: string; entry_id: string; status
 export interface DbBooking { id: number; slot_id: string; entry_id: string; offer_id: string | null; status: 'confirmed' | 'cancelled'; created_at: string }
 export interface DbEvent { id: number; at: string; kind: string; code: string | null; slot_id: string | null; entry_id: string | null; booking_id: number | null; detail: Record<string, unknown> }
 export interface DbMove { id: string; slot_id: string; customer: string; reason: 'STAFF_ABSENT' | 'CUSTOMER_REQUEST' | 'SALON_REQUEST'; status: 'open' | 'moved' | 'cancelled' | 'withdrawn'; to_slot: string | null; created_at: string }
+/** One appointment the absence planner moved, or could not move (migration 012). */
+export interface CoverItem { slot: string; customer: string | null; service: string | null; start_min: number; minutes: number; to?: string; to_name?: string }
+/** Left for the owner when someone is marked out: what was covered, what is left, their tasks, who is in. */
+export interface DbNotice {
+  id: number; kind: 'STAFF_ABSENT'; staff_id: string | null; created_at: string; read_at: string | null
+  detail: { name: string; auto_cover: boolean; covered: CoverItem[]; left: CoverItem[]; held: number; tasks: { id: number; text: string }[]
+    available: { id: string; name: string; skills: string[]; shift_start: number; shift_end: number }[] }
+}
 export type Role = 'owner' | 'desk'
 export interface State {
   role: Role; workspace: Workspace; staff: DbStaff[]; slots: DbSlot[]; waitlist: DbEntry[]; offers: DbOffer[]
-  bookings: DbBooking[]; moves: DbMove[]; events: DbEvent[]; services?: DbService[]; tasks?: DbTask[]
+  bookings: DbBooking[]; moves: DbMove[]; events: DbEvent[]; services?: DbService[]; tasks?: DbTask[]; notices?: DbNotice[]
 }
 
 /** The business's own services; a demo day has none, so it uses the sample salon list. */
@@ -68,8 +78,18 @@ export function dayPayload() {
     waitlist: day.waitlist.map((e) => ({
       ...e, free_from: e.free_from ? toMin(e.free_from) : null, free_until: e.free_until ? toMin(e.free_until) : null,
     })),
+    tasks: DEMO_TASKS,
   }
 }
+
+/** A few jobs on the demo day, so an absence has tasks to hand over. */
+const DEMO_TASKS = [
+  { staff: 'ST2', text: 'Restock the colour bar before 2 pm' },
+  { staff: 'ST2', text: 'Call back Mrs Rao about her bridal trial' },
+  { staff: 'ST1', text: 'Sterilise the facial tools' },
+  { staff: 'ST3', text: 'Count the nail polish stock' },
+  { staff: 'ST4', text: 'Fold and shelve fresh towels' },
+]
 
 // ---------------------------------------------------------------- the owner's key
 
@@ -146,7 +166,7 @@ export interface Profile { id: string; email: string; name: string | null; role:
 // Desk functions take p_ws and p_key; offer-level ones take only the offer id.
 const DESK_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock',
   'staff_link', 'set_staff_presence', 'reassign_slot', 'get_move_options', 'move_booking', 'move_link', 'desk_link', 'set_policy',
-  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment', 'set_listed', 'update_business', 'delete_business'])
+  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment', 'cover_absence', 'reassign_task', 'read_notice', 'set_listed', 'update_business', 'delete_business'])
 
 /** Today's book. Live: this browser's business, or the setup form if it has none. Demo: the sample day, made on first visit. */
 export function useBook() {

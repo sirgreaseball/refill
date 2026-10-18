@@ -90,6 +90,8 @@ const staffDay = {
   waitlist: [{ id: 'W1', name: 'Meera', minutes: 60, skill: 'hair', consent: true }],
 }
 const s = await make(staffDay)
+// These checks are about the desk moving people by hand, so auto-cover (012) is off here; 12c tests it.
+await rpc('set_policy', { p_ws: s.id, p_key: s.owner_key, p_policy: { auto_cover: false } })
 const first = await rpc<Sent>('send_offers', { p_ws: s.id, p_key: s.owner_key, p_slot: 'R1', p_entries: ['W1'] })
 const out = await rpc<{ blocked: number; revoked_offers: number; at_risk: number }>('set_staff_presence', { p_ws: s.id, p_staff: 'ST1', p_key: s.owner_key, p_present: false })
 const tap = await rpc<{ outcome: string }>('accept_offer', { p_offer: first.results[0].offer })
@@ -268,6 +270,55 @@ if (token) {
   check('the owner account opens its business without a key; a stranger cannot',
     byAccount.role === 'owner' && mine.some((x) => x.id === biz.id) && stranger === 'FORBIDDEN', `${byAccount.role}, ${mine.length}, ${stranger}`)
 }
+
+// 12c. 012: an absence covers itself where it can, the owner gets a notice, tasks can be handed over
+const coverDay = {
+  salon: 'Cover test', now_min: 600,
+  staff: [
+    { id: 'ST1', name: 'Riya', skills: ['hair'], present: true, shift_start: 600, shift_end: 1200 },
+    { id: 'ST2', name: 'Arjun', skills: ['hair'], present: true, shift_start: 600, shift_end: 1200 },
+    { id: 'ST3', name: 'Meher', skills: ['nails'], present: true, shift_start: 600, shift_end: 1200 },
+  ],
+  slots: [
+    { id: 'R1', start_min: 720, minutes: 60, skill: 'hair', status: 'booked', customer: 'Ananya', staff: 'ST1' },
+    { id: 'R2', start_min: 840, minutes: 60, skill: 'hair', status: 'booked', customer: 'Ishaan', staff: 'ST1' },
+    { id: 'A1', start_min: 840, minutes: 60, skill: 'hair', status: 'booked', customer: 'Rohan', staff: 'ST2' },
+  ],
+  waitlist: [],
+  tasks: [{ staff: 'ST1', text: 'Restock towels' }, { staff: 'ST1', text: 'Call the supplier' }],
+}
+const cv = await make(coverDay)
+const cOwner = { p_ws: cv.id, p_key: cv.owner_key }
+type Notice = { id: number; detail: { covered: { slot: string; to: string }[]; left: { slot: string }[]; tasks: { id: number }[]; available: { id: string }[] } }
+type CState = { slots: { id: string; staff_id: string }[]; tasks: { id: number; staff_id: string; text: string; missed: boolean }[]; notices: Notice[] }
+const outC = await rpc<{ covered: number; at_risk: number }>('set_staff_presence', { p_ws: cv.id, p_staff: 'ST1', p_key: cv.owner_key, p_present: false })
+const cs = await rpc<CState>('get_state', cOwner)
+const nt = cs.notices[0]
+check('auto-cover moves an absent person\'s appointment to a free teammate who does the service, same time; the rest stay flagged',
+  outC.covered === 1 && outC.at_risk === 1 && cs.slots.find((x) => x.id === 'R1')?.staff_id === 'ST2' && cs.slots.find((x) => x.id === 'R2')?.staff_id === 'ST1',
+  `covered ${outC.covered}, at risk ${outC.at_risk}`)
+check('the owner gets a notice: what was covered, what is left, the tasks, and who is in to take them',
+  !!nt && nt.detail.covered[0]?.to === 'ST2' && nt.detail.left[0]?.slot === 'R2' && nt.detail.tasks.length === 2
+  && nt.detail.available.map((a) => a.id).join() === 'ST2,ST3', nt ? JSON.stringify(nt.detail.available) : 'no notice')
+const [t1, t2] = cs.tasks.filter((t) => t.staff_id === 'ST1')
+const gave = await rpc<Res>('reassign_task', { ...cOwner, p_task: t1.id, p_to: 'ST3' })
+const left = await rpc<Res>('reassign_task', { ...cOwner, p_task: t2.id, p_to: null })
+const toAbsent = await rpc<Res>('reassign_task', { ...cOwner, p_task: t2.id, p_to: 'ST1' })
+const cDesk = await rpc<string>('desk_link', cOwner)
+const deskTry = await fails(rpc('reassign_task', { p_ws: cv.id, p_key: cDesk, p_task: t2.id, p_to: 'ST2' }))
+const deskState = await rpc<CState>('get_state', { p_ws: cv.id, p_key: cDesk })
+const cs2 = await rpc<CState>('get_state', cOwner)
+check('the owner hands a task to someone who is in or marks it missed; never to someone out; the desk cannot; only the owner sees notices',
+  gave.ok && left.ok && toAbsent.code === 'TARGET_ABSENT' && !!deskTry?.includes('FORBIDDEN') && deskState.notices.length === 0
+  && cs2.tasks.find((t) => t.id === t1.id)?.staff_id === 'ST3' && cs2.tasks.find((t) => t.id === t2.id)?.missed === true,
+  `${gave.ok}/${left.ok}/${toAbsent.code}/${deskTry}`)
+const again2 = await rpc<{ ok: boolean; covered: number; left: number }>('cover_absence', { ...cOwner, p_staff: 'ST1' })
+await rpc('set_policy', { ...cOwner, p_policy: { auto_cover: false } })
+await rpc('set_staff_presence', { p_ws: cv.id, p_staff: 'ST2', p_key: cv.owner_key, p_present: false })
+const cs3 = await rpc<CState>('get_state', cOwner)
+check('running auto-cover again finds nobody new; with auto-cover off, nothing moves on its own',
+  again2.ok && again2.covered === 0 && again2.left === 1 && cs3.slots.find((x) => x.id === 'R1')?.staff_id === 'ST2' && cs3.notices.length === 2,
+  `${again2.covered}/${again2.left}, R1 with ${cs3.slots.find((x) => x.id === 'R1')?.staff_id}`)
 
 // 13. rate limit: 260 writes in a burst on one demo day, 240 allowed per minute
 const burst = await make(day())
