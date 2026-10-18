@@ -4,7 +4,7 @@
 // and the sweep and the pulse never repaint the face. The timeline in scenes.ts moves it.
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import {
-  HI, LO, NOW, arjun, eligible, harsh, hhmm, inr, keeper, manav, moveTo, offered, open, reasonOf, recovered,
+  HI, LO, NOW, arjun, eligible, harsh, hhmm, inr, keeper, leftOver, manav, moveTo, offered, open, reasonOf, recovered,
   shortWhy, slots, stake, staff, toMove, waitlist, winner,
 } from './facts'
 import { ORBIT, SPAN, ang, arc, gapPath, markAngle, markAt, midOf, pt, ringOf, ringR, segD } from './geo'
@@ -157,7 +157,7 @@ export default function StoryDial({ label }: { label: string }) {
           <p className="sd-c" data-c="stake"><b className="is-beat">{inr(stake)}</b><small>at stake</small></p>
           <p className="sd-c" data-c="fits"><b>{eligible.length}<i>/{waitlist.length}</i></b><small>fit the gap</small></p>
           <p className="sd-c" data-c="won"><b className="is-act">{inr(recovered)}</b><small>back in the book</small></p>
-          <p className="sd-c" data-c="move"><b className="is-danger">{toMove.length - 1}</b><small>still to move</small></p>
+          <p className="sd-c" data-c="move"><b className="is-danger">{leftOver.length}</b><small>still to move</small></p>
         </div>
       </div>
       </div>

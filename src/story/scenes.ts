@@ -1,7 +1,7 @@
 // The dial's scenes. Each chapter is one still state of the dial: the reduced-motion page shows
 // the stills, and the scroll timeline holds each one while its copy is read, moving only between.
 import gsap from 'gsap'
-import { eligible, excluded, harsh, inr, keeper, manav, moveTo, offered, stake, toMove, waitlist, winner } from './facts'
+import { eligible, excluded, harsh, inr, keeper, leftOver, manav, moveTo, offered, stake, toMove, waitlist, winner } from './facts'
 import { ringOf, segD } from './geo'
 import type { FieldState } from './particles'
 
@@ -174,7 +174,7 @@ export function storyTimeline(stage: HTMLElement, field: FieldState): gsap.core.
     .to(r, { v: toR, duration: 0.55, ease: 'power2.inOut', onUpdate: () => movers.forEach((m) => m.setAttribute('d', path(r.v))) }, 7.02)
     .fromTo(ink, { opacity: 0 }, { opacity: 1, duration: 0.45 }, 7.1)
     .to(coral, { opacity: 0, duration: 0.45 }, 7.12)
-    .fromTo(count, { v: toMove.length }, { v: toMove.length - 1, duration: 0.3, onUpdate: () => { left.textContent = String(Math.round(count.v)) } }, 7.3)
+    .fromTo(count, { v: toMove.length }, { v: leftOver.length, duration: 0.3, onUpdate: () => { left.textContent = String(Math.round(count.v)) } }, 7.3)
   beatOut('out', 8.25)
 
   // The evidence log writes itself as the story plays, newest at the bottom, a few lines in view.

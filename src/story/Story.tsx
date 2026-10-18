@@ -31,7 +31,7 @@ const EVIDENCE: Record<Scene, string> = {
   gap: `${k} · ${clock(F.harsh)} · ${F.harsh.service} · ${F.leadMin} min notice${F.late ? ' · late' : ''}`,
   fits: `${F.waitlist.length} waiting · ${F.eligible.length} fit · ${F.excluded.length} not offered · ${F.offered.length} offers`,
   race: `2 taps · 1 booking · ${F.winner.name} booked · ${F.keeper.name} keeps their place`,
-  out: `${F.arjun.name} out · ${F.toMove.length} to move · ${F.manav.customer} to ${F.hhmm(F.manav.startMin)} with ${F.moveTo.name}`,
+  out: `${F.arjun.name} out · ${F.covered.length} covered automatically · ${F.leftOver.length} to move`,
 }
 const reasons = [
   [F.reasonCount('NO_CONSENT'), 'never said yes to messages'],
@@ -83,9 +83,11 @@ function Copy({ scene, live }: { scene: Scene; live?: boolean }) {
     case 'out': return <>
       <p className="st-over">04 · staff out</p>
       <h2 className="st-h">{ln(`${F.arjun.name} can’t come in.`, 'Nobody is dropped.')}</h2>
-      <p className="st-p">{F.arjun.name}’s {F.toMove.length} clients still to come turn coral: they need moving, and nothing moves on its own. The desk moves {F.manav.customer} to {F.hhmm(F.manav.startMin)} with {F.moveTo.name}. {F.kunal.customer} gets a link and picks a new time.</p>
+      {/* facts.ts runs cover_absence_plan (supabase/migrations/012_absence_cover.sql) on the sample day. */}
+      <p className="st-p">{F.arjun.name}’s {F.toMove.length} clients still to come turn coral. Refill hands each one, by itself, to whoever is free at the same time: {F.manav.customer} moves to {F.hhmm(F.manav.startMin)} with {F.moveTo.name}. Nobody is free for the other {F.leftOver.length}, so the desk sends them a link to pick a new time.</p>
       {/* docs/DEMO_SCRIPT.md, 2:05; HANDOFF.md section 2: rescheduling is the post-feedback change. */}
       <p className="st-note">Rescheduling is the change our business team asked for.</p>
+      <p className="st-note is-quiet">Covering automatically is an owner rule, on by default.</p>
     </>
   }
 }

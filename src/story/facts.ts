@@ -82,12 +82,29 @@ export const recovered = winner.price_inr ?? 0
 export const arjun = staffNamed('Arjun')
 /** Arjun's clients still to come at the demo clock: they need moving (atRisk in src/desk/common.tsx). */
 export const toMove = slots.filter((s) => s.staffId === arjun.id && s.status === 'booked' && s.startMin >= NOW)
-export const manav = slotOf('Manav')
-export const kunal = slotOf('Kunal')
 /** Who can take Manav at the same time: in, working then, able to do it, free (movable in src/desk/common.tsx). */
-export const moveTo = must(staff.find((p) => p.present && p.id !== manav.staffId
-  && manav.startMin >= p.shift_start && manav.startMin + manav.minutes <= p.shift_end && p.skills.includes(manav.skill)
-  && !slots.some((x) => x.staffId === p.id && x.startMin < manav.startMin + manav.minutes && x.startMin + x.minutes > manav.startMin)), 'a free stylist for Manav')
+
+/**
+ * Arjun's clients run through the absence cover planner as the database runs it (cover_absence_plan
+ * in supabase/migrations/012_absence_cover.sql; owner rule auto_cover, on by default). In time
+ * order, each goes to the least-booked stylist who is in, can do it, is working then and has no
+ * slot at all at that time; whoever nobody can take is left for the desk.
+ */
+const placedOn = new Map(slots.map((s) => [s.id, s.staffId]))
+const bookedMinutes = (id: string) => slots.filter((s) => placedOn.get(s.id) === id && s.status === 'booked').reduce((n, s) => n + s.minutes, 0)
+export const covered: { slot: StorySlot; to: StoryStaff }[] = []
+export const leftOver: StorySlot[] = []
+for (const s of toMove) {
+  const to = staff
+    .filter((p) => p.present && p.id !== arjun.id && p.skills.includes(s.skill) && s.startMin >= p.shift_start && s.startMin + s.minutes <= p.shift_end
+      && !slots.some((x) => placedOn.get(x.id) === p.id && x.startMin < s.startMin + s.minutes && x.startMin + x.minutes > s.startMin))
+    .sort((a, b) => bookedMinutes(a.id) - bookedMinutes(b.id) || a.id.localeCompare(b.id))[0]
+  if (to) { covered.push({ slot: s, to }); placedOn.set(s.id, to.id) } else leftOver.push(s)
+}
+/** The first appointment Refill covers by itself (Manav, to Riya), and the first the desk sends a link to (Kunal). */
+export const manav = must(covered[0]?.slot, 'an appointment auto-cover can place')
+export const moveTo = must(covered[0]?.to, 'a stylist free to cover it')
+export const kunal = must(leftOver[0], 'an appointment nobody can cover')
 
 // ---------------------------------------------------------------- the day in numbers
 
@@ -107,8 +124,8 @@ export const LOG = {
   sent: offered.map((e) => ({ id: e.id, code: 'OFFER_SENT', text: `Offer sent to ${e.name} for ${at}` })),
   booked: { code: 'BOOKED', text: `${winner.name} booked ${at}: ${inr(recovered)} recovered` },
   retained: { code: 'WAITLIST_RETAINED', text: `${keeper.name} tapped a moment late: keeps their queue place` },
-  absent: { code: 'STAFF_ABSENT', text: `${arjun.name} is out today: ${toMove.length} booked clients to move` },
-  moved: { code: 'MOVED', text: `${manav.customer} moved from ${hhmm(manav.startMin)} with ${arjun.name} to ${hhmm(manav.startMin)} with ${moveTo.name} (by the desk)` },
+  absent: { code: 'STAFF_ABSENT', text: `${arjun.name} is out today: ${covered.length} ${covered.length === 1 ? 'appointment' : 'appointments'} covered automatically, ${leftOver.length} booked clients to move` },
+  moved: { code: 'AUTO_COVERED', text: `Auto-cover: ${manav.customer}'s ${hhmm(manav.startMin)} ${manav.service ?? 'appointment'} moved from ${arjun.name} to ${moveTo.name}, same time` },
   link: { code: 'MOVE_LINK_SENT', text: `${kunal.customer} sent a link to pick a new time (staff member out)` },
 }
 
