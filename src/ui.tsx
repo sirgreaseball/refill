@@ -29,6 +29,8 @@ export function Mark({ size = 28, fill = 0.62 }: { size?: number; fill?: number 
 
 const paths: Record<string, ReactNode> = {
   check: <path d="M5 12.5l4.2 4.2L19 7" />,
+  eye: <><path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>,
+  eyeOff: <><path d="M10.6 5.6A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.6 3.4M6.2 7.2A16.6 16.6 0 0 0 2.5 12s3.5 6.5 9.5 6.5a9.4 9.4 0 0 0 4.6-1.2" /><path d="M3.5 3.5l17 17" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></>,
   x: <path d="M6 6l12 12M18 6L6 18" />,
   phone: <><rect x="7" y="3" width="10" height="18" rx="2.5" /><path d="M11 18h2" /></>,
   copy: <><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" /></>,

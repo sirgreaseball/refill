@@ -35,6 +35,7 @@
   - `docs/business/Refill-explained-simply.pdf` (plain-language explainer for the MBA pitch, matches Chirag's prices).
   - `docs/TEAM_TASKS.md` (paste-ready teammate messages; Dhruv sends them).
 
+- **v8 sign-in (18 Oct):** the way in rebuilt from the best sign-in pages (Linear, Stripe, Resend, Clerk, Cal.com, Supabase): a stage with the Day Dial playing a refill loop, a focused form (switch link, show password, Caps Lock, strength sub-dial, inline errors, remembered email, desktop-only autofocus), an "or" rule to the demo and booking. `src/SignIn.tsx`, CSS at the end of `src/motion.css` (v8).
 ### 0.3 The design language: LOCKED. Build everything inside it.
 Dhruv's standing instruction: **do not stray from this design language.** Do not add anything that does not fit the flow. You have full creative freedom *inside* it: make your own decisions without asking, and make it feel premium (Awwwards level, Apple-calm, never generic AI-SaaS). Whatever you build, build it from these pieces.
 
