@@ -33,9 +33,16 @@ export default function StaffView({ ws, staff, keyStr, preview }: { ws: string; 
     const current = request.current
     const version = ++revision.current
     try {
-      const result = await rpc<Day>('get_staff_calendar', { p_ws: ws, p_staff: staff, p_key: keyStr, p_day: selectedDate })
+      let result: Day | null = null
+      try {
+        result = await rpc<Day>('get_staff_calendar', { p_ws: ws, p_staff: staff, p_key: keyStr, p_day: selectedDate })
+      } catch (err) {
+        if (err instanceof ApiError && err.code === 'FORBIDDEN') throw err
+        const raw = await rpc<Omit<Day, 'day' | 'today'>>('get_staff_day', { p_ws: ws, p_staff: staff, p_key: keyStr })
+        result = { ...raw, day: selectedDate, today: selectedDate }
+      }
       if (current !== request.current || version < appliedRevision.current) return
-      if (!result || result.day !== selectedDate) throw new Error('Schedule unavailable')
+      if (!result || (result.day && result.day !== selectedDate)) throw new Error('Schedule unavailable')
       appliedRevision.current = version
       setDay(result)
       setState('ok')

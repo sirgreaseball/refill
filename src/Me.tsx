@@ -92,8 +92,13 @@ export default function Me({ token }: { token: string }) {
     setBusy(true)
     setMessage(null)
     try {
-      const result = await rpc<{ ok: boolean }>('cancel_scheduled_booking', { p_token: token })
-      if (!result.ok) setMessage('This appointment could not be cancelled. Refresh and try again.')
+      let result: { ok: boolean } | null = null
+      try {
+        result = await rpc<{ ok: boolean }>('cancel_scheduled_booking', { p_token: token })
+      } catch {
+        result = await rpc<{ ok: boolean }>('leave_waitlist', { p_token: token }).catch(() => ({ ok: false }))
+      }
+      if (!result?.ok) setMessage('This appointment could not be cancelled. Refresh and try again.')
       else { setCancelling(false); await load() }
     } catch { setMessage('Couldn’t cancel your appointment. Please try again.') }
     setBusy(false)
