@@ -153,11 +153,17 @@ function putInUrl(id: string) {
   history.replaceState(history.state, '', url)
 }
 
-export const ownerLink = (d: Desk) => `${location.origin}/?w=${d.id}&k=${d.key}#/`
-export const deskLinkUrl = (id: string, key: string) => `${location.origin}/?w=${id}&k=${key}&r=desk#/`
-export const moveUrl = (id: string) => `${location.origin}/#/m/${id}`
-export const joinLink = (code: string) => `${location.origin}/#/join/${code}`
-export const staffLinkUrl = (ws: string, staff: string, key: string) => `${location.origin}/#/s/${ws}/${staff}/${key}`
+const basePath = () => {
+  if (typeof location === 'undefined') return ''
+  const p = location.pathname
+  return p.includes('index.html') || location.hostname.includes('s3') ? '/index.html' : (p.replace(/\/+$/, '') || '')
+}
+
+export const ownerLink = (d: Desk) => `${location.origin}${basePath()}?w=${d.id}&k=${d.key}#/`
+export const deskLinkUrl = (id: string, key: string) => `${location.origin}${basePath()}?w=${id}&k=${key}&r=desk#/`
+export const moveUrl = (id: string) => `${location.origin}${basePath()}#/m/${id}`
+export const joinLink = (code: string) => `${location.origin}${basePath()}#/join/${code}`
+export const staffLinkUrl = (ws: string, staff: string, key: string) => `${location.origin}${basePath()}#/s/${ws}/${staff}/${key}`
 
 export type Phase = 'connecting' | 'creating' | 'auth' | 'welcome' | 'client' | 'setup' | 'ready' | 'error'
 /** The signed-in account: who they are and how they use Refill (null role: not chosen yet). */
