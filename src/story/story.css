@@ -250,6 +250,22 @@ html.lenis, html.lenis body { height: auto; }
   .story { --dial: min(100vw, 44svh); }
 }
 
+/* The day's minutes as particles, over the face; the copy and the log stay above them. */
+.st-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* The hero's three promises: rows of type on hairlines, no boxes. */
+.st-promises { list-style: none; margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 660px; border-top: 1px solid var(--line); }
+.st-promises li { display: grid; align-content: start; gap: 4px; padding: 14px 18px 0 0; }
+.st-promises li + li { padding-left: 18px; border-left: 1px solid var(--line); }
+.st-promises b { font: 600 13.5px/1.3 var(--sans); color: var(--ink); }
+.st-promises span { font: 400 12.5px/1.45 var(--sans); color: var(--ink-2); }
+
+/* Proof: the case's three checks under the figures. */
+.st-checks { margin-top: clamp(44px, 8vh, 80px); max-width: 780px; }
+.st-checks ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-2); }
+.st-checks li { display: grid; grid-template-columns: 4ch minmax(0, 1fr); gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 17px; line-height: 1.45; color: var(--ink); }
+.st-checks li b { font: 500 12px/2 var(--mono); color: var(--st-quiet); }
+
 /* ------------------------------------------------------------ the modules round the dial */
 
 /* The evidence log: the desk's own event codes, filling in as the story plays. */
@@ -271,7 +287,8 @@ html.lenis, html.lenis body { height: auto; }
 .ph-what { margin: 8px 0 0; font: 400 12px/1.35 var(--sans); color: var(--ink-2); }
 .ph-btn { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 38px; display: grid; place-items: center; overflow: hidden; border-radius: var(--r); background: var(--act); color: var(--act-ink); font: 600 13px var(--sans); }
 .ph-tap { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--act-ink); opacity: 0; }
-.ph-result { position: absolute; inset: 0; display: grid; align-content: center; justify-items: start; gap: 6px; padding: 16px 14px; background: var(--surface-2); opacity: 0; }
+.ph-result { position: absolute; inset: 0; display: grid; align-content: center; justify-items: start; gap: 6px; padding: 16px 14px; background: var(--surface-2); opacity: 0; clip-path: inset(100% 0% 0% 0%); }
+.story.is-still .ph-result { clip-path: none; }
 .ph-result b { font: 500 21px/1.05 var(--display); letter-spacing: -0.01em; color: var(--ink); }
 .st-phone.is-lost .ph-result b { font-size: 18px; }
 .ph-result small { font: 400 12px/1.4 var(--sans); color: var(--ink-2); }
@@ -317,6 +334,8 @@ html.lenis, html.lenis body { height: auto; }
   .st-phone.is-lost .ph-result b { font-size: 15px; }
 }
 @media (max-width: 599px) { .st-note.is-quiet, .st-now { display: none; } }
+@media (max-width: 899px), (max-aspect-ratio: 1/1) { .story:not(.is-still) .st-promises { display: none; } }
+@media (max-width: 599px) { .st-promises { grid-template-columns: 1fr; } .st-promises li + li { padding-left: 0; border-left: 0; } }
 @media (max-height: 799px) { .story { --vis: 4; } }
 @media (max-height: 699px) { .st-ledger { display: none; } }
 @media (prefers-reduced-motion: reduce) { .sd-drift { animation: none; } }

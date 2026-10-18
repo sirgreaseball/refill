@@ -1,8 +1,9 @@
 // The dial's scenes. Each chapter is one still state of the dial: the reduced-motion page shows
 // the stills, and the scroll timeline holds each one while its copy is read, moving only between.
 import gsap from 'gsap'
-import { eligible, excluded, harsh, inr, keeper, manav, moveTo, offered, stake, toMove, waitlist, winner } from './facts'
+import { eligible, excluded, harsh, inr, keeper, leftOver, manav, moveTo, offered, stake, toMove, waitlist, winner } from './facts'
 import { ringOf, segD } from './geo'
+import type { FieldState } from './particles'
 
 export type Scene = 'hero' | 'gap' | 'fits' | 'race' | 'out'
 
@@ -59,7 +60,7 @@ export const LENGTH = 8.6
  * The whole story as one timeline: 1 unit is one viewport of scroll. Every beat is a ramp then a
  * plateau, so the dial holds still while its copy is read. Scroll back and it all rewinds.
  */
-export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
+export function storyTimeline(stage: HTMLElement, field: FieldState): gsap.core.Timeline {
   const $ = (s: string) => all(stage, s)
   const tl = gsap.timeline({ defaults: { ease: 'power1.inOut', duration: 0.4 } })
   const beat = (id: string) => stage.querySelector<HTMLElement>(`[data-beat="${id}"]`)!
@@ -173,7 +174,7 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
     .to(r, { v: toR, duration: 0.55, ease: 'power2.inOut', onUpdate: () => movers.forEach((m) => m.setAttribute('d', path(r.v))) }, 7.02)
     .fromTo(ink, { opacity: 0 }, { opacity: 1, duration: 0.45 }, 7.1)
     .to(coral, { opacity: 0, duration: 0.45 }, 7.12)
-    .fromTo(count, { v: toMove.length }, { v: toMove.length - 1, duration: 0.3, onUpdate: () => { left.textContent = String(Math.round(count.v)) } }, 7.3)
+    .fromTo(count, { v: toMove.length }, { v: leftOver.length, duration: 0.3, onUpdate: () => { left.textContent = String(Math.round(count.v)) } }, 7.3)
   beatOut('out', 8.25)
 
   // The evidence log writes itself as the story plays, newest at the bottom, a few lines in view.
@@ -207,7 +208,17 @@ export function storyTimeline(stage: HTMLElement): gsap.core.Timeline {
     .to(btns, { scale: 0.92, duration: 0.05, ease: 'power2.in' }, 4.74)
     .to(btns, { scale: 1, duration: 0.15, ease: 'power2.out' }, 4.79)
     .fromTo($('[data-ph-tap]'), { scale: 0, opacity: 0.55 }, { scale: 5, opacity: 0, duration: 0.35, ease: 'power2.out', immediateRender: false }, 4.74)
-    .fromTo($('[data-ph-result]'), { opacity: 0 }, { opacity: 1, duration: 0.25, immediateRender: false }, 5.28)
+    .fromTo($('[data-ph-result]'), { opacity: 1, clipPath: 'inset(100% 0% 0% 0%)' }, { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 0.3, ease: 'power3.out', immediateRender: false }, 5.28)
+
+  // The minutes as particles follow the same beats: out with the cancel, back with the refill.
+  tl.to(field, { dim: 1, duration: 0.45 }, 0.35)
+    .fromTo(field, { gap: 0 }, { gap: 1, duration: 0.7, ease: 'power2.out' }, 0.5)
+    .to(field, { clear: 1, duration: 0.45 }, 1.9)
+    .fromTo(field, { refill: 0 }, { refill: 1, duration: 0.6, ease: 'power2.in' }, 4.95)
+    .to(field, { clear: 0, dim: 0, duration: 0.45 }, 6.25)
+    .fromTo(field, { out: 0 }, { out: 1, duration: 0.45, ease: 'power2.out' }, 6.5)
+    .fromTo(field, { move: 0 }, { move: 1, duration: 0.6 }, 7.02)
+    .to(field, { fade: 0, duration: 0.35 }, 8.25)
 
   // The story leaves the way it came: the stage closes back into its inset frame.
   tl.to($('.st-plate'), { clipPath: () => getComputedStyle(stage).getPropertyValue('--plate-from') || 'inset(0px round 0px)', duration: 0.35, ease: 'power2.inOut' }, 8.25)
