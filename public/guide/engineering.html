@@ -73,12 +73,12 @@ pre{background:var(--raised);border-radius:var(--r);padding:16px 18px;overflow:a
 
 <h2>What we built, in one minute</h2>
 <ol class="flow">
-<li>A customer cancels. The owner taps the appointment: <em>Customer cancelled</em>. Under 2 hours notice is marked late.</li>
-<li>The gap glows. The panel lists who fits it, and who is skipped with a rule code.</li>
-<li>The owner reviews and sends offers. The database re-checks every rule first.</li>
-<li>The customer gets a phone page: Book, Not today, or Stop messages.</li>
+<li>Choose "Try the demo", then "Front desk". Open a future appointment, choose "Record a cancellation", and confirm "Yes, [client name] cancelled".</li>
+<li>Open the amber gap. Review matching clients and "Not offered, and why", then use Send offers (for example, "Send 3 offers"). The database re-checks every rule.</li>
+<li>The client opens a pending offer here or by phone QR code: "Book" with the offered time, "Not today", or "Stop messages from Kesar Salon".</li>
 <li>Two taps at once: one booking. The other customer keeps their queue place.</li>
-<li>Every step lands in the Evidence log, exportable as JSON or CSV.</li>
+<li>"Front desk" → "Activity" records the decisions. Its "CSV" and "JSON" buttons export the evidence; "Owner" → "Overview" shows recovery.</li>
+<li>"Proof" opens the <a href="/#/lab">Lab</a>: case checks, editable inputs and before/after results. The view menu calls it "Proof for judges".</li>
 </ol>
 
 <h2>How we are judged, and where each point comes from</h2>
@@ -99,7 +99,7 @@ pre{background:var(--raised);border-radius:var(--r);padding:16px 18px;overflow:a
 <div class="card"><p class="over">Rules engine</p><h3>src/engine.ts</h3><p>Pure functions. For each free slot it checks every waitlist entry in this order and stops at the first failure: consent → skill → duration → availability. Free slots are filled in order; each takes the first eligible person in the queue; nobody gets two slots.</p></div>
 <div class="card"><p class="over">Database</p><h3>Supabase Postgres</h3><p>Every table has row level security on and <strong>no policies</strong>, so the public key cannot read or write tables. The browser can only call 12 functions, and each one re-checks the rules. The page's suggestions are never trusted.</p></div>
 <div class="card"><p class="over">No double booking</p><h3>accept_offer</h3><p>Locks the offer, then the slot, then the customer, in that order everywhere. Simultaneous taps queue on the slot lock: the first finds it free and books; the rest find it booked and keep their place. A partial unique index is the last line of defence.</p></div>
-<div class="card"><p class="over">Front end</p><h3>React + Vite + TypeScript</h3><p>Three screens: Desk (owner), Offer (customer's phone), Lab (judges). Talks to the database with plain <code>fetch</code> (15 lines, no client library). Polls every 1.2 s. Installable as an app; works on phones.</p></div>
+<div class="card"><p class="over">Front end</p><h3>React + Vite + TypeScript</h3><p>Role-specific views: Front desk, Owner, Staff and Client, plus Proof for the Lab. Clients also have private offer and reschedule pages. The app talks to the database with plain <code>fetch</code> and refreshes live state periodically. Installable as an app; works on phones.</p></div>
 </div>
 
 <h3>Tech stack, and why</h3>
@@ -113,17 +113,18 @@ pre{background:var(--raised);border-radius:var(--r);padding:16px 18px;overflow:a
 </table>
 
 <h2>The 4-minute demo (draft, Vedanth owns the final)</h2>
+<p class="quiet">Choose "Try the demo" if the app is not already marked Demo. Use a fresh demo day and a future appointment with at least three matching, consenting clients, so one can stop messages and two can compete to book. The Send offers button shows how many clients are selected; button text such as "Book 14:30" follows the appointment you choose.</p>
 <table>
 <tr><th>Time</th><th>On screen</th><th>Say</th></tr>
-<tr><td class="mono">0:00</td><td>Entry screen</td><td>"An empty chair is money walking out of the salon. Refill fills it, with consent, without double booking."</td></tr>
-<tr><td class="mono">0:20</td><td>Desk, tap Simran 12:30 → Customer cancelled</td><td>"A customer cancels 75 minutes before. Refill marks it late and opens the gap."</td></tr>
-<tr><td class="mono">0:45</td><td>Recovery panel</td><td>"Who fits, and who is skipped and why. Arnav's consent is unknown, so he is never messaged."</td></tr>
-<tr><td class="mono">1:15</td><td>Send offers, show QR codes</td><td>"The database re-checks every rule before an offer exists."</td></tr>
-<tr><td class="mono">1:40</td><td>Two phones tap Book together</td><td>"Two taps, same millisecond: one booking. The other keeps their place."</td></tr>
-<tr><td class="mono">2:20</td><td>Phone: Stop messages</td><td>"Consent withdrawn: every open offer is revoked instantly."</td></tr>
-<tr><td class="mono">2:45</td><td>Evidence log, export</td><td>"Every decision is explained and exportable."</td></tr>
-<tr><td class="mono">3:05</td><td>Lab: checks, live race</td><td>"All three case checks run live; here is a real race at the real database."</td></tr>
-<tr><td class="mono">3:35</td><td>What changed after MBA feedback</td><td>"Our business team asked for staff-aware matching; here is before and after."</td></tr>
+<tr><td class="mono">0:00</td><td>Try the demo → Front desk</td><td>"An empty chair is money walking out of the salon. Refill fills it, with consent, without double booking."</td></tr>
+<tr><td class="mono">0:20</td><td>A future appointment → Record a cancellation → Yes, [client name] cancelled</td><td>"Refill records the notice given, applies the owner's late-cancellation rule and opens the gap."</td></tr>
+<tr><td class="mono">0:45</td><td>The amber open gap → Not offered, and why</td><td>"Here is who fits, and who is skipped and why. Unknown consent never counts as yes."</td></tr>
+<tr><td class="mono">1:15</td><td>Select three clients → Send 3 offers; open a pending offer or its phone QR code</td><td>"The database re-checks every rule before an offer exists."</td></tr>
+<tr><td class="mono">1:40</td><td>A pending offer → Stop messages from Kesar Salon</td><td>"Before booking, this client withdraws consent. Their open offers are revoked."</td></tr>
+<tr><td class="mono">2:00</td><td>Two other pending offers → Two phones, one slot → Tap both at once</td><td>"Two competing requests: one booking. The other client keeps their place."</td></tr>
+<tr><td class="mono">2:45</td><td>Front desk → Activity → CSV or JSON; Owner → Overview</td><td>"The decisions are explained and exportable. The owner sees the recovered value."</td></tr>
+<tr><td class="mono">3:05</td><td>Proof (or Proof for judges) → Lab; Run live race</td><td>"The Lab shows the three case checks and can run a real race at the database."</td></tr>
+<tr><td class="mono">3:35</td><td>Owner → Team; Proof → before/after results</td><td>"Our business team asked for staff-aware matching; compare the original handover with what works today."</td></tr>
 </table>
 
 <h2>Questions judges will ask</h2>

@@ -6,41 +6,23 @@ import fixture from '../data/fixture/C29.fixture.json'
 import core from '../tests/core-scenarios.json'
 import team from '../tests/scenarios.json'
 import { parseCsv } from './day'
-import { candidates, explain, matchAll, notice, race, runScenario, toHHMM, toMin, validate, type Input, type MatchResult, type Reason, type Scenario } from './engine'
+import { candidates, matchAll, notice, race, runScenario, toHHMM, toMin, validate, type Input, type MatchResult, type Scenario } from './engine'
 import { liveRace, type RaceReport } from './liveRace.ts'
 import { Icon, download, lead } from './ui'
-
-interface Doc { now?: string; slots: unknown; waitlist: unknown; race?: { slot: string; requests: string[] } }
+import { candidateExplanation, compareResults, evaluate, exportResult, importJson, presetDocument, slotExplanation, type LabDocument as Doc, type LabEvaluation as Eval, type LabSuccess as Ok } from './labLogic'
 
 const presets: { id: string; label: string; doc: Doc }[] = [
-  { id: 'FIX', label: 'Organiser fixture C29', doc: { slots: fixture.records.slots, waitlist: fixture.records.waitlist } },
-  ...(core as Scenario[]).map((s) => ({ id: s.id, label: s.title ?? s.id, doc: { slots: s.slots, waitlist: s.waitlist, ...(s.race ? { race: s.race } : {}) } })),
-  ...(team as Scenario[]).map((s) => ({ id: s.id, label: `${s.title ?? s.id} (team)`, doc: { slots: s.slots, waitlist: s.waitlist, ...(s.race ? { race: s.race } : {}) } })),
+  { id: 'FIX', label: 'Organiser fixture C29', doc: structuredClone(fixture.records) },
+  ...(core as Scenario[]).map((s) => ({ id: s.id, label: s.title ?? s.id, doc: presetDocument(s) })),
+  ...(team as Scenario[]).map((s) => ({ id: s.id, label: `${s.title ?? s.id} (team)`, doc: presetDocument(s) })),
 ]
 
 const pretty = (d: unknown) => JSON.stringify(d, null, 2)
 
-function evaluate(text: string) {
-  let doc: Doc
-  try { doc = JSON.parse(text) } catch (e) { return { kind: 'parse' as const, message: (e as Error).message } }
-  const v = validate(doc)
-  if (!v.ok) return { kind: 'invalid' as const, error: v.error, at: v.at, message: v.message }
-  const now = typeof doc.now === 'string' && /^\d\d:\d\d$/.test(doc.now) ? toMin(doc.now) : undefined
-  const result = matchAll(v.input, { now })
-  let raced = null
-  if (doc.race) {
-    try { raced = race(v.input, doc.race.slot, doc.race.requests) } catch (e) { return { kind: 'invalid' as const, error: 'INVALID_VALUE', at: 'race', message: (e as Error).message } }
-  }
-  return { kind: 'ok' as const, input: v.input, result, raced, now, doc }
-}
-
-type Eval = ReturnType<typeof evaluate>
-type Ok = Extract<Eval, { kind: 'ok' }>
-
 export default function Lab() {
   const [text, setText] = useState(() => pretty(presets[0].doc))
   const [preset, setPreset] = useState('FIX')
-  const [before, setBefore] = useState<{ label: string; doc: Doc; result: MatchResult } | null>(null)
+  const [before, setBefore] = useState<(Ok & { label: string }) | null>(null)
   const [dropping, setDropping] = useState(false)
   const [importErr, setImportErr] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -58,7 +40,7 @@ export default function Lab() {
     if (ev.kind !== 'ok') return
     const doc = structuredClone(ev.doc) as Doc & { slots: Record<string, unknown>[]; waitlist: Record<string, unknown>[] }
     if (!fn(doc, ev.result)) return
-    setBefore({ label, doc: ev.doc, result: ev.result })
+    setBefore({ ...ev, label })
     setText(pretty(doc))
   }
 
@@ -97,10 +79,8 @@ export default function Lab() {
     const raw = await file.text()
     if (/\.json$/i.test(file.name) || raw.trim().startsWith('{') || raw.trim().startsWith('[')) {
       try {
-        const parsed = JSON.parse(raw)
-        const doc = Array.isArray(parsed) ? parsed[0] : parsed.records ?? parsed
         setBefore(null)
-        setText(pretty({ slots: doc.slots, waitlist: doc.waitlist, ...(doc.race ? { race: doc.race } : {}) }))
+        setText(pretty(importJson(raw)))
       } catch (e) { setImportErr(`Not valid JSON: ${(e as Error).message}`) }
       return
     }
@@ -165,7 +145,7 @@ export default function Lab() {
 
         <section className="lab-out" aria-label="Result" aria-live="polite">
           <header className="section-head"><h2>Result</h2>
-            {ev.kind === 'ok' && <button className="btn is-quiet" onClick={() => download('refill-lab-result.json', pretty({ input: ev.doc, matches: ev.result.matches, perSlot: ev.result.perSlot, race: ev.raced }))}><Icon name="download" /> JSON</button>}
+            {ev.kind === 'ok' && <button className="btn is-quiet" onClick={() => download('refill-lab-result.json', pretty(exportResult(ev)))}><Icon name="download" /> JSON</button>}
           </header>
           <Result ev={ev} />
           {before && ev.kind === 'ok' && <BeforeAfter before={before} after={ev} />}
@@ -181,7 +161,6 @@ function Result({ ev }: { ev: Eval }) {
     <div className="verdict-card is-bad"><span className="code is-bad">{ev.error}</span><p>{ev.message}</p><p className="quiet mono">at {ev.at}. Nothing was matched: a bad file never produces a half-right answer.</p></div>
   )
   const { input, result, raced, now } = ev
-  const entry = (id: string) => input.waitlist.find((e) => e.id === id)!
   const slot = (id: string) => input.slots.find((s) => s.id === id)!
   return (
     <div className="result">
@@ -202,20 +181,19 @@ function Result({ ev }: { ev: Eval }) {
         )}
       </div>
       {input.slots.map((s) => {
-        const r = result.perSlot[s.id]
+        const state = slotExplanation(s, result)
         return (
           <div key={s.id} className="slot-card">
             <p className="overline">{s.id} · {s.start} · {s.minutes} min · {s.skill} · <span className={s.status === 'free' ? 'beat-text' : ''}>{s.status}</span></p>
-            {!r ? <p className="quiet">{s.status === 'blocked' ? 'Blocked (staff absent): never offered.' : 'Booked: never offered.'}</p>
-              : r.tooSoon ? <p className="quiet">Starts too soon to offer.</p> : (
+            {state.code !== 'OFFERABLE' ? <p className="quiet">{state.message}</p> : (
                 <ul className="rows">
                   {input.waitlist.map((e) => {
-                    const why = r.excluded[e.id] as Reason | undefined
+                    const explanation = candidateExplanation(input, result, s, e)
                     return (
                       <li key={e.id} className="skip">
                         <span className="skip-name mono">{e.id}</span>
-                        <span className={`code ${!why ? (r.chosen === e.id ? 'is-act' : '') : ''}`}>{why ?? (r.chosen === e.id ? 'MATCHED' : 'FITS')}</span>
-                        <span className="skip-why">{why ? explain(why, entry(e.id), s) : r.chosen === e.id ? 'First in the queue who fits' : 'Fits, but already matched to an earlier slot'}</span>
+                        <span className={`code ${explanation.code === 'MATCHED' ? 'is-act' : ''}`}>{explanation.code}</span>
+                        <span className="skip-why">{explanation.message}</span>
                       </li>
                     )
                   })}
@@ -228,16 +206,9 @@ function Result({ ev }: { ev: Eval }) {
   )
 }
 
-function BeforeAfter({ before, after }: { before: { label: string; doc: Doc; result: MatchResult }; after: Ok }) {
+function BeforeAfter({ before, after }: { before: Ok & { label: string }; after: Ok }) {
   const fmt = (m: [string, string][]) => (m.length ? m.map(([w, s]) => `${w}→${s}`).join(', ') : 'none')
-  const changes: string[] = []
-  for (const s of Object.keys({ ...before.result.perSlot, ...after.result.perSlot })) {
-    const a = before.result.perSlot[s]?.excluded ?? {}
-    const b = after.result.perSlot[s]?.excluded ?? {}
-    for (const e of new Set([...Object.keys(a), ...Object.keys(b)]))
-      if (a[e] !== b[e]) changes.push(`${s}/${e}: ${a[e] ?? 'fits'} → ${b[e] ?? 'fits'}`)
-    if (!!before.result.perSlot[s] !== !!after.result.perSlot[s]) changes.push(`${s}: ${before.result.perSlot[s] ? 'offerable' : 'not offerable'} → ${after.result.perSlot[s] ? 'offerable' : 'not offerable'}`)
-  }
+  const changes = compareResults(before, after)
   return (
     <div className="verdict-card is-diff">
       <p className="overline">{before.label}: before and after</p>
