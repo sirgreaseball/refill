@@ -532,6 +532,41 @@ details.more[open] summary { margin-bottom: 8px; }
 .my-slot { display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 0; font-size: 14.5px; }
 .my-slot.is-past { opacity: 0.45; }
 .join { display: grid; gap: 16px; }
+.booking-details { display: grid; gap: 16px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.booking-details:disabled { opacity: 0.5; }
+.date-calendar { display: grid; gap: 14px; min-width: 0; padding: 18px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); }
+.calendar-label, .calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.calendar-label .overline { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); }
+.calendar-label .link { padding: 0; font-size: 12px; }
+.calendar-heading strong { font-size: 18px; font-weight: 500; }
+.calendar-prev svg { transform: rotate(90deg); }
+.calendar-next svg { transform: rotate(-90deg); }
+.date-calendar button:disabled { opacity: 0.3; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.calendar-weekday { text-align: center; font: 11px var(--mono); color: var(--ink-2); padding: 2px 0 7px; }
+.calendar-day { position: relative; display: grid; place-items: center; min-height: 42px; padding: 6px 0; border: 1px solid transparent; border-radius: 10px; background: transparent; font: 13px var(--mono); }
+.calendar-day:hover:not(:disabled) { background: var(--hover); border-color: var(--line-2); }
+.calendar-day.is-today { border-color: var(--line-2); color: var(--act-text); }
+.calendar-day.is-selected, .calendar-day.is-selected:hover:not(:disabled) { color: var(--act-ink); background: var(--act); border-color: var(--act); }
+.calendar-marker { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--beat); }
+.calendar-day .calendar-marker { position: absolute; bottom: 5px; }
+.calendar-day.is-selected .calendar-marker { background: var(--act-ink); }
+.calendar-caption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; border-top: 1px solid var(--line); padding-top: 12px; color: var(--ink-2); font-size: 12px; }
+.calendar-caption span { display: inline-flex; align-items: center; gap: 6px; }
+.booking-times-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.booking-time { display: grid; gap: 2px; justify-items: center; padding: 12px 4px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); }
+.booking-time strong { font: 500 15px var(--mono); }
+.booking-time small { font-size: 10px; color: var(--ink-2); }
+.booking-time:hover:not(:disabled) { background: var(--hover); }
+.booking-time.is-gap { border-color: color-mix(in srgb, var(--beat) 45%, transparent); }
+.booking-time.is-on, .booking-time.is-on:hover { border-color: var(--act); background: var(--act-soft); color: var(--act-text); }
+.booking-summary { display: grid; gap: 4px; padding: 14px 16px; border-radius: var(--r); background: var(--act-soft); }
+.booking-summary strong { font-size: 14px; color: var(--act-text); }
+.booking-summary span { color: var(--ink-2); font-size: 13px; }
+.booking-feedback { display: grid; gap: 10px; justify-items: start; }
+.task-add.has-date { grid-template-columns: minmax(120px, 1fr) minmax(160px, 2fr) minmax(150px, 1fr) auto; align-items: end; }
+@media (max-width: 760px) { .task-add.has-date { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 360px) { .booking-times-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .date-calendar { padding: 12px; } .calendar-grid { gap: 2px; } }
 .join label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
 .consent-choice { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
 .consent-choice legend { margin-bottom: 8px; padding: 0; font-size: 16px; font-weight: 600; color: var(--ink); }

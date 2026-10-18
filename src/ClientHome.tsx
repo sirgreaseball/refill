@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { rpc } from './api'
 import { signOut } from './auth.ts'
+import { businessToday, formatDate } from './calendar'
 import type { Book } from './desk/common'
 import { SlotDial } from './Dial'
 import { DirectoryList } from './Directory'
@@ -15,7 +16,7 @@ interface Entry {
   ws: string; id: string; salon: string; business_type: string | null; join_code: string | null; now_min: number
   state: 'waiting' | 'booked' | 'removed'; service: string | null; minutes: number; consent: boolean | null; place: number
   offers: { id: string; start_min: number; minutes: number; expires_min: number | null }[]
-  booking: { status: 'confirmed' | 'cancelled'; start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present: boolean | null } | null
+  booking: { status: 'confirmed' | 'cancelled'; day?: string; scheduled?: boolean; start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present: boolean | null } | null
   history: { day: string; start_min: number; minutes: number; service: string | null; staff: string | null }[]
 }
 
@@ -41,7 +42,7 @@ export default function ClientHome({ book }: { book: Book }) {
 
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
-  const act = async (e: Entry, fn: 'my_entry_move' | 'my_entry_leave' | 'my_entry_consent', extra: Record<string, unknown> = {}) => {
+  const act = async (e: Entry, fn: 'my_entry_move' | 'my_entry_leave' | 'my_entry_consent' | 'cancel_scheduled_booking', extra: Record<string, unknown> = {}) => {
     setBusy(`${e.ws}-${e.id}`)
     setMsg(null)
     try {
@@ -53,6 +54,7 @@ export default function ClientHome({ book }: { book: Book }) {
     setBusy(null)
   }
   const [leaving, setLeaving] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState<string | null>(null)
 
   const join = (ev: FormEvent) => {
     ev.preventDefault()
@@ -60,6 +62,7 @@ export default function ClientHome({ book }: { book: Book }) {
     if (/^[0-9a-f]{8}$/.test(c)) location.hash = `#/join/${c}`
   }
   const booked = (entries ?? []).filter((e) => e.booking?.status === 'confirmed')
+    .sort((a, b) => (a.booking!.day ?? businessToday()).localeCompare(b.booking!.day ?? businessToday()) || a.booking!.start_min - b.booking!.start_min)
   const offers = (entries ?? []).flatMap((e) => e.offers.map((o) => ({ ...o, salon: e.salon })))
   const visits = (entries ?? []).flatMap((e) => e.history.map((h) => ({ ...h, salon: e.salon })))
     .sort((a, b) => b.day.localeCompare(a.day) || b.start_min - a.start_min)
@@ -85,9 +88,9 @@ export default function ClientHome({ book }: { book: Book }) {
       )}
 
       {booked[0]?.booking && (
-        <SlotDial segs={[{ start: booked[0].booking.start_min, minutes: booked[0].booking.minutes, kind: booked[0].booking.stylist_present === false ? 'risk' : 'refilled' }]}
-          now={booked[0].now_min} big={clock(booked[0].booking.start_min)} small={`${booked[0].salon.split(',')[0]} · ${booked[0].booking.stylist ?? ''}`}
-          label={`Booked at ${booked[0].salon}: ${span(booked[0].booking.start_min, booked[0].booking.minutes)}`} />
+        <SlotDial segs={[{ start: booked[0].booking.start_min, minutes: booked[0].booking.minutes, kind: !booked[0].booking.scheduled && booked[0].booking.stylist_present === false ? 'risk' : 'refilled' }]}
+          now={booked[0].booking.scheduled ? undefined : booked[0].now_min} big={clock(booked[0].booking.start_min)} small={`${booked[0].salon.split(',')[0]} · ${booked[0].booking.stylist ?? ''}`}
+          label={`Booked at ${booked[0].salon}${booked[0].booking.day ? ` on ${formatDate(booked[0].booking.day)}` : ''}: ${span(booked[0].booking.start_min, booked[0].booking.minutes)}`} />
       )}
 
       </div>
@@ -100,14 +103,14 @@ export default function ClientHome({ book }: { book: Book }) {
             const b = e.booking
             const confirmed = b?.status === 'confirmed'
             const cancelled = e.state === 'removed' && b?.status === 'cancelled'
-            const out = confirmed && b.stylist_present === false
+            const out = confirmed && !b.scheduled && b.stylist_present === false
             return (
             <li key={k} className="my-slot place">
               <span className="avatar-sm" aria-hidden="true">{e.salon.slice(0, 1)}</span>
               <span className="my-slot-main">
                 <strong>{e.salon}</strong>
-                <small>{confirmed ? `${b.service ?? 'Booked'} · ${span(b.start_min, b.minutes)} with ${b.stylist}`
-                  : cancelled ? `Your ${b.service ?? 'appointment'} at ${clock(b.start_min)} was cancelled`
+                <small>{confirmed ? `${b.service ?? 'Booked'} · ${b.day ? `${formatDate(b.day)} · ` : ''}${span(b.start_min, b.minutes)} with ${b.stylist}`
+                  : cancelled ? `Your ${b.service ?? 'appointment'}${b.day ? ` on ${formatDate(b.day)}` : ''} at ${clock(b.start_min)} was cancelled`
                   : e.state === 'waiting' ? `Number ${e.place} for ${e.service ?? 'an appointment'}${e.consent ? '' : ' · messages off, so no offers'}`
                   : e.state === 'removed' ? 'You left this list' : e.service ?? ''}</small>
                 {out && <small className="risk-text">{b.stylist} can’t come in today. Pick a new time.</small>}
@@ -115,7 +118,13 @@ export default function ClientHome({ book }: { book: Book }) {
               <span className={`tag ${e.offers.length ? 'is-beat' : out ? 'is-risk' : confirmed ? 'is-act' : ''}`}>{e.offers.length ? 'Offer' : out ? 'Move' : confirmed ? 'Booked' : cancelled ? 'Cancelled' : e.state === 'waiting' ? 'Waiting' : 'Left'}</span>
               {(confirmed || e.state === 'waiting') && (
                 <span className="place-acts">
-                  {confirmed && <button className={`btn ${out ? 'is-primary' : ''}`} disabled={busy === k} onClick={() => act(e, 'my_entry_move')}>{out ? 'Pick a new time' : 'Change or cancel'}</button>}
+                  {confirmed && (b.scheduled ? (
+                    cancelling === k ? <>
+                      <span>Cancel this appointment?</span>
+                      <button className="btn is-danger" disabled={busy === k} onClick={() => { setCancelling(null); act(e, 'cancel_scheduled_booking') }}>Yes, cancel</button>
+                      <button className="link" disabled={busy === k} onClick={() => setCancelling(null)}>Keep appointment</button>
+                    </> : <button className="btn" disabled={busy === k} onClick={() => setCancelling(k)}>Cancel appointment</button>
+                  ) : <button className={`btn ${out ? 'is-primary' : ''}`} disabled={busy === k} onClick={() => act(e, 'my_entry_move')}>{out ? 'Pick a new time' : 'Change or cancel'}</button>)}
                   {e.state === 'waiting' && <button className="btn is-quiet" disabled={busy === k} onClick={() => act(e, 'my_entry_consent', { p_consent: !e.consent })}>{e.consent ? 'Stop messages' : 'Yes, message me'}</button>}
                   {e.state === 'waiting' && (leaving === k
                     ? <><button className="btn is-danger" disabled={busy === k} onClick={() => { setLeaving(null); act(e, 'my_entry_leave') }}>Yes, leave</button><button className="link" onClick={() => setLeaving(null)}>Stay</button></>

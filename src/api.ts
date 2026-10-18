@@ -17,7 +17,7 @@ export interface Workspace {
 }
 export interface DbStaff { id: string; name: string; skills: string[]; present: boolean; shift_start: number; shift_end: number }
 export interface DbService { id: string; name: string; minutes: number; skill: string; price_inr: number | null }
-export interface DbTask { id: number; staff_id: string; text: string; done: boolean; created_at: string; missed?: boolean }
+export interface DbTask { id: number; staff_id: string; text: string; done: boolean; created_at: string; missed?: boolean; day?: string }
 export interface DbHistory { id: number; day: string; start_min: number; minutes: number; service: string | null; staff_name: string | null; customer: string | null; status: 'booked' | 'unfilled' | 'held'; price_inr: number | null; refilled: boolean }
 export interface DbSlot {
   id: string; start_min: number; minutes: number; skill: string; status: 'free' | 'booked' | 'blocked'
@@ -166,7 +166,7 @@ export interface Profile { id: string; email: string; name: string | null; role:
 // Desk functions take p_ws and p_key; offer-level ones take only the offer id.
 const DESK_FUNCS = new Set(['cancel_slot', 'restore_slot', 'send_offers', 'set_consent', 'add_entry', 'set_clock',
   'staff_link', 'set_staff_presence', 'reassign_slot', 'get_move_options', 'move_booking', 'move_link', 'desk_link', 'set_policy',
-  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'set_task', 'remove_task', 'add_appointment', 'cover_absence', 'reassign_task', 'read_notice', 'set_listed', 'update_business', 'delete_business'])
+  'sync_clock', 'get_history', 'save_staff', 'remove_staff', 'save_service', 'remove_service', 'add_task', 'add_task_on_date', 'set_task', 'remove_task', 'add_appointment', 'cover_absence', 'reassign_task', 'read_notice', 'set_listed', 'update_business', 'delete_business'])
 
 /** Today's book. Live: this browser's business, or the setup form if it has none. Demo: the sample day, made on first visit. */
 export function useBook() {

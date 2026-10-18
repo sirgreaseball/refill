@@ -6,6 +6,7 @@ import { servicesOf, skillOf, type DbHistory, type DbService, type DbStaff, type
 import { kindOf, plural, staffFor, useRun, type Book, type Run } from './desk/common'
 import { Icon, Modal, Select, clock, money } from './ui'
 import { TaskHandOver } from './Notices'
+import { addDays, businessToday, formatDate } from './calendar'
 
 const hhmm = (m: number) => clock(Math.min(m, 1439))
 const toMin = (t: string) => (/^\d\d:\d\d$/.test(t) ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : NaN)
@@ -80,28 +81,34 @@ export function Tasks({ book }: { book: Book }) {
   const run = useRun(book)
   const [who, setWho] = useState(st.staff[0]?.id ?? '')
   const [text, setText] = useState('')
+  const today = businessToday()
+  const [day, setDay] = useState(today)
+  const [saving, setSaving] = useState(false)
   const tasks = st.tasks ?? []
   const add = async (ev: FormEvent) => {
     ev.preventDefault()
-    if (!text.trim() || !who) return
-    const r = await run<{ ok: boolean; code?: string }>('add_task', { p_staff: who, p_text: text.trim() }, (x) => (x.ok ? 'Task added.' : `Not added: ${x.code}`))
+    if (!text.trim() || !who || !day || saving) return
+    setSaving(true)
+    const r = await run<{ ok: boolean; code?: string }>('add_task_on_date', { p_staff: who, p_text: text.trim(), p_day: day }, (x) => (x.ok ? `Task added for ${formatDate(day)}.` : `Not added: ${x.code}`))
     if (r?.ok) setText('')
+    setSaving(false)
   }
   return (
     <section className="group spot" aria-label="Tasks">
-      <div className="group-head"><h2>Tasks</h2><p>{tasks.filter((t) => !t.done).length} open. Staff tick them off from their own link.</p></div>
-      <form className="task-add" onSubmit={add}>
+      <div className="group-head"><h2>Tasks</h2><p>{tasks.filter((t) => !t.done && !t.missed).length} open. Choose a date to place each task on the staff calendar.</p></div>
+      <form className="task-add has-date" onSubmit={add}>
         <Select value={who} onChange={setWho} label="For" choices={st.staff.map((p) => ({ value: p.id, label: p.name }))} />
         <input value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="For example, restock towels" aria-label="Task" />
-        <button className="btn" type="submit" disabled={!text.trim() || !who}><Icon name="plus" /> Add</button>
+        <label className="field">Task date<input type="date" value={day} min={today} max={addDays(today, 90)} required onChange={(e) => setDay(e.target.value)} /></label>
+        <button className="btn" type="submit" disabled={!text.trim() || !who || !day || saving}><Icon name="plus" /> {saving ? 'Adding…' : 'Add'}</button>
       </form>
       {tasks.length > 0 && (
         <ul className="rows">
           {tasks.map((t) => (
             <li key={t.id} className={`task ${t.done ? 'is-done' : ''}`}>
               <input type="checkbox" checked={t.done} onChange={() => run('set_task', { p_task: t.id, p_done: !t.done })} aria-label={`${t.done ? 'Done' : 'Open'}: ${t.text}`} />
-              <span className="row-main"><strong>{t.text}</strong><small>{st.staff.find((p) => p.id === t.staff_id)?.name ?? 'Former staff member'}{st.staff.find((p) => p.id === t.staff_id)?.present === false ? ' · out today' : ''}{t.missed ? ' · missed' : ''}</small></span>
-              {!t.done && st.role === 'owner' && (t.missed || st.staff.find((p) => p.id === t.staff_id)?.present === false) && <TaskHandOver st={st} run={run} task={t} />}
+              <span className="row-main"><strong>{t.text}</strong><small>{st.staff.find((p) => p.id === t.staff_id)?.name ?? 'Former staff member'}{t.day ? ` · ${formatDate(t.day)}` : ''}{(!t.day || t.day === today) && st.staff.find((p) => p.id === t.staff_id)?.present === false ? ' · out today' : ''}{t.missed ? ' · missed' : ''}</small></span>
+              {!t.done && st.role === 'owner' && (t.missed || ((!t.day || t.day === today) && st.staff.find((p) => p.id === t.staff_id)?.present === false)) && <TaskHandOver st={st} run={run} task={t} />}
               <button className="icon-btn" onClick={() => run('remove_task', { p_task: t.id })} aria-label={`Delete task: ${t.text}`}><Icon name="x" /></button>
             </li>
           ))}

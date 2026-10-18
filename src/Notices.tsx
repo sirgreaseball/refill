@@ -3,6 +3,7 @@
 // hand-over, and who is in to take them.
 import { useEffect, useRef } from 'react'
 import type { DbNotice, DbTask, State } from './api'
+import { businessToday } from './calendar'
 import { plural, useRun, type Book, type Run } from './desk/common'
 import { Icon, Select, clock } from './ui'
 
@@ -31,8 +32,12 @@ function Card({ st, run, n }: { st: State; run: Run; n: DbNotice }) {
   const person = st.staff.find((p) => p.id === n.staff_id)
   const stillOut = person ? !person.present : false
   const left = st.slots.filter((s) => s.staff_id === n.staff_id && s.status === 'booked' && s.start_min >= now && stillOut)
-  const tasks = (st.tasks ?? []).filter((t) => t.staff_id === n.staff_id && !t.done)
-  const handed = d.tasks.filter((t) => !tasks.some((x) => x.id === t.id))
+  const taskDay = st.workspace.day ?? businessToday()
+  const tasks = (st.tasks ?? []).filter((t) => t.staff_id === n.staff_id && !t.done && (!t.day || t.day === taskDay))
+  const handed = d.tasks.filter((t) => {
+    const task = st.tasks?.find((x) => x.id === t.id)
+    return (!task?.day || task.day === taskDay) && !tasks.some((x) => x.id === t.id)
+  })
   const inNow = st.staff.filter((p) => p.present && p.id !== n.staff_id)
   const at = new Date(n.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' })
   return (

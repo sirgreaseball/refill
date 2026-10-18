@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { rpc } from './rpc.ts'
 import { readSession } from './auth.ts'
+import { formatDate } from './calendar'
 import { SlotDial } from './Dial'
 import { Icon, Mark, clock, money, span } from './ui'
 
@@ -12,7 +13,7 @@ interface Mine {
   consent: boolean | null; consent_at: string | null; consent_source: string | null
   free_from: number | null; free_until: number | null; salon: string; now_min: number; place: number; kind?: string
   offers: { id: string; start_min: number; minutes: number; expires_min: number | null; status: string; slot_status: string }[]
-  booking: { status: 'confirmed' | 'cancelled'; start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present: boolean | null } | null
+  booking: { status: 'confirmed' | 'cancelled'; day?: string; scheduled?: boolean; start_min: number; minutes: number; service: string | null; stylist: string | null; stylist_present: boolean | null } | null
   history?: { day: string; start_min: number; minutes: number; service: string | null; staff: string | null }[]
 }
 
@@ -53,6 +54,8 @@ export default function Me({ token }: { token: string }) {
   const [me, setMe] = useState<Mine | null>(null)
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
   const [offline, setOffline] = useState(false)
 
   const load = useCallback(async () => {
@@ -82,6 +85,17 @@ export default function Me({ token }: { token: string }) {
       const r = await rpc<{ ok: boolean; move?: string }>('my_move', { p_token: token })
       if (r.ok && r.move) location.hash = `#/m/${r.move}`
     } catch { setOffline(true) }
+    setBusy(false)
+  }
+
+  const cancelScheduled = async () => {
+    setBusy(true)
+    setMessage(null)
+    try {
+      const result = await rpc<{ ok: boolean }>('cancel_scheduled_booking', { p_token: token })
+      if (!result.ok) setMessage('This appointment could not be cancelled. Refresh and try again.')
+      else { setCancelling(false); await load() }
+    } catch { setMessage('Couldn’t cancel your appointment. Please try again.') }
     setBusy(false)
   }
 
@@ -118,9 +132,9 @@ export default function Me({ token }: { token: string }) {
           label={`Number ${me.place} in the queue`} />
       )}
       {me.booking && (me.state === 'booked' || me.state === 'removed') && (
-        <SlotDial segs={[{ start: me.booking.start_min, minutes: me.booking.minutes, kind: me.booking.status === 'cancelled' ? 'lapsed' : me.booking.stylist_present === false ? 'risk' : 'refilled' }]} now={me.now_min}
+        <SlotDial segs={[{ start: me.booking.start_min, minutes: me.booking.minutes, kind: me.booking.status === 'cancelled' ? 'lapsed' : !me.booking.scheduled && me.booking.stylist_present === false ? 'risk' : 'refilled' }]} now={me.booking.scheduled ? undefined : me.now_min}
           big={clock(me.booking.start_min)} small={`${me.booking.minutes} min · ${me.booking.stylist ?? ''}`}
-          label={`${me.booking.service} at ${span(me.booking.start_min, me.booking.minutes)}`} />
+          label={`${me.booking.service}${me.booking.day ? ` on ${formatDate(me.booking.day)}` : ''} at ${span(me.booking.start_min, me.booking.minutes)}`} />
       )}
       {me.state === 'waiting' && (
         <div>
@@ -132,15 +146,23 @@ export default function Me({ token }: { token: string }) {
       </div>
 
       <div className="phone-body">
+      {message && <p className="err" role="alert">{message}</p>}
       {me.state === 'booked' && me.booking?.status === 'confirmed' && (
         <div className="verdict is-act">
           <h1 className="phone-h">You are booked</h1>
+          {me.booking.day && <p className="overline">{formatDate(me.booking.day)}</p>}
           <p>{me.booking.service} at {span(me.booking.start_min, me.booking.minutes)} with {me.booking.stylist}.</p>
-          {me.booking.stylist_present === false && <p className="risk-text">{me.booking.stylist} can’t come in today. Please pick a new time.</p>}
-          <button className="btn" disabled={busy} onClick={change}>Change or cancel</button>
+          {!me.booking.scheduled && me.booking.stylist_present === false && <p className="risk-text">{me.booking.stylist} can’t come in today. Please pick a new time.</p>}
+          {me.booking.scheduled ? (
+            cancelling ? <div className="phone-acts">
+              <p>Cancel your appointment{me.booking.day ? ` on ${formatDate(me.booking.day)}` : ''}?</p>
+              <button className="btn is-danger" disabled={busy} onClick={cancelScheduled}>Yes, cancel appointment</button>
+              <button className="link" disabled={busy} onClick={() => setCancelling(false)}>Keep appointment</button>
+            </div> : <button className="btn" disabled={busy} onClick={() => setCancelling(true)}>Cancel appointment</button>
+          ) : <button className="btn" disabled={busy} onClick={change}>Change or cancel</button>}
         </div>
       )}
-      {me.state === 'removed' && me.booking?.status === 'cancelled' && <div className="verdict"><h1 className="phone-h">Booking cancelled</h1><p>Your {me.booking.service} at {clock(me.booking.start_min)} is cancelled. Nothing more will be sent to you.</p></div>}
+      {me.state === 'removed' && me.booking?.status === 'cancelled' && <div className="verdict"><h1 className="phone-h">Booking cancelled</h1><p>Your {me.booking.service}{me.booking.day ? ` on ${formatDate(me.booking.day)}` : ''} at {clock(me.booking.start_min)} is cancelled. Nothing more will be sent to you.</p></div>}
       {me.state === 'removed' && me.booking?.status !== 'cancelled' && <div className="verdict"><h1 className="phone-h">You left the waitlist</h1><p>Nothing more will be sent to you.</p></div>}
 
 

@@ -1,20 +1,26 @@
-// A client arrives from a business's code or link. The first thing they can do is book a time
-// that is open today. If nothing fits, the waitlist is the next step, and saying no is fine too.
+// A client chooses a date before loading that day's available appointments.
+// The cancellation waitlist still belongs to today and is labelled separately.
 // Consent for the waitlist is an explicit choice with nothing pre-selected; the database refuses
 // a sign-up without one.
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { demoDay } from './day'
 import { rpc } from './rpc.ts'
 import { readSession } from './auth.ts'
-import { Mark, Select, TimeSelect, clock, money } from './ui'
+import { Mark, Select, TimeSelect, clock, money, span } from './ui'
+import DateCalendar from './DateCalendar'
+import { addDays, businessToday, formatDate } from './calendar'
 
 type Time = { staff: string; name: string; start_min: number; slot: string | null }
+type Availability = { ok: boolean; code?: string; day: string; today: string; times: Time[] }
 const NOT_BOOKED: Record<string, string> = {
   TAKEN: 'Someone took that time a moment ago. Pick another.',
   TRY_AGAIN: 'Someone booked at the same moment. Tap Book again.',
   TOO_SOON: 'That time is too close now. Pick a later one.',
   TARGET_ABSENT: 'That person is out today now. Pick another time.',
   RATE_LIMITED: 'Too many tries from this network. Wait a minute and try again.',
+  INVALID_DATE: 'Choose a date within the next 90 days.',
+  DATE_UNAVAILABLE: 'That date is not available. Choose another day.',
+  DEMO_TODAY_ONLY: 'The sample salon only books its demo day. Choose today.',
 }
 
 export default function Join({ code, start = 'book' }: { code: string; start?: 'book' | 'wait' }) {
@@ -29,7 +35,11 @@ export default function Join({ code, start = 'book' }: { code: string; start?: '
   const [name, setName] = useState(() => { try { return readSession() ? localStorage.getItem('refill.name') ?? '' : '' } catch { return '' } })
   const [service, setService] = useState('')
   const [mode, setMode] = useState<'book' | 'wait' | 'no'>(start)
-  const [times, setTimes] = useState<Time[] | null>(null)
+  const [today, setToday] = useState(businessToday)
+  const [date, setDate] = useState('')
+  const [availability, setAvailability] = useState<{ key: string; times: Time[] } | null>(null)
+  const [timeError, setTimeError] = useState<string | null>(null)
+  const [reload, setReload] = useState(0)
   const [pick, setPick] = useState<Time | null>(null)
   const [from, setFrom] = useState<number | null>(null)
   const [until, setUntil] = useState<number | null>(null)
@@ -37,56 +47,95 @@ export default function Join({ code, start = 'book' }: { code: string; start?: '
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const sv = services.find((s) => s.id === service)
+  const availabilityKey = `${code}/${date}/${service}`
+  const times = availability?.key === availabilityKey ? availability.times : null
 
   useEffect(() => {
-    rpc<{ ok: boolean; salon?: string; max_offers?: number; kind?: string; services?: typeof sample }>('join_info', { p_code: code })
+    let alive = true
+    setSalon(null); setMissing(false); setDate(''); setService(''); setPick(null)
+    rpc<{ ok: boolean; salon?: string; max_offers?: number; kind?: string; today?: string; services?: typeof sample }>('join_info', { p_code: code })
       .then((r) => {
+        if (!alive) return
         if (!r.ok) return setMissing(true)
         setSalon(r.salon!); setCap(r.max_offers ?? null); setOwn(r.services ?? []); setDemo(r.kind !== 'live')
+        if (r.today) setToday(r.today)
         if (r.services?.length === 1) setService(r.services[0].id)
-      }, () => setMissing(true))
+      }, () => { if (alive) setMissing(true) })
+    return () => { alive = false }
   }, [code])
 
-  // Open times for the chosen service, refreshed while the page is open.
+  // Both the date and service belong to each response. Late responses cannot replace a
+  // newer selection, and a refreshed schedule invalidates a time that was just taken.
   useEffect(() => {
     setPick(null)
-    if (!sv) { setTimes(null); return }
+    setTimeError(null)
+    setAvailability(null)
+    if (!sv || !date || mode !== 'book') return
     let alive = true
-    const load = () => rpc<{ ok: boolean; times: Time[] }>('open_times', { p_code: code, p_minutes: sv.minutes, p_skill: sv.skill })
-      .then((r) => { if (alive) setTimes(r.times) }, () => { if (alive) setTimes([]) })
-    setTimes(null)
+    let request = 0
+    let loading = false
+    const load = async () => {
+      if (loading) return
+      loading = true
+      const current = ++request
+      try {
+        const r = await rpc<Availability>('open_times_on_date', { p_code: code, p_minutes: sv.minutes, p_skill: sv.skill, p_day: date })
+        if (!alive || current !== request) return
+        if (r.today) setToday(r.today)
+        if (!r.ok || r.day !== date) {
+          setAvailability(null)
+          setPick(null)
+          setTimeError(NOT_BOOKED[r.code ?? ''] ?? 'Could not load times for this date. Please choose another day.')
+          return
+        }
+        setAvailability({ key: availabilityKey, times: r.times })
+        setTimeError(null)
+        setPick((selected) => selected && r.times.find((t) => t.staff === selected.staff && t.start_min === selected.start_min && t.slot === selected.slot) || null)
+      } catch {
+        if (!alive || current !== request) return
+        setAvailability(null)
+        setPick(null)
+        setTimeError('We couldn’t load the available times. Check your connection and try again.')
+      } finally {
+        loading = false
+      }
+    }
     load()
     const t = setInterval(() => !document.hidden && load(), 15000)
     return () => { alive = false; clearInterval(t) }
-  }, [code, sv])
+  }, [code, sv, date, mode, availabilityKey, reload])
 
   // One chip per start time; the first person free then takes it unless the client picks someone.
-  const starts = useMemo(() => [...new Map((times ?? []).map((t) => [t.start_min, t])).values()], [times])
-  // The day as a dial face would read it: one row per hour, the quarter hours in fixed columns, so
-  // a gap in the row is a time already taken.
-  const hours = useMemo(() => [...new Set(starts.map((t) => Math.floor(t.start_min / 60)))], [starts])
+  const starts = useMemo(() => [...new Map((times ?? []).map((t) => [t.start_min, t])).values()].sort((a, b) => a.start_min - b.start_min), [times])
   const withWhom = pick ? (times ?? []).filter((t) => t.start_min === pick.start_min) : []
+  const validPick = pick && times?.some((t) => t.staff === pick.staff && t.start_min === pick.start_min && t.slot === pick.slot)
+
+  const changeDate = (value: string) => { setDate(value); setPick(null); setAvailability(null); setTimeError(null); setErr(null) }
+  const changeService = (value: string) => { setService(value); setPick(null); setAvailability(null); setTimeError(null); setErr(null) }
 
   const book = async () => {
+    if (busy) return
     if (!name.trim()) return setErr('Write your name.')
-    if (!sv || !pick) return setErr('Pick a time.')
+    if (!date) return setErr('Choose your appointment date.')
+    if (!sv || !pick || !validPick || timeError) return setErr('Pick an available time for this date.')
     setErr(null)
     setBusy(true)
     try {
-      const r = await rpc<{ ok: boolean; token?: string; code?: string }>('book_time', {
-        p_code: code, p_staff: pick.staff, p_start: pick.start_min,
+      const r = await rpc<{ ok: boolean; token?: string; code?: string }>('book_time_on_date', {
+        p_code: code, p_staff: pick.staff, p_start: pick.start_min, p_day: date,
         p_entry: { name: name.trim(), service: sv.name, minutes: sv.minutes, skill: sv.skill, price_inr: sv.price_inr },
       })
       if (r.ok) { location.hash = `#/me/${r.token}`; return }
       setErr(NOT_BOOKED[r.code ?? ''] ?? `Could not book: ${r.code}`)
-      const fresh = await rpc<{ times: Time[] }>('open_times', { p_code: code, p_minutes: sv.minutes, p_skill: sv.skill }).catch(() => null)
-      if (fresh) { setTimes(fresh.times); setPick(null) }
+      setPick(null)
+      setReload((n) => n + 1)
     } catch (e) { setErr((e as Error).message) }
     setBusy(false)
   }
 
   const wait = async (ev: FormEvent) => {
     ev.preventDefault()
+    if (busy) return
     if (!name.trim()) return setErr('Write your name.')
     if (!sv) return setErr('Pick the service you want.')
     if (consent === null) return setErr('Choose whether we may message you. Nothing is ticked for you.')
@@ -125,45 +174,47 @@ export default function Join({ code, start = 'book' }: { code: string; start?: '
         </div>
       ) : <>
         <div className="phone-lead">
-          <h1 className="phone-h">{mode === 'wait' ? 'Get the next time that fits' : 'Book a time today'}</h1>
+          <h1 className="phone-h">{mode === 'wait' ? 'Get the next time that fits' : 'Make time for yourself'}</h1>
           <p className="quiet">{mode === 'wait'
-            ? `When someone cancels, ${salon} can offer you their time if it suits your service and your hours.`
-            : 'Pick a service and a time. If nothing fits, join the waitlist and get offered the next opening.'}</p>
+            ? `Join today’s waitlist. When someone cancels today, ${salon} can offer you their time if it suits your service and your hours.`
+            : 'Choose a date, pick your service, then book an available time.'}</p>
         </div>
 
         <div className="phone-body">
         <form className="join" onSubmit={mode === 'wait' ? wait : (e) => { e.preventDefault(); book() }} noValidate>
+          {mode === 'book' && <>
+            <DateCalendar value={date} onChange={changeDate} today={today} min={today} max={demo ? today : addDays(today, 90)} disabled={busy} label="1 · Choose your date" />
+            <p className="quiet small">{demo ? 'The sample salon has one demo day.' : 'Book up to 90 days ahead.'} All appointment times are in India time (IST).</p>
+          </>}
+          <fieldset className="booking-details" disabled={busy || (mode === 'book' && !date)}>
           <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" maxLength={60} /></label>
           <label>Service
-            <Select value={service} onChange={setService} placeholder="Choose a service" label="Service"
+            <Select value={service} onChange={changeService} placeholder="Choose a service" label="Service"
               choices={services.map((s) => ({ value: s.id, label: s.name, hint: `${s.minutes} min${s.price_inr != null ? ` · ${money(s.price_inr)}` : ''}` }))} />
           </label>
+          </fieldset>
 
-          {mode === 'book' && sv && (
-            <section className="book-times" aria-label="Open times today">
-              <p className="overline">{times === null ? 'Finding open times…' : none ? 'Nothing open today' : `Open today · ${starts.length} time${starts.length === 1 ? '' : 's'}`}</p>
+          {mode === 'book' && date && sv && (
+            <section className="book-times" aria-label={`Available times on ${formatDate(date)}`} aria-busy={!timeError && times === null}>
+              <p className="overline">2 · Choose your time</p>
+              <p className="quiet" role="status">{timeError ? 'Availability unavailable' : times === null ? 'Finding open times…' : none ? `No available times on ${formatDate(date)}` : `${formatDate(date)} · ${starts.length} available time${starts.length === 1 ? '' : 's'}`}</p>
+              {timeError && <div className="booking-feedback"><p className="err" role="alert">{timeError}</p><button type="button" className="btn" onClick={() => setReload((n) => n + 1)}>Try again</button></div>}
               {starts.length > 0 && (
-                <div className="slot-grid" role="group" aria-label="Pick a time">
-                  {hours.map((h) => (
-                    <div className="slot-row" key={h}>
-                      <span className="slot-h" aria-hidden="true">{String(h).padStart(2, '0')}</span>
-                      {starts.filter((t) => Math.floor(t.start_min / 60) === h).map((t) => (
-                        <button key={t.start_min} type="button" style={{ gridColumn: 2 + Math.min(3, Math.floor((t.start_min % 60) / 15)) }}
-                          className={`slot-q ${pick?.start_min === t.start_min ? 'is-on' : ''} ${t.slot ? 'is-gap' : ''}`}
-                          aria-pressed={pick?.start_min === t.start_min} aria-label={`${clock(t.start_min)}${t.slot ? ', a cancelled time back on offer' : ''}`}
-                          onClick={() => setPick(t)}>:{String(t.start_min % 60).padStart(2, '0')}</button>
-                      ))}
-                    </div>
-                  ))}
+                <div className="booking-times-grid" role="group" aria-label="Pick a time">
+                  {starts.map((t) => <button key={t.start_min} type="button" disabled={busy}
+                    className={`booking-time ${pick?.start_min === t.start_min ? 'is-on' : ''} ${t.slot ? 'is-gap' : ''}`}
+                    aria-pressed={pick?.start_min === t.start_min} aria-label={`${span(t.start_min, sv.minutes)}${t.slot ? ', a cancelled time back on offer' : ''}`}
+                    onClick={() => { setPick(t); setErr(null) }}><strong>{clock(t.start_min)}</strong><small>to {clock(t.start_min + sv.minutes)}</small></button>)}
                 </div>
               )}
               {starts.some((t) => t.slot) && <p className="slot-key"><i /> A cancelled time, back on offer</p>}
               {pick && withWhom.length > 1 && (
                 <div className="chips slot-with" role="group" aria-label="With">
-                  {withWhom.map((t) => <button key={t.staff} type="button" className={t.staff === pick.staff ? 'is-on' : ''} aria-pressed={t.staff === pick.staff} onClick={() => setPick(t)}>{t.name}</button>)}
+                  {withWhom.map((t) => <button key={t.staff} type="button" disabled={busy} className={t.staff === pick.staff ? 'is-on' : ''} aria-pressed={t.staff === pick.staff} onClick={() => setPick(t)}>{t.name}</button>)}
                 </div>
               )}
-              {none && <p className="quiet">Every time for a {sv.name.toLowerCase()} is taken today. Join the waitlist and {salon} can offer you a time the moment someone cancels.</p>}
+              {pick && validPick && <div className="booking-summary"><strong>{formatDate(date)} · {span(pick.start_min, sv.minutes)}</strong><span>{sv.name} with {pick.name}{sv.price_inr != null ? ` · ${money(sv.price_inr)}` : ''}</span></div>}
+              {none && <p className="quiet">Choose another date{date === today ? ', or join today’s waitlist for a cancellation' : ''}.</p>}
             </section>
           )}
 
@@ -188,12 +239,12 @@ export default function Join({ code, start = 'book' }: { code: string; start?: '
           {err && <p className="err" role="alert">{err}</p>}
           <div className="phone-acts">
             {mode === 'book' && !none && (
-              <button className="btn is-primary is-big" type="submit" disabled={busy || !pick}>{pick ? `Book ${clock(pick.start_min)} with ${pick.name}` : sv ? 'Pick a time' : 'Choose a service'}</button>
+              <button className="btn is-primary is-big" type="submit" disabled={busy || !validPick || !!timeError}>{busy ? 'Booking…' : pick && validPick ? `Book ${clock(pick.start_min)} with ${pick.name}` : !date ? 'Choose a date first' : sv ? 'Pick a time' : 'Choose a service'}</button>
             )}
-            {mode === 'book' && (none
-              ? <><button type="button" className="btn is-primary is-big" onClick={() => { setErr(null); setMode('wait') }}>Join the waitlist</button>
+            {mode === 'book' && date === today && (none
+              ? <><button type="button" className="btn is-primary is-big" disabled={busy} onClick={() => { setErr(null); setMode('wait') }}>Join today’s waitlist</button>
                   <button type="button" className="link" onClick={() => setMode('no')}>Not now</button></>
-              : <button type="button" className="link" onClick={() => { setErr(null); setMode('wait') }}>None of these suit you? Join the waitlist</button>)}
+              : <button type="button" className="link" disabled={busy} onClick={() => { setErr(null); setMode('wait') }}>Join today’s waitlist instead</button>)}
             {mode === 'wait' && <>
               <button className="btn is-primary is-big" type="submit" disabled={busy}>Join the waitlist</button>
               <button type="button" className="link" onClick={() => { setErr(null); setMode('book') }}>Back to open times</button>
