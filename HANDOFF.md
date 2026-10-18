@@ -225,7 +225,10 @@ The organisers' submission asks for: GitHub URL, live app URL, pitch deck link, 
 - **`docs/submission/Refill-Credits-and-Inspirations.docx/.pdf`** (source `credits.js`; PDF via `topdf-fin.ps1 -f <docx>`). `docs/team/source/package.json` makes that folder CommonJS.
 - Live checks on 18 Oct: `npm test` 51/51, `dbtest` 28/28, `flowtest` 14/14, `race` 3/3. Issues #11–#14 and #19 closed (fixed in `ba121f9`).
 
+**18 Oct ~14:30, commit `bbea8fb` (live):** migration 012 (applied): absence auto-cover planner (`cover_absence_plan`, owner rule `auto_cover`, default on), owner notices (`notices`, bell in the bar, card on Overview), task hand-over or missed (`reassign_task`), `cover_absence` to rerun. Desk Client QR (book / `#/join/<code>/wait`). Time fields use `TimeSelect` (app list; New appointment lists only free quarter hours). The bar's Refill mark opens `/splash`. Demo day seeds 5 tasks. dbtest 32/32 (12c added; manual-move checks set auto_cover off), flowtest 14/14, race 3/3, npm test 51/51. `docs/submission/README.md` indexes the submission in form order; it was emailed to Vedanth to submit.
+
 **Open items:**
+- The film and splash still say "nothing moves until a person decides"; with auto-cover on, that is true only for appointments nobody can take.
 - **Claude in the GitHub contributors list** comes from `Co-Authored-By: Claude` trailers in Chirag's commits `14a5e89` and `adbdfed`. Removing it means rewriting main from there (about 90 commit hashes change; tags are not affected), lifting branch protection for a force push, and teammates re-syncing. Waiting on Dhruv's go-ahead; merge PR #21 first.
 - **Demo video:** the film is 3:29; the brief asks for 4–5 minutes.
 - **Citation fixes (workbook, 'Needs correction'):** Lakmé/Naturals cited to Inventiva (use Ken Research; Inventiva says Naturals 650+), UserJot does not support 3–7% monthly churn, ₹85/US$ is now ≈ ₹95, Mangomint is $120/location + $10/user, Zenoti's HQ is Bellevue (founded in Hyderabad).
