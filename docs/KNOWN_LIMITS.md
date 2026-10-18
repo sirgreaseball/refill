@@ -4,21 +4,19 @@ This document details what **Refill** does not do in its current implementation,
 
 ---
 
-## 1. No Owner Authentication or Multi-Tenant Access Control
+## 1. Authentication & Security: Production AWS Cognito with Frictionless Demo Mode
 
-### What the app does NOT do
-The app does not require a password, username, or OAuth login for salon managers. Anyone with a workspace link (a UUID embedded in the URL `#/<uuid>`) has full permissions to act on that workspace: cancelling appointments, initiating outreach, modifying consent, and configuring salon parameters.
+### Current State in the Application
+- **Production Accounts & AWS Cognito Integration:** Refill is now equipped with production user authentication powered by an AWS Cognito User Pool (`us-east-1_GXcemXtkQ`) and client (`6idmbpa85onbohp4gr3qc06v1e`). 
+- **Custom Gmail OTP Verification:** Account registration enforces real-time 6-digit email OTP verification. The OTP code is embedded directly in the email subject title and highlighted in bold within the custom message body. Unconfirmed accounts cannot bypass this check (`ConfirmSignUp` required).
+- **Role-Based Isolation:** The system distinguishes between **Owner**, **Front Desk**, **Staff**, and **Client** roles with separate keys, session tokens, and database RPC authorization checks (`require_owner`, `require_desk`, `require_staff`).
+- **Preserved Demo Mode:** Alongside real account authentication, the app retains a one-click **"Try the live demo"** mode so hackathon judges and evaluators can explore a simulated salon day without mandatory credential provisioning.
 
-### Why it is acceptable for this prototype
-- **Frictionless evaluation:** Judges, evaluators, and teammates can test the app instantly on any device (phone, laptop, tablet) without credential provisioning, sign-up flows, or password resets.
-- **Isolated workspaces:** Every visitor is allocated an independent workspace (`create_workspace` generates a fresh UUID), preventing judges from interfering with each other's test state.
-- **Zero attack surface on shared accounts:** Since there are no shared credentials, there is no risk of credential stuffing or session hijacking across evaluators.
+### What a commercial scale pilot would add
+- Biometric WebAuthn / Passkey support on mobile devices.
+- Direct phone-based WhatsApp OTP gateway for salon staff in India alongside Cognito email verification.
+- SSO (Single Sign-On) integration for enterprise multi-outlet salon chains.
 
-### What a real pilot would need
-- Multi-tenant authentication using Supabase Auth or phone-based OTP (SMS/WhatsApp login).
-- Role-Based Access Control (RBAC) distinguishing salon owners, front-desk receptionists, and individual stylists.
-- Tenant isolation enforced via authenticated JWT claims in Postgres Row Level Security (RLS) policies.
-- Audit logging associating every slot cancellation and offer dispatch with an authenticated staff user ID.
 
 ---
 
@@ -122,19 +120,17 @@ Offer expiry is governed by a static 15-minute hold window (or until slot start 
 
 ---
 
-## 8. Ephemeral Workspace Lifecycle (3-Day Pruning)
+## 8. Workspace Lifecycle & History Architecture
+ 
+### Current State in the Application
+- **Demo Workspaces:** Ephemeral demo workspaces are pruned after 3 days to preserve database hygiene and prevent storage bloat from hundreds of evaluation runs.
+- **Live Business Workspaces:** For registered salon accounts, each day's appointment book is archived at midnight into the persistent `History` table (`get_history` RPC). The Owner can review every past date, total turnover, refilled appointment counts, and individual client service details on `#/owner/history`.
+ 
+### What a commercial scale pilot would add
+- Exportable monthly GST accounting reports and CSV/PDF financial summaries.
+- Multi-year database partitioning for high-volume salon chains.
+- Dedicated compliance archive preserving customer DPDP consent records for statutory audit trails.
 
-### What the app does NOT do
-Workspace records in the demo Supabase instance are designed for ephemeral lifecycle management and are cleaned up after 3 days. There is no multi-year historical archive or financial ledger.
-
-### Why it is acceptable for this prototype
-- **Database storage hygiene:** Keeps the shared Supabase Postgres instance performant and prevents unbounded disk growth from hundreds of demo runs.
-- **Privacy by design:** Demo session evidence automatically self-terminates.
-
-### What a real pilot would need
-- Persistent relational database schemas with automated partitioning and backup retention.
-- Exportable monthly revenue recovery reports for salon bookkeeping.
-- Compliance archive preserving customer consent transactions for regulatory audit trails.
 
 ---
 

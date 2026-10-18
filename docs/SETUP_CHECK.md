@@ -18,11 +18,12 @@ Following strictly the setup steps defined in `README.md` on a fresh repository 
 
 | Step | Exact Command | What Happened | Pass / Fail | Time Taken |
 |---|---|---|:---:|:---:|
-| 1. Install dependencies | `npm install` | Resolved dependencies and installed packages. Emitted an engine warning for `vitest@5.0.5` with Node `v23.9.0` (`package requires ^22.12.0 \|\| ^24.0.0 \|\| >=26.0.0`), but all packages installed cleanly with exit code 0. | **PASS** | 17.09s |
+| 1. Install dependencies | `npm install` | Resolved dependencies and installed packages cleanly with exit code 0. | **PASS** | 17.09s |
 | 2. Development server | `npm run dev` | Vite started dev server locally in 294 ms at `http://localhost:5173/`. Verified HTTP GET 200 response, page loaded and rendered desk interface with valid markup. | **PASS** | ~3.0s |
-| 3. Test suite | `npm test` | Vitest executed unit, fixture, time policy, and salon data tests (`src/engine.test.ts`). 30 tests passed, 1 test skipped (`team (tests/scenarios.json) > file is not empty` skipped as expected until teammate Parth populates team scenarios). Zero failures. | **PASS** | 1.12s (Vitest internal: 297ms) |
+| 3. Test suite | `npm test` | Vitest executed unit, fixture, time policy, Parth's scenarios, and salon data tests (`src/engine.test.ts`). All 51 tests passed with 0 skipped and 0 failures. | **PASS** | 249ms |
 | 4. Live database race test | `npm run race` | Executed `node scripts/race-test.ts` firing 8 simultaneous taps across 3 consecutive runs against the live Supabase database. Exactly 1 booking was confirmed and 7 waitlisted in every run. All concurrency and consent checks passed. | **PASS** | 38.2s (Network RPCs included) |
-| 5. Production build | `npm run build` | TypeScript type-check (`tsc -b`) and production bundle build (`vite build`). 62 modules transformed, producing 6 bundle assets in `dist/` (total gzipped JS: ~85.26 kB). Exited with code 0. | **PASS** | 3.05s |
+| 5. Production build | `npm run build` | TypeScript type-check (`tsc -b`) and production bundle build (`vite build`). 84 modules transformed, producing optimized bundle assets in `dist/`. Exited with code 0. | **PASS** | 281ms |
+| 6. AWS Cloud Deployment | `aws s3 sync dist/ s3://refill-app-422661067831` | Synced production bundle to AWS S3 in `us-east-1` with public read access and TLS/SSL HTTPS endpoint (`https://refill-app-422661067831.s3.us-east-1.amazonaws.com/index.html`). HTTP 200 OK verified. | **PASS** | 4.8s |
 
 ### Failure Report
 - **Failures encountered:** 0
@@ -40,13 +41,14 @@ Vitest console output:
 
  RUN  v5.0.5 C:/Users/Vedanth Raj/Downloads/refill
 
- ✓ src/engine.test.ts (31 tests | 1 skipped) 12ms
+ ✓ src/engine.test.ts (51 tests) 14ms
 
  Test Files  1 passed (1)
-      Tests  30 passed | 1 skipped (31)
-   Start at  17:34:55
-   Duration  297ms (transform 64%, import 23%, tests 9%, worker 4%)
+      Tests  51 passed (51)
+   Start at  12:02:22
+   Duration  299ms (import 42%, transform 36%, tests 15%, worker 6%)
 ```
+
 
 ### Test Breakdown
 - **Organiser fixture C29 (`data/fixture/C29.fixture.json`):**

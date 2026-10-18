@@ -7,7 +7,7 @@ Fourth year, reliability, handoff check, and engineering presentation.
 - **Clean-Machine Setup & Handoff Verification (`docs/SETUP_CHECK.md`):**
   - Performed a clean-machine setup following strictly `README.md` (`npm install`, `npm run dev`, `npm test`, `npm run race`, `npm run build`).
   - Recorded every command, output, execution duration, and pass/fail status in a structured verification table. Zero failures encountered; verified zero friction for external evaluators.
-  - Benchmarked `npm test` (30 passed, 1 skipped) covering organiser fixture C29, core scenarios, time policy, and salon CSV data validation.
+  - Benchmarked `npm test` (51 passed) covering organiser fixture C29, core scenarios, Parth's team scenarios, time policy, and salon CSV data validation.
 - **Live Concurrency & Race Verification:**
   - Ran the live database race test (`npm run race`) executing 8 simultaneous taps across 3 consecutive runs against the live Supabase database.
   - Verified that exactly 1 booking was confirmed and 7 waitlisted in every run, confirming row-locking order and database partial unique index constraints.
