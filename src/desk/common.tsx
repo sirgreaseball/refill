@@ -115,12 +115,15 @@ export function sentence(ev: DbEvent, st: State): string {
     case 'CONSENT_UNKNOWN': return `${who}: consent unknown, never messaged until they say yes`
     case 'WAITLIST_ADDED': return `${who} joined the waitlist ${d.source === 'self sign-up' ? 'from the sign-up link' : 'at the front desk'}${d.consent === true ? ', said yes to messages' : d.consent === false ? ', said no to messages' : ''}`
     case 'WAITLIST_LEFT': return `${who} left the waitlist${revoked}`
-    case 'STAFF_ABSENT': return `${d.name} is out today: ${plural(Number(d.at_risk), 'booked client')} to move, ${plural(Number(d.blocked), 'open gap')} held${revoked}`
+    case 'STAFF_ABSENT': return `${d.name} is out today: ${d.covered ? `${plural(Number(d.covered), 'appointment')} covered automatically, ` : ''}${plural(Number(d.at_risk), 'booked client')} to move, ${plural(Number(d.blocked), 'open gap')} held${revoked}`
+    case 'AUTO_COVERED': return `Auto-cover: ${d.customer}'s ${clock(Number(d.start_min))} ${d.service ?? 'appointment'} moved from ${d.from} to ${d.to}, same time`
+    case 'TASK_REASSIGNED': return `Owner gave "${d.task}" from ${d.from} to ${d.to}`
+    case 'TASK_MISSED': return `Owner left "${d.task}" unassigned (${d.staff} is out): marked missed`
     case 'STAFF_BACK': return `${d.name} is back in: ${plural(Number(d.freed), 'gap')} open again`
     case 'REASSIGNED': return `${d.was === 'booked' ? `${d.customer}'s ${at} appointment` : `The ${at} gap`} moved from ${d.from} to ${d.to}`
     case 'MOVED': return `${d.customer} moved from ${clock(Number(d.from_min))} with ${d.from} to ${clock(Number(d.to_min))} with ${d.to} (by ${d.by})${d.into_gap ? ', filling an open gap' : ''}${d.opened ? '; their old time is open to fill' : '; their old time is held'}${revoked}`
     case 'MOVE_LINK_SENT': return `${d.customer} sent a link to ${ev.code === 'STAFF_ABSENT' ? 'pick a new time (staff member out)' : 'move or cancel'} ${at}`
-    case 'POLICY_CHANGED': return `Owner changed the rules: offers hold ${d.hold_min} min, at most ${d.max_offers} messages a day, late = under ${lead(Number(d.late_cutoff_min))}`
+    case 'POLICY_CHANGED': return `Owner changed the rules: offers hold ${d.hold_min} min, at most ${d.max_offers} messages a day, late = under ${lead(Number(d.late_cutoff_min))}${d.auto_cover === false ? ', auto-cover off' : d.auto_cover === true ? ', auto-cover on' : ''}`
     case 'DESK_LINK_MADE': return 'Owner made a new front-desk link; the old one stopped working'
     case 'BUSINESS_CREATED': return `Business opened with ${plural(Number(d.staff), 'team member')} and ${plural(Number(d.services), 'service')}`
     case 'DAY_CLOSED': return `Yesterday closed into history: ${plural(Number(d.appointments), 'appointment')}`
@@ -158,7 +161,7 @@ export function useRun(book: Book): Run {
 
 /** Mark a staff member in or out, with the consequence in one sentence. */
 export const togglePresence = (run: Run, p: DbStaff) =>
-  run<{ ok: boolean; at_risk: number; blocked: number; freed: number; revoked_offers: number }>('set_staff_presence', { p_staff: p.id, p_present: !p.present }, (r) =>
+  run<{ ok: boolean; at_risk: number; blocked: number; freed: number; revoked_offers: number; covered?: number }>('set_staff_presence', { p_staff: p.id, p_present: !p.present }, (r) =>
     p.present
-      ? `${p.name} is out. ${plural(r.at_risk, 'booked client')} to move${r.blocked ? `, ${plural(r.blocked, 'open gap')} held` : ''}${r.revoked_offers ? `, ${plural(r.revoked_offers, 'offer')} withdrawn` : ''}.`
+      ? `${p.name} is out. ${r.covered ? `${plural(r.covered, 'appointment')} covered automatically, ` : ''}${plural(r.at_risk, 'booked client')} to move${r.blocked ? `, ${plural(r.blocked, 'open gap')} held` : ''}${r.revoked_offers ? `, ${plural(r.revoked_offers, 'offer')} withdrawn` : ''}.`
       : `${p.name} is back in.${r.freed ? ` ${plural(r.freed, 'gap')} open again.` : ''}`)

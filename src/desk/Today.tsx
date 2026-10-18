@@ -2,10 +2,11 @@
 // open its sheet. The schedule is a calendar (one lane per person) or the Day Dial.
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { servicesOf, type DbSlot, type State } from '../api'
-import { Icon, Modal, Select, clock, money, span } from '../ui'
+import { Icon, Modal, Select, TimeSelect, clock, money, span } from '../ui'
 import Dial, { dayRange } from '../Dial'
 import { Num } from '../motion'
 import { SlotSheet } from './SlotSheet'
+import JoinQr from './JoinQr'
 import { figures, first, kindOf, plural, staffFor, togglePresence, useRun, type Book, type Kind, type Run } from './common'
 
 
@@ -14,6 +15,7 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
   const run = useRun(book)
   const [selected, setSelected] = useState<string | null>(initial ?? null)
   const [adding, setAdding] = useState(false)
+  const [qr, setQr] = useState(false)
   // Calendar or dial: one view of the day at a time, remembered on this device. Calendar first.
   const [view, setView] = useState<'dial' | 'calendar'>(() => { try { return localStorage.getItem('refill.dayView2') === 'dial' ? 'dial' : 'calendar' } catch { return 'calendar' } })
   const pickView = (v: 'dial' | 'calendar') => { setView(v); try { localStorage.setItem('refill.dayView2', v) } catch { /* private mode */ } }
@@ -30,7 +32,10 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
           <h1>{queue.length ? `${plural(queue.length, 'thing')} need${queue.length === 1 ? 's' : ''} you` : 'All clear'}</h1>
           <p>Tap an appointment when a client cancels or needs a new time. Tap an open gap to offer it to the waitlist.</p>
         </div>
-        <button className="btn is-primary" onClick={() => setAdding(true)}><Icon name="plus" /> New appointment</button>
+        <span className="card-acts">
+          {st.workspace.join_code && <button className="btn" onClick={() => setQr(true)}><Icon name="qr" /> Client QR</button>}
+          <button className="btn is-primary" onClick={() => setAdding(true)}><Icon name="plus" /> New appointment</button>
+        </span>
       </header>
 
       <section className={`group today-hero is-${view}`} aria-label="Today at a glance">
@@ -77,6 +82,7 @@ export default function Today({ book, initial }: { book: Book; initial?: string 
         </div>
       </section>
 
+      {qr && st.workspace.join_code && <Modal title="Client QR" onClose={() => setQr(false)}><JoinQr code={st.workspace.join_code} salon={st.workspace.salon} /></Modal>}
       {adding && <Modal title="New appointment" onClose={() => setAdding(false)}><NewAppointment st={st} run={run} onDone={() => setAdding(false)} /></Modal>}
       {sel && <SlotSheet key={sel.id} st={st} slot={sel} run={run} onClose={() => setSelected(null)} />}
     </div>
@@ -175,8 +181,20 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
   const who = able.find((p) => p.id === staff) ?? able[0]
   // The first quarter hour that can still be offered to the waitlist (the owner's lead time).
   const next = Math.ceil((st.workspace.now_min + st.workspace.min_lead_min + 1) / 15) * 15
-  const [time, setTime] = useState(clock(Math.min(Math.max(next, who?.shift_start ?? next), 1425)))
   const [minutes, setMinutes] = useState(String(sv?.minutes ?? 30))
+  // Every quarter hour this person is on shift and free for the whole appointment.
+  const len = Math.max(5, Number(minutes) || 30)
+  const free = useMemo(() => {
+    if (!who) return []
+    const busy = st.slots.filter((x) => x.staff_id === who.id)
+    const out: number[] = []
+    for (let m = Math.ceil(Math.max(next, who.shift_start) / 15) * 15; m + len <= Math.min(who.shift_end, 1440); m += 15) {
+      if (!busy.some((x) => x.start_min < m + len && x.start_min + x.minutes > m)) out.push(m)
+    }
+    return out
+  }, [st.slots, who, next, len])
+  const [start, setStart] = useState<number | null>(null)
+  const time = start != null && free.includes(start) ? start : free[0] ?? null
   const [customer, setCustomer] = useState('')
   const [err, setErr] = useState<string | null>(null)
 
@@ -194,13 +212,12 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
   const submit = async (ev: FormEvent) => {
     ev.preventDefault()
     if (!who) return setErr('Nobody who is in today does this service.')
-    const start = /^\d\d:\d\d$/.test(time) ? Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)) : NaN
-    if (Number.isNaN(start)) return setErr('Pick a time.')
+    if (time == null) return setErr(`${who.name} has no free time left today for ${len} minutes. Pick someone else or a shorter length.`)
     setErr(null)
     const name = en ? en.name : customer.trim()
     const r = await run<{ ok: boolean; code?: string }>('add_appointment', {
-      p_appt: { staff: who.id, start_min: start, minutes: Number(minutes), customer: en ? null : name || null, entry: en?.id ?? null, service: sv?.name ?? null, skill: sv?.skill ?? null, price_inr: sv?.price_inr ?? null },
-    }, (x) => (x.ok ? (name ? `${name} booked at ${time} with ${who.name}.` : `Open time added at ${time} with ${who.name}. Offer it from Today.`) : null))
+      p_appt: { staff: who.id, start_min: time, minutes: Number(minutes), customer: en ? null : name || null, entry: en?.id ?? null, service: sv?.name ?? null, skill: sv?.skill ?? null, price_inr: sv?.price_inr ?? null },
+    }, (x) => (x.ok ? (name ? `${name} booked at ${clock(time)} with ${who.name}.` : `Open time added at ${clock(time)} with ${who.name}. Offer it from Today.`) : null))
     if (r && !r.ok) setErr(NOT_ADDED[r.code ?? ''] ?? `Not added: ${r.code}`)
     else if (r) onDone()
   }
@@ -223,7 +240,7 @@ function NewAppointment({ st, run, onDone }: { st: State; run: Run; onDone: () =
           choices={able.map((p) => ({ value: p.id, label: p.name, hint: `${clock(p.shift_start)}–${clock(Math.min(p.shift_end, 1439))}` }))} />
       </label>
       <div className="field-row">
-        <label className="field">Starts<input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>
+        <label className="field">Starts today<TimeSelect value={time} onChange={setStart} times={free} label="Starts" empty="Nothing free today" /></label>
         <label className="field">Minutes<input type="number" inputMode="numeric" min={5} max={720} value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
       </div>
       {err && <p className="err" role="alert">{err}</p>}

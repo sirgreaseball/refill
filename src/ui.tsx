@@ -58,6 +58,8 @@ const paths: Record<string, ReactNode> = {
   sliders: <path d="M5 7h8m4 0h2M5 17h2m4 0h8M15 4.5v5M9 14.5v5" />,
   chevron: <path d="M7 10l5 5 5-5" />,
   user: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /></>,
+  bell: <><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" /><path d="M10 20.5a2.2 2.2 0 0 0 4 0" /></>,
+  qr: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><path d="M14 14h2.5v2.5M20 14v6h-6v-2.5M17.5 17.5h.01" /></>,
   desk: <><path d="M3.5 9.5h17M5 9.5V19M19 9.5V19M8.5 9.5v-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3" /></>,
   scissors: <><circle cx="6.5" cy="7" r="2.5" /><circle cx="6.5" cy="17" r="2.5" /><path d="M8.6 8.4L20 17M8.6 15.6L20 7" /></>,
 }
@@ -230,4 +232,16 @@ export function Select({ value, choices, onChange, placeholder = 'Choose', disab
       )}
     </div>
   )
+}
+
+/** Times of day as the app's own list (quarter hours), in place of the browser's time input,
+ *  which some phones and dark sheets make hard to open. Pass `times` to offer only those. */
+export function TimeSelect({ value, onChange, from = 0, to = 1425, step = 15, times, label, empty = 'No time free', optional }: {
+  value: number | null; onChange: (v: number | null) => void; from?: number; to?: number; step?: number
+  times?: number[]; label?: string; empty?: string; optional?: string
+}) {
+  const list = times ?? Array.from({ length: Math.max(0, Math.floor((to - from) / step) + 1) }, (_, i) => from + i * step)
+  const choices: Choice[] = [...(optional ? [{ value: '', label: optional }] : []), ...list.map((m) => ({ value: String(m), label: clock(m) }))]
+  return <Select value={value == null ? '' : String(value)} onChange={(v) => onChange(v === '' ? null : Number(v))}
+    choices={choices} label={label} disabled={!choices.length} placeholder={choices.length ? 'Pick a time' : empty} />
 }

@@ -4,7 +4,8 @@ import { ownerLink, readDesk, useBook } from './api'
 import Offer from './Offer'
 import Home from './Home'
 import { Glow, reduced, useSpotlight } from './motion'
-import { Icon, Mark, Modal, Qr, ToastHost, clock } from './ui'
+import { Icon, Mark, Modal, Qr, ToastHost, clock, useToast } from './ui'
+import { useNoticeAlerts } from './Notices'
 import { readSession, signOut } from './auth.ts'
 import { figures, type Book } from './desk/common'
 
@@ -63,7 +64,7 @@ function useRoute() {
     // Pages cross-fade with a hint of blur where the browser supports view transitions; elsewhere they swap at once.
     const on = () => {
       const next = get()
-      const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => { ready: Promise<void>; finished: Promise<void>; updateCallbackDone: Promise<void> } }
       let done = false
       const apply = (sync: boolean) => {
         if (done) return
@@ -73,7 +74,9 @@ function useRoute() {
         scrollTo({ top: 0 })
       }
       if (doc.startViewTransition && !reduced()) {
-        doc.startViewTransition(() => apply(true))
+        // A newer route skips the old transition; that rejection is expected, not an error.
+        const vt = doc.startViewTransition(() => apply(true))
+        vt.ready.catch(() => {}); vt.finished.catch(() => {}); vt.updateCallbackDone.catch(() => {})
         // A window that cannot paint (hidden, minimised, captured off-screen) never runs the
         // transition's callback; the page must change anyway.
         setTimeout(() => apply(false), 350)
@@ -117,8 +120,8 @@ function Routes({ route }: { route: string }) {
   const preview = /^\/staff\/([A-Za-z0-9_-]+)$/.exec(route)
   const desk = readDesk()
   if (preview && desk) return <Suspense fallback={phoneWait}><StaffView ws={desk.id} staff={preview[1]} keyStr={desk.key} preview /></Suspense>
-  const join = /^\/join\/([0-9a-f]{8})$/i.exec(route)
-  if (join) return <Suspense fallback={phoneWait}><Join code={join[1]} /></Suspense>
+  const join = /^\/join\/([0-9a-f]{8})(\/wait)?$/i.exec(route)
+  if (join) return <Suspense fallback={phoneWait}><Join code={join[1]} start={join[2] ? 'wait' : 'book'} /></Suspense>
   if (route === '/places') return <Suspense fallback={phoneWait}><Directory /></Suspense>
   const me = /^\/me\/([0-9a-f]{32})$/i.exec(route)
   if (me) return <Suspense fallback={phoneWait}><Me token={me[1]} /></Suspense>
@@ -189,6 +192,7 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
   const canOwn = role === 'owner' || !!book.desk?.deskKey
   const [menu, setMenu] = useState<'roles' | 'more' | null>(null)
   const [qr, setQr] = useState(false)
+  const toast = useToast()
   const [armed, setArmed] = useState(false)
   const [install, setInstall] = useState<InstallEvent | null>(null)
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem('refill.theme') ?? 'auto' } catch { return 'auto' } })
@@ -227,12 +231,13 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
   const session = readSession()
   const who = book.profile?.name ?? session?.user.email.split('@')[0] ?? (role === 'owner' ? 'Owner' : role === 'desk' ? 'Front desk' : 'Guest')
   const initial = who.slice(0, 1).toUpperCase()
+  const unread = useNoticeAlerts(st, toast)
   const label = area === 'desk' ? 'Front desk' : area === 'owner' ? 'Owner' : area === 'lab' ? 'Proof' : 'Choose a view'
 
   return (
     <header className="bar">
       <div className="bar-in" ref={ref}>
-        <a className="brand" href="#/" aria-label="Refill home"><Mark size={14} /><span>Refill</span></a>
+        <a className="brand" href="/splash" aria-label="Refill: the story page"><Mark size={14} /><span>Refill</span></a>
         {st && <span className="biz"><strong>{st.workspace.salon}</strong><small>{live ? st.workspace.business_type ?? 'today' : 'demo day'}</small></span>}
 
         <div className="bar-end">
@@ -242,6 +247,9 @@ function Bar({ route, area, book }: { route: string; area: Area; book: Book }) {
           {st && (area === 'desk' || area === 'owner') && (live
             ? <LiveClock />
             : <Clock now={st.workspace.now_min} onCommit={(v) => book.act('set_clock', { p_now: v })} />)}
+          {role === 'owner' && <a className={`icon-btn bell ${unread ? 'has-new' : ''}`} href="#/owner" aria-label={unread ? `${unread} new notices` : 'Notices'} title="Notices"
+            onClick={() => { try { if ('Notification' in window && Notification.permission === 'default') void Notification.requestPermission() } catch { /* not supported */ } }}>
+            <Icon name="bell" />{unread > 0 && <span className="badge">{unread}</span>}</a>}
           {!ENTRY.has(book.phase) && <div className="menu-wrap">
             <button className={`role-pill ${area === 'desk' ? 'is-desk' : ''}`} onClick={() => setMenu(menu === 'roles' ? null : 'roles')} aria-expanded={menu === 'roles'} aria-haspopup="menu">
               <span className="dot" /><span className="label">{label}</span><Icon name="chevron" size={16} />

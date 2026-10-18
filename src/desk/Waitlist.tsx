@@ -2,7 +2,8 @@
 // Nobody without a yes is ever offered anything; the database checks it again at booking.
 import { useState, type FormEvent } from 'react'
 import { servicesOf, type DbEntry } from '../api'
-import { Icon, Modal, Select, clock, money } from '../ui'
+import { Icon, Modal, Select, TimeSelect, clock, money } from '../ui'
+import JoinQr from './JoinQr'
 import { Num } from '../motion'
 import { plural, useRun, type Book, type Run } from './common'
 
@@ -10,6 +11,7 @@ export default function Waitlist({ book }: { book: Book }) {
   const st = book.state!
   const run = useRun(book)
   const [adding, setAdding] = useState(false)
+  const [qr, setQr] = useState(false)
   const waiting = st.waitlist.filter((e) => e.status === 'waiting')
   const booked = st.waitlist.filter((e) => e.status === 'booked')
   const yes = waiting.filter((e) => e.consent === true).length
@@ -27,8 +29,12 @@ export default function Waitlist({ book }: { book: Book }) {
           <h1>{plural(waiting.length, 'person', 'people')} waiting</h1>
           <p>{yes} said yes to messages. The rest are never contacted until they say yes; clients can also join themselves from the sign-up code.</p>
         </div>
-        <button className="btn is-primary" onClick={() => setAdding(true)}><Icon name="plus" /> Add someone</button>
+        <span className="card-acts">
+          {st.workspace.join_code && <button className="btn" onClick={() => setQr(true)}><Icon name="qr" /> Client QR</button>}
+          <button className="btn is-primary" onClick={() => setAdding(true)}><Icon name="plus" /> Add someone</button>
+        </span>
       </header>
+      {qr && st.workspace.join_code && <Modal title="Client QR" onClose={() => setQr(false)}><JoinQr code={st.workspace.join_code} salon={st.workspace.salon} /></Modal>}
 
       <section className="group wl-consent" aria-label="Consent">
         <div className="consent-bar" role="img" aria-label={`${yes} may be messaged, ${no} said no, ${waiting.length - yes - no} not asked`}>
@@ -102,8 +108,8 @@ function AddEntry({ run, services, onDone }: { run: Run; services: ReturnType<ty
   const [name, setName] = useState('')
   const [service, setService] = useState(services[0]?.id ?? '')
   const [consent, setConsent] = useState<'yes' | 'no' | 'unknown'>('unknown')
-  const [from, setFrom] = useState('')
-  const [until, setUntil] = useState('')
+  const [from, setFrom] = useState<number | null>(null)
+  const [until, setUntil] = useState<number | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   const submit = async (ev: FormEvent) => {
@@ -111,9 +117,8 @@ function AddEntry({ run, services, onDone }: { run: Run; services: ReturnType<ty
     const sv = services.find((s) => s.id === service)
     if (!name.trim()) return setErr('Write the client’s name.')
     if (!sv) return setErr('Pick a service.')
-    const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
-    const f = toM(from)
-    const u = toM(until)
+    const f = from
+    const u = until
     if (f != null && u != null && u - f < sv.minutes) return setErr(`That window is shorter than a ${sv.minutes}-minute ${sv.name}.`)
     setErr(null)
     const r = await run<{ ok: boolean; code?: string }>('add_entry', {
@@ -137,8 +142,8 @@ function AddEntry({ run, services, onDone }: { run: Run; services: ReturnType<ty
         ))}
       </fieldset>
       <div className="field-row">
-        <label className="field">Free from<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label className="field">Until<input type="time" value={until} onChange={(e) => setUntil(e.target.value)} /></label>
+        <label className="field">Free from<TimeSelect value={from} onChange={setFrom} from={360} to={1380} label="Free from" optional="Any time" /></label>
+        <label className="field">Until<TimeSelect value={until} onChange={setUntil} from={(from ?? 360) + 15} to={1425} label="Until" optional="End of day" /></label>
       </div>
       {err && <p className="err" role="alert">{err}</p>}
       <button className="btn is-primary is-big" type="submit">Add to waitlist</button>

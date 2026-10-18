@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { servicesOf, skillOf, type DbHistory, type DbService, type DbStaff, type State } from './api'
 import { kindOf, plural, staffFor, useRun, type Book, type Run } from './desk/common'
 import { Icon, Modal, Select, clock, money } from './ui'
+import { TaskHandOver } from './Notices'
 
 const hhmm = (m: number) => clock(Math.min(m, 1439))
 const toMin = (t: string) => (/^\d\d:\d\d$/.test(t) ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : NaN)
@@ -99,7 +100,8 @@ export function Tasks({ book }: { book: Book }) {
           {tasks.map((t) => (
             <li key={t.id} className={`task ${t.done ? 'is-done' : ''}`}>
               <input type="checkbox" checked={t.done} onChange={() => run('set_task', { p_task: t.id, p_done: !t.done })} aria-label={`${t.done ? 'Done' : 'Open'}: ${t.text}`} />
-              <span className="row-main"><strong>{t.text}</strong><small>{st.staff.find((p) => p.id === t.staff_id)?.name ?? 'Former staff member'}</small></span>
+              <span className="row-main"><strong>{t.text}</strong><small>{st.staff.find((p) => p.id === t.staff_id)?.name ?? 'Former staff member'}{st.staff.find((p) => p.id === t.staff_id)?.present === false ? ' · out today' : ''}{t.missed ? ' · missed' : ''}</small></span>
+              {!t.done && st.role === 'owner' && (t.missed || st.staff.find((p) => p.id === t.staff_id)?.present === false) && <TaskHandOver st={st} run={run} task={t} />}
               <button className="icon-btn" onClick={() => run('remove_task', { p_task: t.id })} aria-label={`Delete task: ${t.text}`}><Icon name="x" /></button>
             </li>
           ))}

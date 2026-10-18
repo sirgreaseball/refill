@@ -27,6 +27,8 @@ const day = {
 const ws = await rpc<Made>('create_workspace', { p_day: day })
 const owner = { p_ws: ws.id, p_key: ws.owner_key }
 const deskKey = await rpc<string>('desk_link', owner)
+// This flow walks the desk moving a client by hand, so auto-cover (012) is off; db-test 12c covers it.
+await rpc('set_policy', { ...owner, p_policy: { auto_cover: false } })
 const desk = { p_ws: ws.id, p_key: deskKey }
 const staffKey = await rpc<string>('staff_link', { ...owner, p_staff: 'ST1' })
 const ownerSees = () => rpc<St>('get_state', owner)

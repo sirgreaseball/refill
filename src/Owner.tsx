@@ -8,6 +8,7 @@ import { SubDial } from './Dial'
 import { Services, StaffForm, Tasks } from './Manage'
 import { Num } from './motion'
 import { Icon, Modal, Qr, clock, copy, lead, money } from './ui'
+import Notices from './Notices'
 
 type Can = 'yes' | 'own' | 'no'
 
@@ -16,6 +17,8 @@ type Can = 'yes' | 'own' | 'no'
 const ACCESS: [string, Can, Can, Can, Can][] = [
   ['See the day, the waitlist and everyone’s consent', 'yes', 'yes', 'no', 'no'],
   ['Record a cancellation, undo it', 'yes', 'yes', 'no', 'own'],
+  ['Run auto-cover for someone who is out', 'yes', 'yes', 'no', 'no'],
+  ['Hand an absent person’s task to someone, or mark it missed', 'yes', 'no', 'no', 'no'],
   ['Offer an open gap to the waitlist', 'yes', 'yes', 'no', 'no'],
   ['Move an appointment, or send a link to choose', 'yes', 'yes', 'no', 'own'],
   ['Mark a staff member in or out', 'yes', 'yes', 'own', 'no'],
@@ -56,6 +59,7 @@ export function Overview({ book }: { book: Book }) {
           <p>Counted live from the database.{st.workspace.kind === 'live' ? '' : ' Synthetic demo day.'}</p>
         </div>
       </header>
+      <Notices book={book} />
       <section className="group ov-hero spot" aria-label="Where cancelled money went">
         <div className="ov-money">
           <p className="overline">Cancelled value, where it went</p>
@@ -240,7 +244,7 @@ export function Team({ book }: { book: Book }) {
 export function Rules({ book }: { book: Book }) {
   const st = book.state!
   const w = st.workspace
-  const [policy, setPolicy] = useState({ hold_min: w.hold_min, max_offers: w.max_offers, late_cutoff_min: w.late_cutoff_min, min_lead_min: w.min_lead_min })
+  const [policy, setPolicy] = useState({ hold_min: w.hold_min, max_offers: w.max_offers, late_cutoff_min: w.late_cutoff_min, min_lead_min: w.min_lead_min, auto_cover: w.auto_cover ?? true })
   const [saved, setSaved] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   if (st.role !== 'owner') return <OwnerOnly />
@@ -265,6 +269,8 @@ export function Rules({ book }: { book: Book }) {
           <label className="rule"><span className="row-main"><strong>Messages per client a day</strong><small>No one is messaged more than this, however many gaps open.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={1} max={20} value={policy.max_offers} onChange={num('max_offers')} /><i>max</i></span></label>
           <label className="rule"><span className="row-main"><strong>Late if cancelled within</strong><small>Cancellations closer to the start than this are tagged late.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={0} max={1440} value={policy.late_cutoff_min} onChange={num('late_cutoff_min')} /><i>min</i></span></label>
           <label className="rule"><span className="row-main"><strong>No offers within</strong><small>Too close to the start for anyone to get there, so nobody is asked.</small></span><span className="unit-in"><input type="number" inputMode="numeric" min={0} max={240} value={policy.min_lead_min} onChange={num('min_lead_min')} /><i>min</i></span></label>
+          <label className="rule is-switch"><span className="row-main"><strong>Cover absences automatically</strong><small>When someone is marked out, Refill's planner gives each of their coming appointments to a teammate who is in, does that service and is free at that time; the lightest day goes first. The rest stay flagged for the desk.</small></span>
+            <span className="switch"><input type="checkbox" checked={policy.auto_cover} onChange={(e) => { setSaved(false); setPolicy({ ...policy, auto_cover: e.target.checked }) }} aria-label="Cover absences automatically" /><i aria-hidden="true" /></span></label>
           <div className="card-acts">
             <button className="btn is-primary" type="submit">Save rules</button>
             {saved && <span className="done-line"><Icon name="check" /> Saved. Late now means under {lead(w.late_cutoff_min)}.</span>}

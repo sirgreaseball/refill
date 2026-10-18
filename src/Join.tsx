@@ -6,9 +6,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { demoDay } from './day'
 import { rpc } from './rpc.ts'
 import { readSession } from './auth.ts'
-import { Mark, Select, clock, money } from './ui'
+import { Mark, Select, TimeSelect, clock, money } from './ui'
 
-const toM = (t: string) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null)
 type Time = { staff: string; name: string; start_min: number; slot: string | null }
 const NOT_BOOKED: Record<string, string> = {
   TAKEN: 'Someone took that time a moment ago. Pick another.',
@@ -18,7 +17,7 @@ const NOT_BOOKED: Record<string, string> = {
   RATE_LIMITED: 'Too many tries from this network. Wait a minute and try again.',
 }
 
-export default function Join({ code }: { code: string }) {
+export default function Join({ code, start = 'book' }: { code: string; start?: 'book' | 'wait' }) {
   const sample = useMemo(() => demoDay().services, [])
   const [own, setOwn] = useState<typeof sample>([])
   const services = own.length ? own : sample
@@ -29,11 +28,11 @@ export default function Join({ code }: { code: string }) {
   // A signed-in client's name is already known; anyone else types it.
   const [name, setName] = useState(() => { try { return readSession() ? localStorage.getItem('refill.name') ?? '' : '' } catch { return '' } })
   const [service, setService] = useState('')
-  const [mode, setMode] = useState<'book' | 'wait' | 'no'>('book')
+  const [mode, setMode] = useState<'book' | 'wait' | 'no'>(start)
   const [times, setTimes] = useState<Time[] | null>(null)
   const [pick, setPick] = useState<Time | null>(null)
-  const [from, setFrom] = useState('')
-  const [until, setUntil] = useState('')
+  const [from, setFrom] = useState<number | null>(null)
+  const [until, setUntil] = useState<number | null>(null)
   const [consent, setConsent] = useState<boolean | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -91,8 +90,8 @@ export default function Join({ code }: { code: string }) {
     if (!name.trim()) return setErr('Write your name.')
     if (!sv) return setErr('Pick the service you want.')
     if (consent === null) return setErr('Choose whether we may message you. Nothing is ticked for you.')
-    const f = toM(from)
-    const u = toM(until)
+    const f = from
+    const u = until
     if (f != null && u != null && u - f < sv.minutes) return setErr(`That window is shorter than a ${sv.minutes}-minute ${sv.name}.`)
     setErr(null)
     setBusy(true)
@@ -170,8 +169,8 @@ export default function Join({ code }: { code: string }) {
 
           {mode === 'wait' && <>
             <div className="add-times">
-              <label>Free from (optional)<input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-              <label>Until (optional)<input type="time" value={until} onChange={(e) => setUntil(e.target.value)} /></label>
+              <label>Free from (optional)<TimeSelect value={from} onChange={setFrom} from={360} to={1380} label="Free from" optional="Any time" /></label>
+              <label>Until (optional)<TimeSelect value={until} onChange={setUntil} from={(from ?? 360) + 15} to={1425} label="Until" optional="End of day" /></label>
             </div>
             <fieldset className="consent-choice">
               <legend>May {salon} message you when a time opens?</legend>

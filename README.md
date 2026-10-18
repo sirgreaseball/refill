@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <sub>Case C29 Appointment Recovery Desk&ensp;·&ensp;Fynd × NMIMS Hyderabad&ensp;·&ensp;51 rule tests&ensp;·&ensp;28 live database checks&ensp;·&ensp;8 taps, 1 booking</sub>
+  <sub>Case C29 Appointment Recovery Desk&ensp;·&ensp;Fynd × NMIMS Hyderabad&ensp;·&ensp;51 rule tests&ensp;·&ensp;32 live database checks&ensp;·&ensp;8 taps, 1 booking</sub>
 </p>
 
 <br>
@@ -79,7 +79,7 @@ When two clients tap Book at the same instant, one gets the booking and the othe
 
 ### Someone can't come in.
 
-Staff see only their own day. When someone marks themselves out, their offers are withdrawn, their gaps are held and their clients are flagged. Nothing moves until a person decides: the desk picks a new time, or sends the client a link to choose one.
+Staff see only their own day. When someone marks themselves out, their offers are withdrawn and their gaps are held. Refill's absence planner then gives each of their coming appointments to a teammate who is in, does that exact service and is free at that time, lightest day first. Whatever nobody can take stays flagged: the desk picks a new time, or sends the client a link to choose one. The owner gets a notice listing what was covered, what is left, the person's tasks with a one-tap hand-over (or "leave it missed"), and who is in to help. Auto-cover is an owner rule; switch it off and nothing moves on its own.
 
 <img src=".github/media/staff.webp" width="100%" alt="A stylist marks themselves out; their ring turns coral and four clients are flagged to move">
 
@@ -134,8 +134,9 @@ The Lab (`/#/lab`) runs every case check live in the browser with the same rules
 2. On Front desk Today, tap Harsh's 12:00 hair spa with Kabir and record the cancellation. The gap turns amber with ₹1,600 at stake and is flagged late (under 2 hours).
 3. **Who fits** lists 6 who fit and 11 who are skipped, each with a reason. Tap **Send 3 offers**.
 4. Open an offer on a phone (QR on the desk) and tap **Book**. The slot turns lime and the owner sees ₹1,600 recovered.
-5. Mark a stylist out and watch their clients get flagged; move one, or send them a pick-a-time link.
-6. Open **Activity** for the evidence log, and **Proof** (`/#/lab`) for the live checks and race.
+5. Mark Arjun out. One appointment moves to Riya automatically; the rest are flagged. The owner's bell lights up: open **Owner**, hand Arjun's tasks to someone who is in or leave them missed, and move the flagged clients from the desk.
+6. Tap **Client QR** on Today or Waitlist: one code books a time today, the other joins the waitlist. Book from a phone and the booking appears on Today at once; **New appointment** at the desk lists only the times that person is free.
+7. Open **Activity** for the evidence log, and **Proof** (`/#/lab`) for the live checks and race.
 
 All of it is synthetic demo data. Nothing here claims real revenue.
 
@@ -167,8 +168,8 @@ The click path for each shock is in [`docs/SHOCKS.md`](docs/SHOCKS.md).
 
 | Role | How they get in | What they can do |
 |---|---|---|
-| Owner | Their account | Overview, team, services, rules, history, settings |
-| Front desk | A private desk link | Today, waitlist, activity; cancel, offer, move, add appointments |
+| Owner | Their account | Overview with absence notices, team, tasks and hand-overs, services, rules, history, settings |
+| Front desk | A private desk link | Today, waitlist, activity; cancel, offer, move, add appointments, run auto-cover, show the client QR |
 | Staff | A private link per person | Their own day; mark themselves out; tick their tasks |
 | Client | The booking page or QR, optionally an account | Join a waitlist with a yes or no to messages, book offers, see bookings and past visits |
 
@@ -179,7 +180,7 @@ The click path for each shock is in [`docs/SHOCKS.md`](docs/SHOCKS.md).
 | Command | What it checks | Result on 18 Oct 2026 |
 |---|---|---|
 | `npm test` | Rules engine, the organisers' fixture, every scenario file, the demo data | 51 / 51 |
-| `npm run dbtest` | What the public key can and cannot do, limits, holds, caps, undo, against the live database | 28 / 28 |
+| `npm run dbtest` | What the public key can and cannot do, limits, holds, caps, undo, absence cover, notices and task hand-over, against the live database | 32 / 32 |
 | `npm run flowtest` | Cross-role flows: owner, desk, staff, client | 14 / 14 |
 | `npm run race` | 8 simultaneous taps at one live slot, 3 runs | 3 / 3 runs, 1 booking each |
 
